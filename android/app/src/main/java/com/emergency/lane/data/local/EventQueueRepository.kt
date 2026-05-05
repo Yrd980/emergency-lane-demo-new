@@ -42,6 +42,13 @@ class EventQueueRepository(context: Context) {
 
     suspend fun getAll(): List<LocalEventEntity> = eventDao.getAll()
 
+    suspend fun getEvidenceForEvent(eventId: String): List<EvidenceFileEntity> =
+        evidenceDao.getByEvent(eventId)
+
+    suspend fun getPendingCount(): Int =
+        eventDao.countByState(UploadState.QUEUED.name) +
+        eventDao.countByState(UploadState.FAILED.name)
+
     private suspend fun refreshPendingCount() {
         _pendingCount.value = eventDao.countByState(UploadState.QUEUED.name) +
                 eventDao.countByState(UploadState.FAILED.name)

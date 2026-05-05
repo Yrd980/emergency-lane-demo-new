@@ -23,7 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,6 +77,14 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
             }
         }
 
+        // Prerequisites
+        if (!uiState.roiConfigured) {
+            Text("请先完成 ROI 标定", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 8.dp))
+        }
+        if (!uiState.hpConfigured) {
+            Text("请先配置 HP 地址", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 8.dp))
+        }
+
         // Controls
         Row(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
@@ -88,15 +96,23 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-            Button(onClick = { /* Task 6: generate manual event */ }) { Text("生成模拟事件") }
+            Button(
+                onClick = { viewModel.generateManualEvent() },
+                enabled = uiState.canGenerateEvent
+            ) { Text("生成模拟事件") }
             Spacer(modifier = Modifier.weight(1f))
             Button(onClick = { navController.navigate("settings") }) { Text("设置") }
             Button(onClick = { navController.navigate("queue") }) { Text("队列") }
         }
 
         // Status bar
-        if (uiState.lastEventId != null) {
-            Text("最近事件: ${uiState.lastEventId}", modifier = Modifier.padding(8.dp))
+        Row(modifier = Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            if (uiState.lastEventId != null) {
+                Text("最近事件: ${uiState.lastEventId}")
+            }
+            if (uiState.pendingUploadCount > 0) {
+                Text("待上传: ${uiState.pendingUploadCount}")
+            }
         }
     }
 }
