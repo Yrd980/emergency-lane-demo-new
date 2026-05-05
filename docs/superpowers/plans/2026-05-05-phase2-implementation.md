@@ -6,14 +6,16 @@
 
 **Architecture:** FastAPI 后端分 routers（HTTP 层）→ services（业务逻辑）→ database（SQLite）三层。前端 react-router-dom 管理 4 页面路由，自定义 hooks 封装 API 调用。Vite dev server 代理 `/api` 到后端。
 
-**Tech Stack:** Python 3.11+ / FastAPI / SQLite / uvicorn / pytest / React 18 / TypeScript / Tailwind CSS / Vite / react-router-dom
+**Tech Stack:** Python 3.11+ / uv / FastAPI / SQLite / uvicorn / pytest / Bun / React 18 / TypeScript / Tailwind CSS / Vite / react-router-dom
+
+**Toolchain Contract:** Backend dependency management and execution must use `uv` (`uv sync`, `uv run ...`). Frontend dependency management and execution must use `bun` (`bun install`, `bun add`, `bun run ...`). Do not create `requirements.txt`, `package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock` unless a later task explicitly changes this contract.
 
 ---
 
 ### Task 1: 后端项目骨架
 
 **Files:**
-- Create: `backend/requirements.txt`
+- Create: `backend/pyproject.toml`
 - Create: `backend/app/__init__.py`
 - Create: `backend/app/config.py`
 - Create: `backend/app/database.py`
@@ -30,15 +32,25 @@
 mkdir -p backend/app/routers backend/app/services backend/tests backend/data/evidence
 ```
 
-- [ ] **Step 2: 创建 requirements.txt**
+- [ ] **Step 2: 创建 pyproject.toml**
 
-```
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-python-multipart==0.0.20
-pytest==8.3.4
-httpx==0.28.1
-requests==2.32.3
+```toml
+[project]
+name = "emergency-lane-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "python-multipart==0.0.20",
+    "requests==2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "httpx==0.28.1",
+]
 ```
 
 - [ ] **Step 3: 创建 config.py**
@@ -101,7 +113,8 @@ def init_db():
             review_status TEXT NOT NULL DEFAULT 'pending',
             operator_note TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL,
-            reviewed_at TEXT
+            reviewed_at TEXT,
+            CHECK (review_status IN ('pending', 'confirmed', 'rejected'))
         );
 
         CREATE TABLE IF NOT EXISTS evidence_files (
@@ -112,7 +125,8 @@ def init_db():
             mime_type TEXT NOT NULL,
             size_bytes INTEGER NOT NULL,
             sha256 TEXT NOT NULL DEFAULT '',
-            uploaded_at TEXT NOT NULL
+            uploaded_at TEXT NOT NULL,
+            FOREIGN KEY(event_id) REFERENCES events(event_id)
         );
 
         CREATE INDEX IF NOT EXISTS idx_events_device ON events(device_id);
@@ -182,7 +196,7 @@ chmod +x backend/start.sh
 set -e
 cd "$(dirname "$0")"
 mkdir -p data/evidence
-uvicorn app.main:app --host "${HOST:-0.0.0.0}" --port "${PORT:-8000}" --reload
+uv run uvicorn app.main:app --host "${HOST:-0.0.0.0}" --port "${PORT:-8000}" --reload
 ```
 
 `backend/.gitignore`:
@@ -201,20 +215,19 @@ from fastapi import APIRouter
 router = APIRouter(tags=["health"])
 ```
 
-创建对应的占位 routers（events, devices, evidence, stats）使 import 不报错:
+创建对应的占位 routers（events, devices, evidence, stats）使 import 不报错。不要用 shell 重定向生成源码；逐个创建文件，内容均为：
 
-```bash
-for mod in devices events evidence stats; do
-  echo 'from fastapi import APIRouter
-router = APIRouter()' > backend/app/routers/${mod}.py
-done
+```python
+from fastapi import APIRouter
+
+router = APIRouter()
 ```
 
 - [ ] **Step 8: 安装依赖并验证可启动**
 
 ```bash
-cd backend && pip install -r requirements.txt
-python -c "from app.main import app; print('OK')"
+cd backend && uv sync
+uv run python -c "from app.main import app; print('OK')"
 ```
 
 Expected: prints "OK" without errors.
@@ -259,8 +272,9 @@ def test_settings():
 
 @pytest.fixture
 def client():
-    from app.main import app
+    from app.main import create_app
     from starlette.testclient import TestClient
+    app = create_app()
     return TestClient(app)
 ```
 
@@ -278,7 +292,7 @@ def test_health_returns_ok(client):
 - [ ] **Step 3: 运行测试确认失败**
 
 ```bash
-cd backend && python -m pytest tests/test_health.py -v
+cd backend && uv run pytest tests/test_health.py -v
 ```
 
 Expected: FAIL (404 — health endpoint returns no route or empty response)
@@ -305,7 +319,7 @@ def health_check():
 - [ ] **Step 5: 运行测试确认通过**
 
 ```bash
-cd backend && python -m pytest tests/test_health.py -v
+cd backend && uv run pytest tests/test_health.py -v
 ```
 
 Expected: 1 PASS
@@ -512,7 +526,7 @@ def test_heartbeat_preserves_register_fields(client):
 - [ ] **Step 5: 运行测试确认通过**
 
 ```bash
-cd backend && python -m pytest tests/test_devices.py -v
+cd backend && uv run pytest tests/test_devices.py -v
 ```
 
 Expected: 4 PASS
@@ -576,6 +590,8 @@ import json
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
 
+VALID_REVIEW_STATUSES = {"pending", "confirmed", "rejected"}
+
 def _now():
     tz = timezone(timedelta(hours=8))
     return datetime.now(tz).isoformat()
@@ -608,6 +624,11 @@ def list_events(
     start_time_from: str = None, start_time_to: str = None,
     limit: int = 50, offset: int = 0,
 ):
+    limit = max(1, min(limit, 200))
+    offset = max(0, offset)
+    if status and status not in VALID_REVIEW_STATUSES:
+        return {"items": [], "total": 0}
+
     conn = get_db()
     clauses = []
     params = []
@@ -703,11 +724,13 @@ def get_event(event_id: str):
 def update_review(event_id: str, review_status: str, operator_note: str):
     conn = get_db()
     now = _now()
-    conn.execute(
+    cur = conn.execute(
         "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
         (review_status, operator_note, now, event_id),
     )
     conn.commit()
+    if cur.rowcount == 0:
+        return None
     return {
         "event_id": event_id,
         "review_status": review_status,
@@ -765,7 +788,10 @@ def get_event(event_id: str):
 def update_review(event_id: str, body: ReviewUpdate):
     if body.review_status not in ("confirmed", "rejected"):
         raise HTTPException(status_code=422, detail="review_status must be 'confirmed' or 'rejected'")
-    return event_service.update_review(event_id, body.review_status, body.operator_note)
+    result = event_service.update_review(event_id, body.review_status, body.operator_note)
+    if not result:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return result
 ```
 
 - [ ] **Step 4: 编写参数化事件测试 (backend/tests/test_events.py)**
@@ -878,7 +904,7 @@ def test_duplicate_upload_does_not_overwrite_review(client):
 - [ ] **Step 5: 运行测试确认通过**
 
 ```bash
-cd backend && python -m pytest tests/test_events.py -v
+cd backend && uv run pytest tests/test_events.py -v
 ```
 
 Expected: 10 PASS
@@ -910,15 +936,17 @@ from pydantic import BaseModel
 
 class EvidenceResponse(BaseModel):
     event_id: str
-    type: str
+    evidence_type: str
     stored: bool
     url: str
+    sha256: str
 ```
 
 - [ ] **Step 2: 编写 evidence_service (backend/app/services/evidence_service.py)**
 
 ```python
 import os
+import hashlib
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
 from app.config import settings
@@ -928,21 +956,33 @@ def _now():
     return datetime.now(tz).isoformat()
 
 def save_evidence(event_id: str, evidence_type: str, file_content: bytes, filename: str, mime_type: str):
+    conn = get_db()
+    event = conn.execute("SELECT event_id FROM events WHERE event_id=?", (event_id,)).fetchone()
+    if not event:
+        return None
+
     event_dir = os.path.join(settings.evidence_dir, event_id)
     os.makedirs(event_dir, exist_ok=True)
+    filename = os.path.basename(filename) or "unknown"
     dest = os.path.join(event_dir, filename)
     with open(dest, "wb") as f:
         f.write(file_content)
     size = os.path.getsize(dest)
+    sha256 = hashlib.sha256(file_content).hexdigest()
 
-    conn = get_db()
     conn.execute(
-        """INSERT INTO evidence_files (event_id, evidence_type, file_path, mime_type, size_bytes, uploaded_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (event_id, evidence_type, dest, mime_type, size, _now()),
+        """INSERT INTO evidence_files (event_id, evidence_type, file_path, mime_type, size_bytes, sha256, uploaded_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (event_id, evidence_type, dest, mime_type, size, sha256, _now()),
     )
     conn.commit()
-    return {"event_id": event_id, "type": evidence_type, "stored": True, "url": f"/evidence/{event_id}/{filename}"}
+    return {
+        "event_id": event_id,
+        "evidence_type": evidence_type,
+        "stored": True,
+        "url": f"/evidence/{event_id}/{filename}",
+        "sha256": sha256,
+    }
 ```
 
 - [ ] **Step 3: 编写 stats_service (backend/app/services/stats_service.py)**
@@ -962,7 +1002,7 @@ def get_overview():
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
 
     total_today = conn.execute(
-        "SELECT COUNT(*) FROM events WHERE created_at >= ?", (today_start,)
+        "SELECT COUNT(*) FROM events WHERE start_time >= ?", (today_start,)
     ).fetchone()[0]
 
     pending = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='pending'").fetchone()[0]
@@ -1014,7 +1054,7 @@ def get_overview():
 Rewrite `backend/app/routers/evidence.py`:
 
 ```python
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services import evidence_service
 
 router = APIRouter(prefix="/api/events", tags=["evidence"])
@@ -1022,17 +1062,20 @@ router = APIRouter(prefix="/api/events", tags=["evidence"])
 @router.post("/{event_id}/evidence")
 def upload_evidence(
     event_id: str,
-    type: str = Form(...),
+    evidence_type: str = Form(...),
     file: UploadFile = File(...),
 ):
     content = file.file.read()
-    return evidence_service.save_evidence(
+    result = evidence_service.save_evidence(
         event_id=event_id,
-        evidence_type=type,
+        evidence_type=evidence_type,
         file_content=content,
         filename=file.filename or "unknown",
         mime_type=file.content_type or "application/octet-stream",
     )
+    if not result:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return result
 ```
 
 - [ ] **Step 5: 编写 stats router**
@@ -1142,7 +1185,7 @@ def test_online_device_count(client):
 - [ ] **Step 8: 运行全部后端测试**
 
 ```bash
-cd backend && python -m pytest tests/ -v
+cd backend && uv run pytest tests/ -v
 ```
 
 Expected: all tests pass (health 1 + devices 4 + events 10 + evidence 2 + stats 3 = 20)
@@ -1165,11 +1208,11 @@ git commit -m "feat: add evidence upload, stats overview, and static file servin
 
 ```bash
 cd /home/yrd/projects/emergency-lane-demo-new
-npm create vite@latest frontend -- --template react-ts
+bun create vite frontend --template react-ts
 cd frontend
-npm install
-npm install react-router-dom
-npm install -D tailwindcss @tailwindcss/vite
+bun install
+bun add react-router-dom
+bun add -d tailwindcss @tailwindcss/vite
 ```
 
 - [ ] **Step 2: 配置 Tailwind 和 Vite proxy**
@@ -1231,7 +1274,7 @@ export interface EventDetail {
   vehicle_class: string;
   vehicle_box: VehicleBox;
   confidence: number;
-  gps_location: GpsLocation;
+  gps_location: GpsLocation | null;
   review_status: string;
   operator_note: string;
   created_at: string;
@@ -1443,7 +1486,7 @@ createRoot(document.getElementById('root')!).render(
 - [ ] **Step 9: 验证前端可启动并路由正确**
 
 ```bash
-cd frontend && npm run dev
+cd frontend && bun run dev
 ```
 
 打开 http://localhost:5173，确认侧边栏导航存在，点击各路由不报错。
@@ -1701,7 +1744,7 @@ export default function FilterBar({
         <input
           type="datetime-local"
           className="border rounded px-2 py-1 text-sm mt-0.5"
-          value={(filters.start_time_from || '').replace('%2B', '+').slice(0, 19) || ''}
+          value={(filters.start_time_from || '').slice(0, 16)}
           onChange={(e) => update('start_time_from', e.target.value ? e.target.value + ':00+08:00' : '')}
         />
       </label>
@@ -1710,7 +1753,7 @@ export default function FilterBar({
         <input
           type="datetime-local"
           className="border rounded px-2 py-1 text-sm mt-0.5"
-          value={(filters.start_time_to || '').replace('%2B', '+').slice(0, 19) || ''}
+          value={(filters.start_time_to || '').slice(0, 16)}
           onChange={(e) => update('start_time_to', e.target.value ? e.target.value + ':00+08:00' : '')}
         />
       </label>
@@ -2070,7 +2113,12 @@ export default function EventDetail() {
           <div><span className="text-gray-500">轨迹 ID:</span> {data.track_id}</div>
           <div><span className="text-gray-500">车辆类别:</span> {data.vehicle_class}</div>
           <div><span className="text-gray-500">置信度:</span> {(data.confidence * 100).toFixed(0)}%</div>
-          <div><span className="text-gray-500">GPS:</span> {data.gps_location.lat.toFixed(4)}, {data.gps_location.lng.toFixed(4)}</div>
+          <div>
+            <span className="text-gray-500">GPS:</span>{' '}
+            {data.gps_location
+              ? `${data.gps_location.lat.toFixed(4)}, ${data.gps_location.lng.toFixed(4)}`
+              : '无'}
+          </div>
           <div><span className="text-gray-500">状态:</span> <StatusBadge status={data.review_status} /></div>
         </div>
         <ReviewPanel
@@ -2242,7 +2290,7 @@ print("\nSeed complete. Visit http://localhost:5173")
 
 运行 seed:
 ```bash
-cd backend && python seed_data.py
+cd backend && uv run python seed_data.py
 ```
 
 Expected: 22 successful HTTP calls printed.
@@ -2261,7 +2309,7 @@ git commit -m "feat: add seed data script with 2 devices and 10 events"
 - [ ] **Step 1: 运行全部后端测试**
 
 ```bash
-cd backend && python -m pytest tests/ -v
+cd backend && uv run pytest tests/ -v
 ```
 
 Expected: 20 PASS
@@ -2275,12 +2323,12 @@ cd backend && ./start.sh
 
 Terminal 2:
 ```bash
-cd backend && python seed_data.py
+cd backend && uv run python seed_data.py
 ```
 
 Terminal 3:
 ```bash
-cd frontend && npm run dev
+cd frontend && bun run dev
 ```
 
 - [ ] **Step 3: 浏览器验证**
