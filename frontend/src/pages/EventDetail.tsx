@@ -1,17 +1,30 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEventDetail } from '../hooks/useEventDetail';
 import { useReview } from '../hooks/useReview';
 import StatusBadge from '../components/StatusBadge';
 import EvidenceViewer from '../components/EvidenceViewer';
 import ReviewPanel from '../components/ReviewPanel';
+import ErrorBanner from '../components/ErrorBanner';
+import EmptyState from '../components/EmptyState';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data, loading, error, refetch } = useEventDetail(id!);
   const { submit, submitting } = useReview(id!);
 
   if (loading) return <div className="text-gray-400">加载中...</div>;
-  if (error) return <div className="text-red-500">加载失败: {error}</div>;
+  if (error && error.includes('404')) {
+    return (
+      <EmptyState
+        icon="⚠️"
+        title="事件不存在"
+        description="该事件可能已被删除，或 ID 不正确"
+        action={{ label: "返回事件列表", onClick: () => navigate('/events') }}
+      />
+    );
+  }
+  if (error) return <ErrorBanner message={`加载事件失败: ${error}`} />;
   if (!data) return null;
 
   const handleReview = async (status: string, note: string): Promise<boolean> => {
@@ -50,6 +63,11 @@ export default function EventDetail() {
       </div>
       <div className="mt-4">
         <h2 className="text-lg font-semibold mb-2">证据文件</h2>
+        {data.evidence_files.length === 0 && (
+          <div className="text-gray-400 text-sm p-4 border border-dashed border-gray-300 rounded">
+            暂无证据文件 — 该事件可能尚未完成证据上传
+          </div>
+        )}
         <EvidenceViewer files={data.evidence_files} />
       </div>
     </div>

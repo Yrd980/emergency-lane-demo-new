@@ -12,7 +12,17 @@ export default function ReviewPanel({
   submitting: boolean;
 }) {
   const [note, setNote] = useState(operatorNote);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const isReviewed = reviewStatus !== 'pending';
+
+  async function handleReview(newStatus: 'confirmed' | 'rejected') {
+    setSubmitError(null);
+    try {
+      await onSubmit(newStatus, note);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : '复核提交失败');
+    }
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -23,6 +33,11 @@ export default function ReviewPanel({
         </div>
       ) : (
         <div className="space-y-3">
+          {submitError && (
+            <div className="text-red-600 text-sm mb-2">
+              {submitError} — 请重试或检查后端状态
+            </div>
+          )}
           <textarea
             className="w-full border rounded p-2 text-sm"
             rows={3}
@@ -34,14 +49,14 @@ export default function ReviewPanel({
             <button
               className="px-4 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
               disabled={submitting}
-              onClick={() => onSubmit('confirmed', note)}
+              onClick={() => handleReview('confirmed')}
             >
               确认占用
             </button>
             <button
               className="px-4 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
               disabled={submitting}
-              onClick={() => onSubmit('rejected', note)}
+              onClick={() => handleReview('rejected')}
             >
               驳回
             </button>

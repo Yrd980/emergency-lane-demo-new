@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
+import ErrorBanner from '../components/ErrorBanner';
+import EmptyState from '../components/EmptyState';
 import type { DeviceInfo } from '../types';
 
 export default function DeviceStatus() {
@@ -7,22 +9,31 @@ export default function DeviceStatus() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadDevices = useCallback(() => {
+    setLoading(true);
+    setError(null);
     api.getDevices()
       .then((d) => { setDevices(d); setError(null); })
       .catch((e: unknown) => setError((e as Error).message))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => { loadDevices(); }, [loadDevices]);
+
   if (loading) return <div className="text-gray-400">加载中...</div>;
-  if (error) return <div className="text-red-500">加载失败: {error}</div>;
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">设备状态</h1>
-      {devices.length === 0 ? (
-        <div className="text-gray-400">暂无设备</div>
-      ) : (
+      {error && <ErrorBanner message={`加载设备失败: ${error}`} onRetry={loadDevices} />}
+      {!loading && devices.length === 0 && !error && (
+        <EmptyState
+          icon="📱"
+          title="暂无设备"
+          description="还没有设备注册到系统"
+        />
+      )}
+      {devices.length > 0 && (
         <div className="grid gap-4">
           {devices.map((dev) => (
             <div key={dev.device_id} className="bg-white rounded-lg shadow p-4">

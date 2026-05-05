@@ -3,13 +3,14 @@ import { usePolling } from '../hooks/usePolling';
 import { api } from '../api/client';
 import StatCard from '../components/StatCard';
 import StatusBadge from '../components/StatusBadge';
+import ErrorBanner from '../components/ErrorBanner';
 import type { OverviewStats } from '../types';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { data, error } = usePolling<OverviewStats>(() => api.getStats(), 5000);
 
-  if (error) return <div className="text-red-500">加载失败: {error}</div>;
+  if (error) return <ErrorBanner message={`加载概览失败: ${error}`} />;
   if (!data) return <div className="text-gray-400">加载中...</div>;
 
   return (
