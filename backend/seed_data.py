@@ -1,9 +1,48 @@
-"""注入模拟数据：2 台设备 + 10 个事件 (覆盖 pending/confirmed/rejected)"""
+"""注入模拟数据：2 台设备 + 10 个事件 (覆盖 pending/confirmed/rejected) + 证据图片"""
+import io
 import requests
 from datetime import datetime, timezone, timedelta
 
 BASE = "http://localhost:8000/api"
 tz = timezone(timedelta(hours=8))
+
+
+def make_jpeg_bytes_minimal():
+    """Return a tiny valid JPEG without adding Pillow to backend dependencies."""
+    return (
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+        b"\xff\xdb\x00C\x00" + bytes([8] * 64) +
+        b"\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01\x11\x00\x02\x11\x00\x03\x11\x00"
+        b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xd2\xcf \xff\xd9"
+    )
+
+
+def make_jpeg_bytes(width=640, height=360, text="EMERGENCY LANE"):
+    try:
+        from PIL import Image, ImageDraw
+    except ImportError:
+        return make_jpeg_bytes_minimal()
+
+    img = Image.new("RGB", (width, height), color=(40, 40, 40))
+    draw = ImageDraw.Draw(img)
+    draw.polygon([(420, 100), (620, 110), (630, 350), (320, 350)], outline=(0, 255, 255), width=3)
+    draw.rectangle([(300, 150), (480, 280)], outline=(255, 0, 0), width=2)
+    draw.text((310, 130), "car 0.86", fill=(255, 0, 0))
+    draw.text((20, 20), text, fill=(255, 255, 255))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return buf.getvalue()
+
+
+def upload_evidence(event_id, evidence_type, filename, file_bytes, mime_type="image/jpeg"):
+    url = f"{BASE}/events/{event_id}/evidence"
+    files = {"file": (filename, io.BytesIO(file_bytes), mime_type)}
+    data = {"evidence_type": evidence_type}
+    r = requests.post(url, data=data, files=files)
+    body = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+    print(f"POST evidence {event_id}/{evidence_type}: {r.status_code} {body}")
 
 
 def post(path, body):
@@ -89,5 +128,10 @@ for i, (eid, dev, status, note) in enumerate(events):
             f"/events/{eid}/review",
             {"review_status": status, "operator_note": note},
         )
+
+# Upload evidence for first 4 events (covering all 3 review statuses)
+evidence_events = ["evt_seed_01", "evt_seed_02", "evt_seed_04", "evt_seed_09"]
+for eid in evidence_events:
+    upload_evidence(eid, "frame_peak", "frame_peak.jpg", make_jpeg_bytes(text=eid))
 
 print("\nSeed complete. Visit http://localhost:5173")
