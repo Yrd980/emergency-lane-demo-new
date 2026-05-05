@@ -50,7 +50,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             settings.saveConfig(baseUrl, deviceId, deviceName)
             repo.register().fold(
-                onSuccess = { _uiState.value = _uiState.value.copy(isRegistered = true, connectionStatus = SettingsUiState.ConnectionStatus.Success("已注册: $it")) },
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(isRegistered = true, connectionStatus = SettingsUiState.ConnectionStatus.Success("已注册: $it"))
+                    repo.startHeartbeat()
+                },
                 onFailure = { _uiState.value = _uiState.value.copy(connectionStatus = SettingsUiState.ConnectionStatus.Error(it.message ?: "注册失败")) }
             )
         }

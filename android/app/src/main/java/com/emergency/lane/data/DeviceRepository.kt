@@ -45,7 +45,11 @@ class DeviceRepository(private val context: Context) {
         }
     }
 
-    suspend fun startHeartbeat(intervalMs: Long = 10_000) {
+    suspend fun startHeartbeat(
+        intervalMs: Long = 10_000,
+        fpsProvider: () -> Float = { 15f },
+        pendingProvider: () -> Int = { 0 }
+    ) {
         isRunning = true
         while (isRunning) {
             try {
@@ -55,8 +59,8 @@ class DeviceRepository(private val context: Context) {
                         deviceId = deviceId,
                         batteryLevel = 85f,
                         thermalState = "normal",
-                        fps = 15f,
-                        pendingUploadCount = 0
+                        fps = fpsProvider(),
+                        pendingUploadCount = pendingProvider()
                     )
                 )
             } catch (_: Exception) {}
