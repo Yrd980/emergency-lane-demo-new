@@ -72,6 +72,12 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
 
                 // Detection overlay
                 Canvas(modifier = Modifier.fillMaxSize()) {
+                    val scaleX = if (uiState.frameWidth > 0) {
+                        size.width / uiState.frameWidth.toFloat()
+                    } else 1f
+                    val scaleY = if (uiState.frameHeight > 0) {
+                        size.height / uiState.frameHeight.toFloat()
+                    } else 1f
                     val paint = Paint().apply {
                         color = android.graphics.Color.RED
                         textSize = 36f
@@ -79,11 +85,15 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     }
 
                     for (det in uiState.detections) {
+                        val x = det.x * scaleX
+                        val y = det.y * scaleY
+                        val width = det.width * scaleX
+                        val height = det.height * scaleY
                         // Bounding box
                         drawRect(
                             color = Color.Red,
-                            topLeft = Offset(det.x, det.y),
-                            size = Size(det.width, det.height),
+                            topLeft = Offset(x, y),
+                            size = Size(width, height),
                             style = Stroke(width = 3f)
                         )
                         // Label
@@ -92,8 +102,8 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         }"
                         drawContext.canvas.nativeCanvas.drawText(
                             label,
-                            det.x,
-                            (det.y - 4f).coerceAtLeast(0f),
+                            x,
+                            (y - 4f).coerceAtLeast(0f),
                             paint
                         )
                     }
@@ -101,6 +111,9 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     // Draw track IDs
                     for (track in uiState.tracks) {
                         val box = track.lastBox
+                        val x = box.x * scaleX
+                        val y = box.y * scaleY
+                        val height = box.height * scaleY
                         val paintTrack = Paint().apply {
                             color = if (track.insideRoi) android.graphics.Color.GREEN
                             else android.graphics.Color.YELLOW
@@ -110,8 +123,8 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         val label = "${track.trackId}"
                         drawContext.canvas.nativeCanvas.drawText(
                             label,
-                            box.x,
-                            (box.y + box.height + 20f),
+                            x,
+                            (y + height + 20f),
                             paintTrack
                         )
                     }

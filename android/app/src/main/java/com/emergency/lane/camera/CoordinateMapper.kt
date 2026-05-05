@@ -30,4 +30,27 @@ object CoordinateMapper {
             )
         }
     }
+
+    fun mapStretchedInputToFrame(
+        boxes: List<DetectionBox>,
+        originalWidth: Int,
+        originalHeight: Int,
+        modelWidth: Int = 640,
+        modelHeight: Int = 640
+    ): List<DetectionBox> {
+        val scaleX = originalWidth.toFloat() / modelWidth.toFloat()
+        val scaleY = originalHeight.toFloat() / modelHeight.toFloat()
+        return boxes.map { box ->
+            val x = (box.x * scaleX).coerceIn(0f, originalWidth.toFloat())
+            val y = (box.y * scaleY).coerceIn(0f, originalHeight.toFloat())
+            val right = ((box.x + box.width) * scaleX).coerceIn(0f, originalWidth.toFloat())
+            val bottom = ((box.y + box.height) * scaleY).coerceIn(0f, originalHeight.toFloat())
+            box.copy(
+                x = x,
+                y = y,
+                width = (right - x).coerceAtLeast(0f),
+                height = (bottom - y).coerceAtLeast(0f)
+            )
+        }
+    }
 }

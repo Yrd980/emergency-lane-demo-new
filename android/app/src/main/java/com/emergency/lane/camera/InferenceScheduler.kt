@@ -1,9 +1,9 @@
 package com.emergency.lane.camera
 
 class InferenceScheduler(
-    private val targetFps: Int = 15
+    targetFps: Int = 15
 ) {
-    private val frameIntervalMs = 1000L / targetFps
+    private var frameIntervalMs = 1000L / targetFps.coerceAtLeast(1)
     private var lastInferenceTime = 0L
 
     fun shouldRunInference(nowMs: Long): Boolean {
@@ -15,6 +15,6 @@ class InferenceScheduler(
     }
 
     fun updateTargetFps(fps: Int) {
-        // used by degradation logic
+        frameIntervalMs = 1000L / fps.coerceIn(1, 30)
     }
 }

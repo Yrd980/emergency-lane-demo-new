@@ -8,6 +8,9 @@ import com.emergency.lane.domain.VehicleBox
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -39,7 +42,7 @@ class UploadRepository(private val context: Context) {
                     roi_id = event.roiId,
                     track_id = event.trackId,
                     vehicle_class = event.vehicleClass,
-                    vehicle_box = VehicleBox(120f, 220f, 180f, 90f),
+                    vehicle_box = parseVehicleBox(event.vehicleBoxJson),
                     confidence = event.confidence
                 )
                 val body = json.encodeToString(payload)
@@ -80,5 +83,19 @@ class UploadRepository(private val context: Context) {
             }
         }
         return uploaded
+    }
+
+    private fun parseVehicleBox(raw: String): VehicleBox {
+        return runCatching {
+            val obj = json.decodeFromString<JsonObject>(raw)
+            VehicleBox(
+                x = obj.getValue("x").jsonPrimitive.float,
+                y = obj.getValue("y").jsonPrimitive.float,
+                width = obj.getValue("width").jsonPrimitive.float,
+                height = obj.getValue("height").jsonPrimitive.float
+            )
+        }.getOrElse {
+            VehicleBox(120f, 220f, 180f, 90f)
+        }
     }
 }

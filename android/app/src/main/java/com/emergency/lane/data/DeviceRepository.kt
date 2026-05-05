@@ -1,15 +1,18 @@
 package com.emergency.lane.data
 
 import android.content.Context
+import com.emergency.lane.data.local.EventQueueRepository
 import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.data.remote.DeviceRegisterRequest
 import com.emergency.lane.data.remote.HeartbeatRequest
 import com.emergency.lane.data.remote.HpApiClient
+import com.emergency.lane.domain.RuntimeMetrics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 class DeviceRepository(private val context: Context) {
     private val settings = SettingsStore(context)
+    private val queue = EventQueueRepository(context)
     private var apiClient: HpApiClient? = null
     private var isRunning = false
 
@@ -47,8 +50,8 @@ class DeviceRepository(private val context: Context) {
 
     suspend fun startHeartbeat(
         intervalMs: Long = 10_000,
-        fpsProvider: () -> Float = { 15f },
-        pendingProvider: () -> Int = { 0 }
+        fpsProvider: () -> Float = { RuntimeMetrics.fps },
+        pendingProvider: suspend () -> Int = { queue.getPendingCount() }
     ) {
         isRunning = true
         while (isRunning) {

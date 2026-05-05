@@ -23,6 +23,7 @@ import com.emergency.lane.domain.DetectionBox
 import com.emergency.lane.domain.EventFactory
 import com.emergency.lane.domain.GeometryUtils
 import com.emergency.lane.domain.RoiConfig
+import com.emergency.lane.domain.RuntimeMetrics
 import com.emergency.lane.domain.Track
 import com.emergency.lane.domain.UploadState
 import com.emergency.lane.domain.isValid
@@ -58,6 +59,8 @@ data class DetectionUiState(
     val isDetecting: Boolean = false,
     val detections: List<DetectionBox> = emptyList(),
     val tracks: List<Track> = emptyList(),
+    val frameWidth: Int = 0,
+    val frameHeight: Int = 0,
     val fps: Float = 0f,
     val inferenceMs: Long = 0,
     val avgInferenceMs: Long = 0,
@@ -181,7 +184,13 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
             val boxes = NmsProcessor.parseYoloOutput(
                 rawOutput, engine.modelInfo.outputShape
             )
-            val afterNms = NmsProcessor.nms(boxes)
+            val afterNms = CoordinateMapper.mapStretchedInputToFrame(
+                NmsProcessor.nms(boxes),
+                originalWidth = bitmap.width,
+                originalHeight = bitmap.height,
+                modelWidth = engine.modelInfo.inputWidth,
+                modelHeight = engine.modelInfo.inputHeight
+            )
 
             val nowMs = System.currentTimeMillis()
             val tracks = tkr.update(afterNms, nowMs)
@@ -210,15 +219,20 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
             if (recentInferenceMs.size > 20) recentInferenceMs.removeFirst()
             val avgMs = if (recentInferenceMs.isNotEmpty())
                 recentInferenceMs.average().toLong() else 0L
+            scheduler?.updateTargetFps(maybeDegradeFps(avgMs))
 
             _uiState.value = _uiState.value.copy(
                 detections = afterNms,
                 tracks = tkr.getAllTracks(),
+                frameWidth = bitmap.width,
+                frameHeight = bitmap.height,
                 fps = if (avgMs > 0) 1000f / avgMs else 0f,
                 inferenceMs = inferenceMs,
                 avgInferenceMs = avgMs,
                 inferenceError = null
             )
+            RuntimeMetrics.fps = _uiState.value.fps
+            RuntimeMetrics.avgInferenceMs = avgMs
             frameCounter++
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(inferenceError = e.message)
@@ -272,8 +286,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         )
     }
 
-    fun maybeDegradeFps(): Int {
-        val avgMs = _uiState.value.avgInferenceMs
+    fun maybeDegradeFps(avgMs: Long = _uiState.value.avgInferenceMs): Int {
         return when {
             avgMs > 150 -> 3
             avgMs > 80  -> 5
