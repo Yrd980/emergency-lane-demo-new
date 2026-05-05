@@ -30,14 +30,14 @@
 
 ## 模型方案
 
-**已锁定：** 运行时 Google AI Edge LiteRT (TFLite) 2.16，模型 YOLOv8n INT8 640×640。
+**默认选择：** 运行时 Google AI Edge LiteRT (TFLite)，模型优先使用 YOLOv8n 640×640 车辆检测版本。模型输入类型、量化参数和输出布局必须在运行时读取并记录，不能只按文件名假定。
 
-- 模型文件：`app/src/main/assets/yolov8n_vehicle_640x640_int8.tflite`。
-- 输入：640×640×3，归一化 mean=[0,0,0] std=[255,255,255]。
-- 输出：[1, 84, 8400]，84 = 4 (bbox) + 80 (COCO classes)。
+- 模型文件：`app/src/main/assets/yolov8n_vehicle_640x640.tflite`，若使用量化版本可在文件名中追加 `int8` 或 `uint8`，但运行时仍以 tensor metadata 为准。
+- 输入：优先 640×640×3 RGB；实际 dtype 以 `interpreter.getInputTensor(0)` 为准，支持 Float32 或 UInt8/Int8 量化输入。
+- 输出：常见 YOLOv8 TFLite 输出为 `[1, 84, 8400]` 或 `[1, 8400, 84]`；解析前必须检查 shape，按布局选择索引方式。
 - 类别：car (2), truck (7), bus (5)，无单独 emergency_vehicle 类别 — 用 car 近似。
 - GPU 委托优先，CPU (4线程) 降级。
-- 模型来源：从 Ultralytics YOLOv8n 导出 TFLite INT8，不纳入 git（>5MB）。
+- 模型来源：从 Ultralytics YOLOv8n 导出 TFLite，或使用预训练 TFLite 版本；大模型文件不纳入 git，通过文档或脚本说明获取方式。
 
 ## 推理管线
 
@@ -73,7 +73,7 @@ CameraX ImageAnalysis
 }
 ```
 
-坐标约定：输出给 UI、跟踪和 ROI 判定的 `box` 必须统一映射到预览画面坐标系。
+坐标约定：输出给 UI、跟踪和 ROI 判定的 `box` 必须统一映射到预览画面坐标系。预处理若使用 letterbox，映射回预览时必须减去 padding 后再除以缩放比例；不能用简单 X/Y 独立缩放替代。
 
 ## 轻量跟踪
 
@@ -208,4 +208,3 @@ outside_roi
 | 跟踪 ID 抖动 | 重复事件或漏事件 | 增加丢失容忍和单轨迹触发锁 |
 | 发热降频 | FPS 下降 | 动态降低推理帧率和输入尺寸 |
 | 误报较多 | 复核压力增加 | 提高阈值，保留人工复核作为最终结论 |
-

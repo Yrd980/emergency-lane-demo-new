@@ -15,8 +15,8 @@
 |---|---|---|
 | `backend/seed_data.py` | ✅ 存在 | 2 devices + 10 events, 覆盖 pending/confirmed/rejected, car/truck/bus |
 | 证据图片 (frame_peak) | ❌ 缺失 | seed 脚本不生成任何证据文件 — 需补至少 3 条事件的 JPEG 证据 |
-| `uv run pytest` | 25 passed | Phase 2 修复后的状态 |
-| `bun run build` | 通过 | 40 modules, 247KB JS |
+| `uv run pytest` | 待验证 | 期望全部通过；实际数量以当前测试集为准 |
+| `bun run build` | 待验证 | 期望无 TypeScript/Vite 构建错误 |
 | Web 错误状态 | 部分 | 后端不可用时 fetch 抛异常但无用户友好提示 |
 | Web 空状态 | 缺失 | 无事件/无设备时列表空白，无引导信息 |
 
@@ -39,7 +39,7 @@ git status --short
 ```bash
 cd backend && uv sync && uv run pytest
 ```
-Expected: 25 passed. 如果不是，记录失败原因并在继续前修复。
+Expected: all tests pass. 记录实际通过数量；如果失败，记录失败原因并在继续前修复。
 
 - [ ] **Step 3: 验证前端构建**
 
@@ -111,22 +111,31 @@ ip addr show | grep "inet " | grep -v 127.0.0.1
 
 - [ ] **Step 1: 生成 JPEG 占位图函数**
 
-在 `backend/seed_data.py` 顶部添加：
+在 `backend/seed_data.py` 顶部添加。优先不新增后端依赖；如果当前环境已有 Pillow，可以用可读图，否则使用内嵌最小 JPEG：
 
 ```python
 import io
-import struct
-import zlib
+def make_jpeg_bytes_minimal():
+    """Return a tiny valid JPEG without adding Pillow to backend dependencies."""
+    return (
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+        b"\xff\xdb\x00C\x00" + bytes([8] * 64) +
+        b"\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01\x11\x00\x02\x11\x00\x03\x11\x00"
+        b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        b"\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xd2\xcf \xff\xd9"
+    )
 
 
 def make_jpeg_bytes(width=640, height=360, text="EMERGENCY LANE"):
-    """Generate a minimal valid JPEG with text overlay."""
-    from PIL import Image, ImageDraw, ImageFont
+    try:
+        from PIL import Image, ImageDraw
+    except ImportError:
+        return make_jpeg_bytes_minimal()
+
     img = Image.new("RGB", (width, height), color=(40, 40, 40))
     draw = ImageDraw.Draw(img)
-    # Draw ROI-like polygon
     draw.polygon([(420, 100), (620, 110), (630, 350), (320, 350)], outline=(0, 255, 255), width=3)
-    # Draw vehicle box
     draw.rectangle([(300, 150), (480, 280)], outline=(255, 0, 0), width=2)
     draw.text((310, 130), "car 0.86", fill=(255, 0, 0))
     draw.text((20, 20), text, fill=(255, 255, 255))
@@ -134,25 +143,6 @@ def make_jpeg_bytes(width=640, height=360, text="EMERGENCY LANE"):
     img.save(buf, format="JPEG", quality=85)
     return buf.getvalue()
 ```
-
-如果 Pillow 不可用（不在依赖中），使用纯标准库生成最小 JPEG：
-
-```python
-def make_jpeg_bytes_minimal():
-    """Generate a minimal 1x1 JPEG using pure stdlib."""
-    # Minimal JPEG: SOI, APP0 (JFIF), DQT, SOF0 (1x1 grayscale), DHT, SOS, ECS, EOI
-    chunks = [
-        b'\xff\xd8',  # SOI
-        b'\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00',  # APP0
-        b'\xff\xdb\x00\x43\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\t\t\x08\n\x0c\x14\r\x0c\x0b\x0b\x0c\x19\x12\x13\x0f\x14\x1d\x1a\x1f\x1e\x1d\x1a\x1c\x1c $.\' ",#\x1c\x1c(7),01444\x1f\'9=82<.342',  # DQT
-        b'\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00',  # SOF0 (1x1)
-        b'\xff\xc4\x00\x1f\x00\x00\x01\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b',  # DHT
-        b'\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00\x9f\xff\xd9',  # SOS + ECS + EOI
-    ]
-    return b''.join(chunks)
-```
-
-选择：如 Pillow 不可用则用最小 JPEG。优先检查现有依赖。
 
 - [ ] **Step 2: 添加证据上传函数**
 
@@ -175,16 +165,8 @@ def upload_evidence(event_id, evidence_type, filename, file_bytes, mime_type="im
 evidence_events = ["evt_seed_01", "evt_seed_02", "evt_seed_04", "evt_seed_09"]
 # evt_seed_01: confirmed, evt_seed_02: rejected, evt_seed_04: confirmed, evt_seed_09: confirmed
 
-try:
-    from PIL import Image
-    jpeg_bytes = make_jpeg_bytes
-except ImportError:
-    jpeg_bytes = make_jpeg_bytes_minimal
-    print("WARNING: Pillow not available — using 1x1 placeholder JPEG")
-
 for eid in evidence_events:
-    img = jpeg_bytes()
-    upload_evidence(eid, "frame_peak", "frame_peak.jpg", img if isinstance(img, bytes) else img)
+    upload_evidence(eid, "frame_peak", "frame_peak.jpg", make_jpeg_bytes(text=eid))
 ```
 
 - [ ] **Step 4: 运行验证**
@@ -280,39 +262,28 @@ export default function EmptyState({ icon = "📋", title, description, action }
 }
 ```
 
-- [ ] **Step 3: 为 Dashboard 添加错误和加载状态**
+- [ ] **Step 3: 为 Dashboard 使用现有 hook 的错误状态**
 
-在 `Dashboard.tsx` 中：
+当前 `Dashboard.tsx` 已从 `usePolling` 接收 `{ data, error }`。保持这个数据流，只把直接渲染的错误文案替换为 `ErrorBanner`：
+
 ```tsx
-// Add to the hook or component:
-const [error, setError] = useState<string | null>(null);
-
-// In usePolling callback:
-try {
-  const data = await getStats();
-  setStats(data);
-  setError(null);
-} catch (e) {
-  setError(e instanceof Error ? e.message : "获取统计数据失败");
-}
-
-// In JSX, before the StatCards:
-{error && <ErrorBanner message={error} onRetry={fetchStats} />}
+if (error) return <ErrorBanner message={`加载概览失败: ${error}`} />;
+if (!data) return <div className="text-gray-400">加载中...</div>;
 ```
 
 - [ ] **Step 4: 为 EventList 添加空状态和错误**
 
+当前 `EventList.tsx` 使用 `data.items`，不要引入不存在的 `events` 或 `fetchEvents` 变量：
+
 ```tsx
-// After loading and when events.length === 0:
-{!loading && events.length === 0 && !error && (
+{error && <ErrorBanner message={`加载事件失败: ${error}`} />}
+{!loading && data && data.items.length === 0 && !error && (
   <EmptyState
-    icon="🔍"
+    icon="search"
     title="暂无事件"
-    description={status ? `没有 "${status}" 状态的事件` : "还没有收到任何事件数据"}
+    description={filters.status ? `没有 ${filters.status} 状态的事件` : "还没有收到任何事件数据"}
   />
 )}
-
-{error && <ErrorBanner message={error} onRetry={fetchEvents} />}
 ```
 
 - [ ] **Step 5: 为 EventDetail 添加 404 和证据缺失状态**
@@ -321,10 +292,10 @@ try {
 // 404 state:
 {error && error.includes("404") && (
   <EmptyState
-    icon="🚫"
-    title="事件不存在"
-    description="该事件可能已被删除，或 ID 不正确"
-    action={{ label: "返回事件列表", href: "/events" }}
+        icon="warning"
+        title="事件不存在"
+        description="该事件可能已被删除，或 ID 不正确"
+        action={{ label: "返回事件列表", href: "/events" }}
   />
 )}
 
@@ -338,15 +309,27 @@ try {
 
 - [ ] **Step 6: 为 DeviceStatus 添加空状态和错误**
 
+当前 `DeviceStatus.tsx` 在 `useEffect` 内直接调用 `api.getDevices()`。如需重试，先提取 `loadDevices` 函数，再传给 `ErrorBanner`：
+
 ```tsx
+const loadDevices = () => {
+  setLoading(true);
+  api.getDevices()
+    .then((d) => { setDevices(d); setError(null); })
+    .catch((e: unknown) => setError((e as Error).message))
+    .finally(() => setLoading(false));
+};
+
+useEffect(() => { loadDevices(); }, []);
+
 {!loading && devices.length === 0 && !error && (
   <EmptyState
-    icon="📱"
+    icon="device"
     title="暂无设备"
     description="还没有设备注册到系统"
   />
 )}
-{error && <ErrorBanner message={error} onRetry={fetchDevices} />}
+{error && <ErrorBanner message={`加载设备失败: ${error}`} onRetry={loadDevices} />}
 ```
 
 - [ ] **Step 7: ReviewPanel 复核失败保留输入**
@@ -602,7 +585,7 @@ Web `/devices` 出现 vivo X100，`is_online: true`。
 
 | 项目 | 命令 | 结果 |
 |---|---|---|
-| 后端测试 | `uv run pytest` | [ ] 25 passed |
+| 后端测试 | `uv run pytest` | [ ] 全部通过，实际数量：[填写] |
 | 前端构建 | `bun run build` | [ ] 通过 |
 | Android 构建 | `./gradlew assembleDebug` | [ ] 通过 |
 | 种子数据 | `uv run python seed_data.py` | [ ] 2 devices + 10 events + 4 evidence |

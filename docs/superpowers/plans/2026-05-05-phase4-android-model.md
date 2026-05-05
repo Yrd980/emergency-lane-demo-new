@@ -4,7 +4,7 @@
 
 **Goal:** 在 Phase 3 Android 端基础上接入车辆检测模型，实现自动检测、跟踪、ROI 停留判定、自动事件生成和上传。
 
-**Architecture:** TFLite 运行时通过 Google AI Edge LiteRT 加载 YOLOv8n INT8 模型。CameraX ImageAnalysis 提供帧流 → 推理节流 → 预处理 (resize/normalize) → TFLite 推理 → NMS 后处理 → 坐标映射 → IoU 跟踪 → ROI 点内判定 → 事件状态机 → 复用 Phase 3 Room 队列上传。
+**Architecture:** TFLite 运行时通过 Google AI Edge LiteRT 加载 YOLOv8n 640×640 模型。CameraX ImageAnalysis 提供帧流 → 推理节流 → 预处理 (letterbox/normalize/quantize as tensor requires) → TFLite 推理 → NMS 后处理 → 坐标映射 → IoU 跟踪 → ROI 点内判定 → 事件状态机 → 复用 Phase 3 Room 队列上传。
 
 **Tech Stack:** Phase 3 全部依赖 + Google AI Edge LiteRT (TFLite) 2.16 / 纯 Kotlin 几何和跟踪逻辑（无额外跟踪库）
 
@@ -16,18 +16,18 @@
 | 配置项 | 值 | 说明 |
 |---|---|---|
 | 运行时 | Google AI Edge LiteRT (TFLite) 2.16 | vivo X100 有良好的 TFLite GPU/NNAPI 委托支持 |
-| 模型文件 | `app/src/main/assets/yolov8n_vehicle_640x640_int8.tflite` | YOLOv8n INT8 量化，车辆检测 |
-| 输入尺寸 | 640×640×3 | RGB, channel-first or channel-last per model |
-| 输入归一化 | mean=[0,0,0], std=[255,255,255] | 标准 YOLOv8 预处理 |
-| 输出格式 | `[1, 84, 8400]` | 84 = 4 (bbox) + 80 (COCO classes)，实际只用车辆类别 |
+| 模型文件 | `app/src/main/assets/yolov8n_vehicle_640x640.tflite` | YOLOv8n TFLite 车辆检测；可为 float32 或 int8/uint8 量化 |
+| 输入尺寸 | 读取 input tensor shape | 常见为 `[1,640,640,3]`，以模型实际 metadata/tensor 为准 |
+| 输入类型 | 读取 input tensor dataType 和 quantizationParams | Float32 写归一化 float；量化模型按 scale/zeroPoint 写 byte |
+| 输出格式 | 读取 output tensor shape | 常见 `[1,84,8400]` 或 `[1,8400,84]`，解析前必须判定布局 |
 | 类别映射 | car=2, truck=7, bus=5, emergency_vehicle=-1 (用 COCO car/truck/bus) | 无专用 emergency_vehicle，用 car 近似 |
-| 模型来源 | 从 Ultralytics YOLOv8n 导出为 TFLite INT8，或使用预训练 TFLite 版本 | 不提交到 git（>5MB），通过文档/脚本说明获取方式 |
+| 模型来源 | 从 Ultralytics YOLOv8n 导出为 TFLite，或使用预训练 TFLite 版本 | 不提交到 git（>5MB），通过文档/脚本说明获取方式 |
 
 **Key Decisions (locked for this plan):**
 | 决策 | 选择 | 理由 |
 |---|---|---|
 | ML 运行时 | Google AI Edge LiteRT (TFLite) | 最广泛的 Android 支持，vivo X100 GPU 委托可用 |
-| 模型 | YOLOv8n INT8 640×640 | 轻量、INT8 量化适合端侧、640×640 足够车辆检测 |
+| 模型 | YOLOv8n TFLite 640×640 | 轻量，float32 先跑通，量化版本作为性能优化 |
 | 跟踪算法 | IoU-based 简单关联 | 代码可控、可测试、不依赖 ByteTrack 等重依赖 |
 | 判定点 | bbox 底边中心点 | 简单、稳定、适合应急车道场景（车辆底部接触地面） |
 | 证据帧 | 仅 frame_peak | Phase 4 只保证触发帧；before/after 帧降级到 Phase 5 |
@@ -85,10 +85,15 @@ import java.io.FileInputStream
 import java.nio.channels.FileChannel
 
 data class ModelInfo(
-    val version: String = "yolov8n-640-int8",
-    val inputWidth: Int = 640,
-    val inputHeight: Int = 640,
-    val channels: Int = 3,
+    val version: String,
+    val inputShape: IntArray,
+    val inputDataType: String,
+    val inputScale: Float,
+    val inputZeroPoint: Int,
+    val outputShape: IntArray,
+    val outputDataType: String,
+    val inputWidth: Int,
+    val inputHeight: Int,
     val numClasses: Int = 80,
     val numBoxes: Int = 8400
 )
@@ -100,7 +105,7 @@ sealed class ModelLoadResult {
 
 class ModelLoader(private val context: Context) {
 
-    fun load(modelPath: String = "yolov8n_vehicle_640x640_int8.tflite"): ModelLoadResult {
+    fun load(modelPath: String = "yolov8n_vehicle_640x640.tflite"): ModelLoadResult {
         return try {
             val buf = loadModelFile(modelPath)
             val options = Interpreter.Options().apply {
@@ -112,7 +117,24 @@ class ModelLoader(private val context: Context) {
                 }
             }
             val interpreter = Interpreter(buf, options)
-            ModelLoadResult.Loaded(interpreter, ModelInfo())
+            val inputTensor = interpreter.getInputTensor(0)
+            val outputTensor = interpreter.getOutputTensor(0)
+            val inputShape = inputTensor.shape()
+            val outputShape = outputTensor.shape()
+            val inputQuant = inputTensor.quantizationParams()
+            val info = ModelInfo(
+                version = modelPath.removeSuffix(".tflite"),
+                inputShape = inputShape,
+                inputDataType = inputTensor.dataType().name,
+                inputScale = inputQuant.scale,
+                inputZeroPoint = inputQuant.zeroPoint,
+                outputShape = outputShape,
+                outputDataType = outputTensor.dataType().name,
+                inputWidth = inputShape.getOrElse(2) { 640 },
+                inputHeight = inputShape.getOrElse(1) { 640 },
+                numBoxes = outputShape.maxOrNull() ?: 8400
+            )
+            ModelLoadResult.Loaded(interpreter, info)
         } catch (e: Exception) {
             ModelLoadResult.Failed(e.message ?: "Unknown model load error")
         }
@@ -137,26 +159,42 @@ import android.graphics.Bitmap
 import com.google.ai.edge.litert.Interpreter
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.FloatBuffer
+class InferenceEngine(
+    private val interpreter: Interpreter,
+    private val modelInfo: ModelInfo
+) {
 
-class InferenceEngine(private val interpreter: Interpreter) {
-
-    private val inputSize = 640
-    private val outputSize = 84 * 8400  // [1, 84, 8400]
+    private val inputWidth = modelInfo.inputWidth
+    private val inputHeight = modelInfo.inputHeight
+    private val outputSize = modelInfo.outputShape.fold(1) { acc, value -> acc * value }
 
     fun runInference(bitmap: Bitmap): Pair<FloatArray, Long> {
         val start = System.currentTimeMillis()
 
-        // Preprocess: resize + normalize
-        val scaled = Bitmap.createScaledBitmap(bitmap, inputSize, inputSize, true)
-        val inputBuffer = ByteBuffer.allocateDirect(4 * inputSize * inputSize * 3)
+        // Preprocess: resize first; Task 2 replaces this with letterbox + metadata.
+        val scaled = Bitmap.createScaledBitmap(bitmap, inputWidth, inputHeight, true)
+        val isFloatInput = modelInfo.inputDataType == "FLOAT32"
+        val bytesPerChannel = if (isFloatInput) 4 else 1
+        val inputBuffer = ByteBuffer.allocateDirect(bytesPerChannel * inputWidth * inputHeight * 3)
             .order(ByteOrder.nativeOrder())
-        val intValues = IntArray(inputSize * inputSize)
-        scaled.getPixels(intValues, 0, inputSize, 0, 0, inputSize, inputSize)
+        val intValues = IntArray(inputWidth * inputHeight)
+        scaled.getPixels(intValues, 0, inputWidth, 0, 0, inputWidth, inputHeight)
         for (pixel in intValues) {
-            inputBuffer.putFloat(((pixel shr 16) and 0xFF) / 255.0f)  // R
-            inputBuffer.putFloat(((pixel shr 8) and 0xFF) / 255.0f)   // G
-            inputBuffer.putFloat((pixel and 0xFF) / 255.0f)            // B
+            val channels = intArrayOf(
+                (pixel shr 16) and 0xFF,
+                (pixel shr 8) and 0xFF,
+                pixel and 0xFF
+            )
+            for (channel in channels) {
+                if (isFloatInput) {
+                    inputBuffer.putFloat(channel / 255.0f)
+                } else {
+                    val quantized = (channel / 255.0f / modelInfo.inputScale + modelInfo.inputZeroPoint)
+                        .toInt()
+                        .coerceIn(0, 255)
+                    inputBuffer.put(quantized.toByte())
+                }
+            }
         }
 
         // Run inference
@@ -186,7 +224,7 @@ sealed class ModelLoadStatus {
 
 - [ ] **Step 6: 验证**
 
-用一张测试图片调用推理，返回检测结果（可为空），不崩溃。模型加载失败时显示错误但不阻塞手动模拟功能。
+用一张测试图片调用推理，返回输出张量（可无检测框），不崩溃。日志中必须打印 input/output shape、dtype、quantizationParams。模型加载失败时显示错误但不阻塞手动模拟功能。
 
 - [ ] **Step 7: Commit**
 
@@ -280,27 +318,54 @@ object NmsProcessor {
     private val VEHICLE_CLASSES = setOf(2, 5, 7)  // car, bus, truck
     private val CLASS_NAMES = mapOf(2 to "car", 5 to "bus", 7 to "truck")
 
+    enum class YoloOutputLayout { CHANNELS_FIRST, BOXES_FIRST }
+
+    data class YoloOutputSpec(
+        val numChannels: Int,
+        val numBoxes: Int,
+        val layout: YoloOutputLayout
+    )
+
+    fun outputSpec(shape: IntArray): YoloOutputSpec {
+        val dims = shape.filter { it > 1 }
+        require(dims.size == 2) { "Unsupported YOLO output shape: ${shape.contentToString()}" }
+        return when {
+            dims[0] == 84 -> YoloOutputSpec(numChannels = 84, numBoxes = dims[1], layout = YoloOutputLayout.CHANNELS_FIRST)
+            dims[1] == 84 -> YoloOutputSpec(numChannels = 84, numBoxes = dims[0], layout = YoloOutputLayout.BOXES_FIRST)
+            else -> error("Unsupported YOLO output shape: ${shape.contentToString()}")
+        }
+    }
+
+    private fun value(output: FloatArray, spec: YoloOutputSpec, boxIndex: Int, channelIndex: Int): Float {
+        return when (spec.layout) {
+            // [1, 84, 8400]: channel-major
+            YoloOutputLayout.CHANNELS_FIRST -> output[channelIndex * spec.numBoxes + boxIndex]
+            // [1, 8400, 84]: box-major
+            YoloOutputLayout.BOXES_FIRST -> output[boxIndex * spec.numChannels + channelIndex]
+        }
+    }
+
     /**
-     * Parse YOLOv8 output [1, 84, 8400] into DetectionBox list.
-     * 84 channels: [cx, cy, w, h, ...80 class scores...]
+     * Parse YOLOv8 output into DetectionBox list.
+     * Supports both [1,84,8400] and [1,8400,84].
+     * 84 channels: [cx, cy, w, h, ...80 class scores...].
      */
     fun parseYoloOutput(
         output: FloatArray,
+        outputShape: IntArray,
         inputWidth: Int = 640,
         inputHeight: Int = 640,
         confidenceThreshold: Float = 0.5f
     ): List<DetectionBox> {
         val boxes = mutableListOf<DetectionBox>()
-        val numBoxes = 8400
-        val numChannels = 84
+        val spec = outputSpec(outputShape)
 
-        for (i in 0 until numBoxes) {
-            val offset = i * numChannels
+        for (i in 0 until spec.numBoxes) {
             // Find max class score and index
             var maxScore = 0f
             var maxClassIdx = -1
-            for (c in 4 until numChannels) {
-                val score = output[offset + c]
+            for (c in 4 until spec.numChannels) {
+                val score = value(output, spec, i, c)
                 if (score > maxScore) {
                     maxScore = score
                     maxClassIdx = c - 4
@@ -310,10 +375,10 @@ object NmsProcessor {
             if (maxScore < confidenceThreshold) continue
             if (maxClassIdx !in VEHICLE_CLASSES) continue
 
-            val cx = output[offset + 0]
-            val cy = output[offset + 1]
-            val w = output[offset + 2]
-            val h = output[offset + 3]
+            val cx = value(output, spec, i, 0)
+            val cy = value(output, spec, i, 1)
+            val w = value(output, spec, i, 2)
+            val h = value(output, spec, i, 3)
 
             boxes.add(DetectionBox(
                 x = cx - w / 2,
@@ -389,26 +454,35 @@ package com.emergency.lane.camera
 import com.emergency.lane.domain.DetectionBox
 
 object CoordinateMapper {
+    data class LetterboxMeta(
+        val scale: Float,
+        val padX: Float,
+        val padY: Float,
+        val originalWidth: Int,
+        val originalHeight: Int
+    )
+
     /**
-     * Map detection boxes from model input space (640x640) to preview view space.
-     * YOLOv8 input is a square 640x640 letterbox — we scale to the actual preview dimensions.
+     * Map detection boxes from model input space back to the preview frame.
+     * This assumes preprocessing used letterbox resize. If preprocessing stretches
+     * the frame instead, use a different mapper and document that decision.
      */
     fun mapToPreview(
         boxes: List<DetectionBox>,
         modelWidth: Int = 640,
         modelHeight: Int = 640,
-        previewWidth: Int,
-        previewHeight: Int
+        meta: LetterboxMeta
     ): List<DetectionBox> {
-        val scaleX = previewWidth.toFloat() / modelWidth
-        val scaleY = previewHeight.toFloat() / modelHeight
-
         return boxes.map { box ->
+            val x = (box.x - meta.padX) / meta.scale
+            val y = (box.y - meta.padY) / meta.scale
+            val width = box.width / meta.scale
+            val height = box.height / meta.scale
             box.copy(
-                x = box.x * scaleX,
-                y = box.y * scaleY,
-                width = box.width * scaleX,
-                height = box.height * scaleY
+                x = x.coerceIn(0f, meta.originalWidth.toFloat()),
+                y = y.coerceIn(0f, meta.originalHeight.toFloat()),
+                width = width.coerceAtLeast(0f),
+                height = height.coerceAtLeast(0f)
             )
         }
     }
@@ -552,6 +626,14 @@ object GeometryUtils {
      */
     fun isPointInPolygon(point: RoiPoint, polygon: List<RoiPoint>): Boolean {
         if (polygon.size < 3) return false
+        if (polygon.any { p -> kotlin.math.abs(p.x - point.x) < 0.001f && kotlin.math.abs(p.y - point.y) < 0.001f }) {
+            return true
+        }
+        for (i in polygon.indices) {
+            val a = polygon[i]
+            val b = polygon[(i + 1) % polygon.size]
+            if (isPointOnSegment(point, a, b)) return true
+        }
 
         var inside = false
         val n = polygon.size
@@ -569,6 +651,15 @@ object GeometryUtils {
             j = i
         }
         return inside
+    }
+
+    private fun isPointOnSegment(p: RoiPoint, a: RoiPoint, b: RoiPoint): Boolean {
+        val cross = (p.y - a.y) * (b.x - a.x) - (p.x - a.x) * (b.y - a.y)
+        if (kotlin.math.abs(cross) > 0.001f) return false
+        val dot = (p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)
+        if (dot < 0f) return false
+        val squaredLen = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y)
+        return dot <= squaredLen
     }
 }
 ```

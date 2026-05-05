@@ -41,7 +41,7 @@
 - Create: `android/app/src/main/java/com/emergency/lane/EmergencyLaneApp.kt`
 - Create: `android/app/src/main/java/com/emergency/lane/MainActivity.kt`
 - Create: `android/gradle.properties`
-- Create: `android/gradle/wrapper/gradle-wrapper.properties`
+- Create: Gradle wrapper files via `gradle wrapper` or copy them from a trusted Android project on this machine.
 
 - [ ] **Step 1: 创建目录结构**
 
@@ -290,7 +290,18 @@ android.nonTransitiveRClass=true
 org.gradle.jvmargs=-Xmx2048m
 ```
 
-- [ ] **Step 9: 验证构建**
+- [ ] **Step 9: 生成 Gradle wrapper**
+
+如果 `android/gradlew` 不存在，先在 `android/` 目录生成 wrapper：
+
+```bash
+cd android
+gradle wrapper --gradle-version 8.7
+```
+
+Expected: creates `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`, and `gradle/wrapper/gradle-wrapper.properties`.
+
+- [ ] **Step 10: 验证构建**
 
 ```bash
 cd android
@@ -298,7 +309,7 @@ cd android
 ```
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
 git add android/
@@ -320,12 +331,11 @@ git commit -m "feat(android): create project skeleton with Compose, CameraX, Ret
 package com.emergency.lane.camera
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.util.Size
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -334,6 +344,8 @@ import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -374,10 +386,20 @@ class CameraController(
         capture.takePicture(
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(bitmap: Bitmap) {
-                    val matrix = Matrix().apply { postRotate(90f) }
-                    val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                    cont.resume(rotated)
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    try {
+                        val buffer = image.planes[0].buffer
+                        val bytes = ByteArray(buffer.remaining())
+                        buffer.get(bytes)
+                        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        if (bitmap != null) {
+                            cont.resume(bitmap)
+                        } else {
+                            cont.resumeWithException(IllegalStateException("Failed to decode captured frame"))
+                        }
+                    } finally {
+                        image.close()
+                    }
                 }
                 override fun onError(exception: ImageCaptureException) {
                     cont.resumeWithException(exception)
@@ -1946,4 +1968,3 @@ bun run dev --host 0.0.0.0
 git add docs/
 git commit -m "docs: add Phase 3 E2E verification results"
 ```
-

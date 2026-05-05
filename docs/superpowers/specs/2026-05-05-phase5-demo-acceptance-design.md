@@ -86,7 +86,7 @@ Android Base URL：
 - 2 台设备（已有）：vivo_x100_001, vivo_x100_002。
 - 10 条事件（已有）：3 confirmed, 2 rejected, 5 pending。
 - 4 条事件带 `frame_peak` 证据图（新增）：evt_seed_01, evt_seed_02, evt_seed_04, evt_seed_09。
-- 证据图使用 Pillow 生成的占位 JPEG（标注检测框、ROI 边界、事件 ID），Pillow 不可用时退化为最小 JPEG。
+- 证据图优先使用标准库生成或内嵌最小 JPEG，避免为演示数据新增后端依赖。若已存在 Pillow，可生成带检测框、ROI 边界、事件 ID 的更可读图片。
 
 注入方式：`uv run python seed_data.py`，走 HTTP API 保证数据符合真实上传契约。
 
@@ -218,4 +218,3 @@ Android 需要覆盖：
 - 至少一条事件从 Android 生成并在 Web 驳回。
 - 重复上传不会产生重复记录或覆盖复核结论。
 - 运行文档写明实际 IP、命令、限制和排障入口。
-
