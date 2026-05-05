@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Query, HTTPException
 from app.models.event import EventCreate, ReviewUpdate
 from app.services import event_service
@@ -6,7 +8,7 @@ router = APIRouter(prefix="/api/events", tags=["events"])
 
 @router.post("")
 def create_event(body: EventCreate):
-    gps = body.gps_location.model_dump() if body.gps_location else {}
+    gps = body.gps_location.model_dump() if body.gps_location else None
     return event_service.create_event(
         event_id=body.event_id, device_id=body.device_id,
         start_time=body.start_time, end_time=body.end_time,
@@ -18,7 +20,7 @@ def create_event(body: EventCreate):
 
 @router.get("")
 def list_events(
-    status: str = Query(None),
+    status: Literal["pending", "confirmed", "rejected"] | None = Query(None),
     device_id: str = Query(None),
     start_time_from: str = Query(None),
     start_time_to: str = Query(None),

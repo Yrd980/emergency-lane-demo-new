@@ -1,4 +1,5 @@
 import pytest
+from concurrent.futures import ThreadPoolExecutor
 
 EVENT_PAYLOAD = {
     "event_id": "evt_001",
@@ -29,6 +30,22 @@ def test_duplicate_event(client):
     assert data["duplicate"] is True
     assert data["accepted"] is False
 
+
+def test_concurrent_duplicate_event_returns_duplicate(client):
+    payload = {**EVENT_PAYLOAD, "event_id": "evt_concurrent"}
+
+    def post_event():
+        return client.post("/api/events", json=payload)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = list(executor.map(lambda _: post_event(), range(2)))
+
+    assert all(resp.status_code == 200 for resp in responses)
+    bodies = [resp.json() for resp in responses]
+    assert sum(1 for body in bodies if body["accepted"] is True) == 1
+    assert sum(1 for body in bodies if body["duplicate"] is True) == 1
+
+
 def test_list_events_pagination(client):
     for i in range(5):
         p = {**EVENT_PAYLOAD, "event_id": f"evt_{i:03d}",
@@ -49,6 +66,12 @@ def test_list_events_filter_by_status(client):
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert all(i["review_status"] == "pending" for i in items)
+
+
+def test_list_events_invalid_status_returns_422(client):
+    resp = client.get("/api/events?status=maybe")
+    assert resp.status_code == 422
+
 
 def test_list_events_filter_by_time_range(client):
     t1 = {**EVENT_PAYLOAD, "event_id": "evt_t1",
@@ -73,6 +96,15 @@ def test_get_event_detail(client):
     assert data["vehicle_class"] == "car"
     assert data["vehicle_box"]["width"] == 180
     assert data["evidence_files"] == []
+
+
+def test_get_event_detail_without_gps_returns_null(client):
+    payload = {**EVENT_PAYLOAD, "event_id": "evt_no_gps"}
+    payload.pop("gps_location")
+    client.post("/api/events", json=payload)
+    resp = client.get("/api/events/evt_no_gps")
+    assert resp.status_code == 200
+    assert resp.json()["gps_location"] is None
 
 def test_event_not_found_returns_404(client):
     resp = client.get("/api/events/nonexistent")

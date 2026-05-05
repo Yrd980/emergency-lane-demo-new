@@ -40,12 +40,14 @@ def heartbeat(
 ):
     conn = get_db()
     now = _now()
-    conn.execute(
+    cur = conn.execute(
         """UPDATE devices SET last_seen_at=?, battery_level=?, thermal_state=?, fps=?, pending_upload_count=?
            WHERE device_id=?""",
         (now, battery_level, thermal_state, fps, pending_upload_count, device_id),
     )
     conn.commit()
+    if cur.rowcount == 0:
+        return None
     return {"device_id": device_id, "heartbeat_accepted": True}
 
 

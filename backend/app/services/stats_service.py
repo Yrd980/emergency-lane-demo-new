@@ -10,9 +10,11 @@ def get_overview():
     conn = get_db()
     now = _now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    now_iso = now.isoformat()
 
     total_today = conn.execute(
-        "SELECT COUNT(*) FROM events WHERE start_time >= ?", (today_start,)
+        "SELECT COUNT(*) FROM events WHERE start_time >= ? AND start_time <= ?",
+        (today_start, now_iso),
     ).fetchone()[0]
 
     pending = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='pending'").fetchone()[0]
@@ -25,18 +27,19 @@ def get_overview():
     ).fetchone()[0]
 
     recent_rows = conn.execute(
-        "SELECT e.* FROM events e ORDER BY e.created_at DESC LIMIT 10"
+        """SELECT e.*,
+                  (SELECT file_path FROM evidence_files ef
+                   WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
+                   LIMIT 1) AS thumbnail_file_path
+           FROM events e
+           ORDER BY e.created_at DESC LIMIT 10"""
     ).fetchall()
 
     recent = []
     for r in recent_rows:
-        thumb = conn.execute(
-            "SELECT file_path FROM evidence_files WHERE event_id=? AND evidence_type='frame_peak' LIMIT 1",
-            (r["event_id"],),
-        ).fetchone()
         thumbnail_url = (
-            f"/evidence/{r['event_id']}/{thumb['file_path'].split('/')[-1]}"
-            if thumb else ""
+            f"/evidence/{r['event_id']}/{r['thumbnail_file_path'].split('/')[-1]}"
+            if r["thumbnail_file_path"] else ""
         )
         recent.append({
             "event_id": r["event_id"],

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.models.device import DeviceRegister, DeviceHeartbeat
 from app.services import device_service
@@ -23,10 +23,13 @@ def register_device(body: DeviceRegister):
 
 @router.post("/heartbeat")
 def device_heartbeat(body: DeviceHeartbeat):
-    return device_service.heartbeat(
+    result = device_service.heartbeat(
         device_id=body.device_id,
         battery_level=body.battery_level,
         thermal_state=body.thermal_state,
         fps=body.fps,
         pending_upload_count=body.pending_upload_count,
     )
+    if not result:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return result

@@ -11,6 +11,7 @@ BASE_EVENT = {
     "confidence": 0.8,
 }
 
+
 def test_stats_overview_structure(client):
     resp = client.get("/api/stats/overview")
     assert resp.status_code == 200
@@ -28,6 +29,21 @@ def test_stats_counts_reflect_events(client):
     data = resp.json()
     assert data["confirmed_count"] == 1
     assert data["pending_review_count"] == 1
+
+
+def test_stats_today_excludes_future_events(client):
+    client.post(
+        "/api/events",
+        json={
+            **BASE_EVENT,
+            "event_id": "evt_future",
+            "start_time": "2999-05-05T10:00:00+08:00",
+            "end_time": "2999-05-05T10:00:12+08:00",
+        },
+    )
+    resp = client.get("/api/stats/overview")
+    assert resp.json()["total_events_today"] == 0
+
 
 def test_online_device_count(client):
     client.post("/api/devices/register", json={

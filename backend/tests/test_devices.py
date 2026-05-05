@@ -38,6 +38,20 @@ def test_heartbeat_updates_fields(client):
     assert resp.json()["heartbeat_accepted"] is True
 
 
+def test_heartbeat_unknown_device_returns_404(client):
+    resp = client.post(
+        "/api/devices/heartbeat",
+        json={
+            "device_id": "missing_device",
+            "battery_level": 82.0,
+            "thermal_state": "normal",
+            "fps": 15.2,
+            "pending_upload_count": 3,
+        },
+    )
+    assert resp.status_code == 404
+
+
 def test_list_devices_returns_registered(client):
     client.post(
         "/api/devices/register",

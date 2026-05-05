@@ -14,14 +14,8 @@ def create_event(
     vehicle_box: dict, confidence: float, gps_location: dict,
 ):
     conn = get_db()
-    existing = conn.execute(
-        "SELECT event_id, review_status FROM events WHERE event_id=?", (event_id,)
-    ).fetchone()
-    if existing:
-        return {"event_id": event_id, "accepted": False, "duplicate": True}
-
-    conn.execute(
-        """INSERT INTO events (event_id, device_id, start_time, end_time, duration_seconds,
+    cur = conn.execute(
+        """INSERT OR IGNORE INTO events (event_id, device_id, start_time, end_time, duration_seconds,
            roi_id, track_id, vehicle_class, vehicle_box_json, confidence, gps_json, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (event_id, device_id, start_time, end_time, duration_seconds,
@@ -29,6 +23,8 @@ def create_event(
          confidence, json.dumps(gps_location), _now()),
     )
     conn.commit()
+    if cur.rowcount == 0:
+        return {"event_id": event_id, "accepted": False, "duplicate": True}
     return {"event_id": event_id, "accepted": True, "duplicate": False}
 
 def list_events(
@@ -38,9 +34,6 @@ def list_events(
 ):
     limit = max(1, min(limit, 200))
     offset = max(0, offset)
-    if status and status not in VALID_REVIEW_STATUSES:
-        return {"items": [], "total": 0}
-
     conn = get_db()
     clauses = []
     params = []
@@ -64,20 +57,20 @@ def list_events(
     total = conn.execute(count_sql, params).fetchone()[0]
 
     rows = conn.execute(
-        f"""SELECT e.* FROM events e {where}
+        f"""SELECT e.*,
+                   (SELECT file_path FROM evidence_files ef
+                    WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
+                    LIMIT 1) AS thumbnail_file_path
+            FROM events e {where}
             ORDER BY e.created_at DESC LIMIT ? OFFSET ?""",
         params + [limit, offset],
     ).fetchall()
 
     items = []
     for r in rows:
-        thumb = conn.execute(
-            "SELECT file_path FROM evidence_files WHERE event_id=? AND evidence_type='frame_peak' LIMIT 1",
-            (r["event_id"],),
-        ).fetchone()
         thumbnail_url = (
-            f"/evidence/{r['event_id']}/{thumb['file_path'].split('/')[-1]}"
-            if thumb else ""
+            f"/evidence/{r['event_id']}/{r['thumbnail_file_path'].split('/')[-1]}"
+            if r["thumbnail_file_path"] else ""
         )
         items.append({
             "event_id": r["event_id"],
