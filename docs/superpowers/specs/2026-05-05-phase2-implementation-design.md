@@ -7,7 +7,7 @@
 ## 技术栈
 
 - **后端**: Python 3.11+ / FastAPI / SQLite / uvicorn
-- **前端**: React 18 / TypeScript / Tailwind CSS / Vite
+- **前端**: React 18 / TypeScript / Tailwind CSS / Vite / react-router-dom
 - **测试**: pytest + httpx TestClient
 
 ## 后端目录结构
@@ -71,7 +71,7 @@ backend/
 ```json
 {
   "total_events_today": 25,
-  "pending_count": 8,
+  "pending_review_count": 8,
   "confirmed_count": 12,
   "rejected_count": 5,
   "online_device_count": 2,
@@ -89,6 +89,18 @@ backend/
   ]
 }
 ```
+
+统计口径：
+- `total_events_today`：今日（服务器时区 00:00 至当前）创建的事件总数
+- `pending_review_count`：全库 review_status = pending 的事件数（可能包含昨天未复核的记录）
+- `confirmed_count`：全库 review_status = confirmed 的事件数
+- `rejected_count`：全库 review_status = rejected 的事件数
+- `online_device_count`：last_seen_at 距当前时刻在 `online_threshold_seconds`（默认 60 秒）以内的设备数
+- `recent_events`：最近创建的 10 条事件，按 created_at 降序
+
+### 在线判定规则
+
+设备通过 `last_seen_at` 判定在线状态。阈值由后端配置项 `online_threshold_seconds` 控制，默认值 60 秒。`GET /api/stats/overview` 的 `online_device_count` 和 `GET /api/devices` 返回的在线标记均使用同一阈值。
 
 ### GET /api/events 查询参数
 
@@ -162,7 +174,7 @@ frontend/
 
 ### Step 1: 后端骨架
 - 初始化 FastAPI 项目、requirements.txt、start.sh
-- config.py：host, port, db_path, evidence_dir
+- config.py：host, port, db_path, evidence_dir, online_threshold_seconds (default 60)
 - database.py：建表 SQL (devices, events, evidence_files)
 - GET /api/health
 - 验证项：`uvicorn app.main:app` 启动成功，curl /api/health 返回 200
@@ -197,7 +209,8 @@ frontend/
 
 ### Step 7: 前端骨架
 - Vite + React + TypeScript + Tailwind 项目初始化
-- 路由 + Layout 组件（侧边栏导航：概览/事件/设备）
+- 安装 react-router-dom，定义 4 条路由（`/`, `/events`, `/events/:id`, `/devices`）
+- Layout 组件（侧边栏导航：概览/事件/设备）
 - API client 封装（baseURL, 错误统一处理）
 - TypeScript 类型定义（与后端 Pydantic models 对齐）
 
@@ -233,7 +246,7 @@ frontend/
 - [ ] 设备注册成功
 - [ ] 心跳更新 last_seen_at, battery_level, thermal_state, fps, pending_upload_count
 - [ ] `GET /api/devices` 返回设备列表含最新状态
-- [ ] `GET /api/stats/overview` 返回正确的今日事件数、各状态数、在线设备数、最近事件
+- [ ] `GET /api/stats/overview` 返回正确的 total_events_today（今日）、pending_review_count（全库）、confirmed/rejected_count（全库）、online_device_count（按 60s 阈值）、recent_events（最近 10 条）
 - [ ] 事件上传成功
 - [ ] 重复 event_id 返回 duplicate:true，不创建第二条事件
 - [ ] 证据文件上传成功，可通过 URL 访问
