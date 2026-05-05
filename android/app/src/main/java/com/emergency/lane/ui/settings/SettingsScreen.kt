@@ -29,17 +29,38 @@ fun SettingsScreen(
     var baseUrl by remember { mutableStateOf("http://192.168.1.6:8000") }
     var deviceId by remember { mutableStateOf("vivo_x100_001") }
     var deviceName by remember { mutableStateOf("vivo X100") }
+    var urlError by remember { mutableStateOf<String?>(null) }
+
+    fun validateUrl(url: String): String? {
+        if (url.isBlank()) return "请输入 HP 后端地址"
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return "地址必须以 http:// 或 https:// 开头"
+        }
+        return null
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("HP 连接设置", style = MaterialTheme.typography.headlineSmall)
 
-        OutlinedTextField(value = baseUrl, onValueChange = { baseUrl = it }, label = { Text("HP Base URL") })
+        OutlinedTextField(
+            value = baseUrl, onValueChange = { baseUrl = it; urlError = null },
+            label = { Text("HP Base URL") }, isError = urlError != null,
+            supportingText = urlError?.let { { Text(it) } }
+        )
         OutlinedTextField(value = deviceId, onValueChange = { deviceId = it }, label = { Text("设备 ID") })
         OutlinedTextField(value = deviceName, onValueChange = { deviceName = it }, label = { Text("设备名称") })
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { viewModel.testConnection(baseUrl) }) { Text("测试连接") }
-            Button(onClick = { viewModel.saveAndRegister(baseUrl, deviceId, deviceName) }) { Text("保存并注册") }
+            Button(onClick = {
+                val err = validateUrl(baseUrl)
+                if (err != null) { urlError = err; return@Button }
+                viewModel.testConnection(baseUrl)
+            }) { Text("测试连接") }
+            Button(onClick = {
+                val err = validateUrl(baseUrl)
+                if (err != null) { urlError = err; return@Button }
+                viewModel.saveAndRegister(baseUrl, deviceId, deviceName)
+            }) { Text("保存并注册") }
         }
 
         when (val status = uiState.connectionStatus) {

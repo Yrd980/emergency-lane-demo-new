@@ -1,7 +1,10 @@
 package com.emergency.lane.ui.detection
 
 import android.Manifest
+import android.content.Intent
 import android.graphics.Paint
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.view.PreviewView
@@ -15,7 +18,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -135,17 +141,43 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(uiState.cameraError!!, color = MaterialTheme.colorScheme.error)
+                    Text("相机权限未授权", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(uiState.cameraError!!, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                        Text("重新授权")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
+                            Text("重新授权")
+                        }
+                        Button(onClick = {
+                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            })
+                        }) {
+                            Text("打开设置")
+                        }
                     }
                 }
             }
         }
 
         // Prerequisites
-        if (!uiState.roiConfigured) {
+        if (!uiState.roiConfigured && uiState.modelStatus is ModelLoadStatus.Ready) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("⚠", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("尚未配置 ROI 区域", style = MaterialTheme.typography.titleSmall)
+                        Text("自动检测需要先标定应急车道区域", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Button(onClick = { navController.navigate("calibration") }) { Text("去标定") }
+                }
+            }
+        } else if (!uiState.roiConfigured) {
             Text("请先完成 ROI 标定", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 8.dp))
         }
         if (!uiState.hpConfigured) {
@@ -167,11 +199,17 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                 )
             }
             is ModelLoadStatus.Failed ->
-                Text(
-                    "模型加载失败: ${status.error} — 可使用手动模拟",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("模型加载失败", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.error)
+                        Text(status.error, style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("已切换到手动模拟模式。自动检测不可用，但您可以手动生成事件。", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
         }
 
         // Controls row 1: Preview + Detection
