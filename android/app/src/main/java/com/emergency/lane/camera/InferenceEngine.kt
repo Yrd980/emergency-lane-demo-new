@@ -7,7 +7,7 @@ import java.nio.ByteOrder
 
 class InferenceEngine(
     private val interpreter: Interpreter,
-    private val modelInfo: ModelInfo
+    val modelInfo: ModelInfo
 ) {
     private val inputWidth = modelInfo.inputWidth
     private val inputHeight = modelInfo.inputHeight

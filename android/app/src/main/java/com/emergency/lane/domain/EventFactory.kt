@@ -6,17 +6,25 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object EventFactory {
-    private var seq = 0
+    private var manualSeq = 0
+    private var autoSeq = 0
+
+    fun createAutoEventId(): String {
+        autoSeq++
+        val now = LocalDateTime.now()
+        val fmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+        return "evt_${now.format(fmt)}_a%03d".format(autoSeq)
+    }
 
     fun createManualEvent(
         deviceId: String,
         roiId: String = "roi_default",
         vehicleClass: String = "car"
     ): Pair<LocalEventEntity, EvidenceFileEntity> {
-        seq++
+        manualSeq++
         val now = LocalDateTime.now()
         val fmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-        val eventId = "evt_${now.format(fmt)}_%03d".format(seq)
+        val eventId = "evt_${now.format(fmt)}_m%03d".format(manualSeq)
         val startTime = now.toString()
         val endTime = now.plusSeconds(12).toString()
 
@@ -29,7 +37,7 @@ object EventFactory {
             endTime = endTime,
             durationSeconds = 12.0,
             roiId = roiId,
-            trackId = "manual_track_%03d".format(seq),
+            trackId = "manual_track_%03d".format(manualSeq),
             vehicleClass = vehicleClass,
             vehicleBoxJson = "{\"x\":120,\"y\":220,\"width\":180,\"height\":90}",
             confidence = 0.86,
