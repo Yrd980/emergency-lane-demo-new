@@ -34,7 +34,7 @@ class ModelLoader(private val context: Context) {
             val options = Interpreter.Options().apply {
                 try {
                     addDelegate(GpuDelegate())
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                     setNumThreads(4)
                 }
             }
