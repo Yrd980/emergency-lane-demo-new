@@ -20,7 +20,7 @@ class SettingsStore(private val context: Context) {
         val MODEL_VERSION = stringPreferencesKey("model_version")
     }
 
-    val baseUrl: Flow<String> = context.settingsDs.data.map { it[BASE_URL] ?: "" }
+    val baseUrl: Flow<String> = context.settingsDs.data.map { it[BASE_URL] ?: "http://192.168.1.6:8000" }
     val deviceId: Flow<String> = context.settingsDs.data.map { it[DEVICE_ID] ?: "vivo_x100_001" }
     val deviceName: Flow<String> = context.settingsDs.data.map { it[DEVICE_NAME] ?: "vivo X100" }
 

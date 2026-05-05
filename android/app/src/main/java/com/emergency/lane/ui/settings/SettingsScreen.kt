@@ -26,7 +26,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var baseUrl by remember { mutableStateOf("http://192.168.1.20:8000") }
+    var baseUrl by remember { mutableStateOf("http://192.168.1.6:8000") }
     var deviceId by remember { mutableStateOf("vivo_x100_001") }
     var deviceName by remember { mutableStateOf("vivo X100") }
 

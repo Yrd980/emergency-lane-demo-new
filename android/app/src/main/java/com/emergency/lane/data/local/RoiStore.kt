@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.emergency.lane.domain.RoiConfig
+import com.emergency.lane.domain.RoiPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -19,7 +20,14 @@ class RoiStore(private val context: Context) {
     private val roiKey = stringPreferencesKey("roi_config")
 
     val roiConfig: Flow<RoiConfig?> = context.roiDataStore.data.map { prefs ->
-        prefs[roiKey]?.let { json.decodeFromString<RoiConfig>(it) }
+        prefs[roiKey]?.let { json.decodeFromString<RoiConfig>(it) } ?: RoiConfig(
+            points = listOf(
+                RoiPoint(160f, 120f),
+                RoiPoint(1120f, 120f),
+                RoiPoint(1120f, 620f),
+                RoiPoint(160f, 620f),
+            )
+        )
     }
 
     suspend fun save(config: RoiConfig) {
