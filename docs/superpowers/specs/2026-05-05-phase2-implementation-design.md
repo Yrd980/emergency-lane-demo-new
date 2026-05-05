@@ -25,13 +25,15 @@ backend/
 │   │   └── evidence.py      # EvidenceUpload 响应
 │   ├── routers/             # API 路由 (薄层, 参数解析 → service)
 │   │   ├── health.py        # GET /api/health
-│   │   ├── devices.py       # POST /api/devices/register, /heartbeat
+│   │   ├── devices.py       # GET /api/devices, POST register/heartbeat
 │   │   ├── events.py        # POST/GET /api/events, PATCH review
-│   │   └── evidence.py      # POST /api/events/{id}/evidence, 静态文件挂载
+│   │   ├── evidence.py      # POST /api/events/{id}/evidence, 静态文件挂载
+│   │   └── stats.py         # GET /api/stats/overview
 │   └── services/            # 业务逻辑
 │       ├── device_service.py
 │       ├── event_service.py
-│       └── evidence_service.py
+│       ├── evidence_service.py
+│       └── stats_service.py
 ├── data/                    # 运行时产物 (gitignore)
 │   ├── app.db
 │   └── evidence/
@@ -40,20 +42,23 @@ backend/
 │   ├── test_health.py
 │   ├── test_devices.py
 │   ├── test_events.py
-│   └── test_evidence.py
+│   ├── test_evidence.py
+│   └── test_stats.py
 ├── requirements.txt
 └── start.sh
 ```
 
 分层约束：routers 只做 HTTP 参数解析和响应格式化，services 做业务逻辑和数据库操作，database 做连接和建表。
 
-## API 端点（来自详细设计文档，无变更）
+## API 端点
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/api/health` | 健康检查 |
+| GET | `/api/devices` | 设备列表（DeviceStatus 页数据源） |
 | POST | `/api/devices/register` | 设备注册 |
 | POST | `/api/devices/heartbeat` | 设备心跳 |
+| GET | `/api/stats/overview` | 概览统计（Dashboard 数据源） |
 | POST | `/api/events` | 事件上传 |
 | GET | `/api/events` | 事件列表 (分页+筛选) |
 | GET | `/api/events/{event_id}` | 事件详情 |
@@ -61,9 +66,46 @@ backend/
 | PATCH | `/api/events/{event_id}/review` | 人工复核 |
 | GET | `/evidence/{event_id}/{filename}` | 静态证据文件 |
 
+### GET /api/stats/overview 响应
+
+```json
+{
+  "total_events_today": 25,
+  "pending_count": 8,
+  "confirmed_count": 12,
+  "rejected_count": 5,
+  "online_device_count": 2,
+  "recent_events": [
+    {
+      "event_id": "evt_20260505_000001",
+      "device_id": "vivo_x100_001",
+      "start_time": "2026-05-05T10:00:00+08:00",
+      "duration_seconds": 12,
+      "vehicle_class": "car",
+      "confidence": 0.86,
+      "review_status": "pending",
+      "thumbnail_url": "/evidence/evt_20260505_000001/frame_peak.jpg"
+    }
+  ]
+}
+```
+
+### GET /api/events 查询参数
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| status | string | pending / confirmed / rejected |
+| device_id | string | 设备 ID |
+| start_time_from | string | ISO 时间，范围起始 |
+| start_time_to | string | ISO 时间，范围结束 |
+| limit | int | 每页条数，默认 50 |
+| offset | int | 偏移量，默认 0 |
+
 ## 数据库（SQLite，3 张表）
 
-**devices**: device_id (PK), device_name, app_version, model_version, registered_at, last_seen_at
+**devices**: device_id (PK), device_name, app_version, model_version, registered_at, last_seen_at, battery_level, thermal_state, fps, pending_upload_count
+
+心跳字段 (battery_level, thermal_state, fps, pending_upload_count) 在 `POST /api/devices/heartbeat` 时更新到 devices 表，`GET /api/devices` 直接读取，无需联表查询。
 
 **events**: event_id (PK), device_id, start_time, end_time, duration_seconds, roi_id, track_id, vehicle_class, vehicle_box_json, confidence, gps_json, review_status, operator_note, created_at, reviewed_at
 
@@ -127,15 +169,16 @@ frontend/
 
 ### Step 2: 设备管理
 - POST /api/devices/register — 注册或 upsert
-- POST /api/devices/heartbeat — 更新 last_seen_at, 状态字段
+- POST /api/devices/heartbeat — 更新 last_seen_at, battery_level, thermal_state, fps, pending_upload_count
+- GET /api/devices — 返回所有已注册设备及其最新状态
 - device_service + router + Pydantic models
-- 验证项：注册返回 device_id + registered:true，心跳更新 last_seen_at
+- 验证项：注册返回 device_id + registered:true，心跳更新状态字段，GET /api/devices 返回设备列表
 
 ### Step 3: 事件接收与存储
 - POST /api/events — 接收事件 JSON，幂等处理
-- GET /api/events — 分页+筛选 (status, device_id, limit, offset)
+- GET /api/events — 分页+筛选 (status, device_id, start_time_from, start_time_to, limit, offset)
 - GET /api/events/{event_id} — 事件详情+证据文件列表+复核信息
-- 验证项：上传成功，重复 event_id 返回 duplicate:true，列表分页正确
+- 验证项：上传成功，重复 event_id 返回 duplicate:true，列表分页正确，时间范围筛选正确
 
 ### Step 4: 证据文件管理
 - POST /api/events/{event_id}/evidence — multipart 上传
@@ -150,7 +193,7 @@ frontend/
 
 ### Step 6: 后端测试
 - pytest + httpx TestClient
-- 覆盖 10 个场景：健康检查、设备注册、心跳、事件上传、事件去重、证据上传、事件列表分页、事件详情、复核更新、重复上传不覆盖复核
+- 覆盖 13 个场景：健康检查、设备注册、心跳、设备列表、概览统计、事件上传、事件去重、事件列表分页、事件列表时间筛选、事件详情、证据上传、复核更新、重复上传不覆盖复核
 
 ### Step 7: 前端骨架
 - Vite + React + TypeScript + Tailwind 项目初始化
@@ -160,7 +203,7 @@ frontend/
 
 ### Step 8: 概览页（Dashboard）
 - StatCard 组件 + Dashboard 页面
-- usePolling hook 每 5 秒拉取统计
+- usePolling hook 每 5 秒轮询 `GET /api/stats/overview`
 - 展示：今日事件数、待复核数、已确认数、已驳回数、在线设备数、最近 10 条事件
 
 ### Step 9: 事件列表页（EventList）
@@ -184,20 +227,22 @@ frontend/
 - 浏览器端走完整流程：概览 → 列表筛选 → 事件详情 → 确认 → 驳回 → 历史查询 → 设备状态
 - 确认所有验收项通过
 
-## 验收清单
+## 验收清单（17 项）
 
 - [ ] `GET /api/health` 返回 200
 - [ ] 设备注册成功
-- [ ] 心跳更新 last_seen_at
+- [ ] 心跳更新 last_seen_at, battery_level, thermal_state, fps, pending_upload_count
+- [ ] `GET /api/devices` 返回设备列表含最新状态
+- [ ] `GET /api/stats/overview` 返回正确的今日事件数、各状态数、在线设备数、最近事件
 - [ ] 事件上传成功
 - [ ] 重复 event_id 返回 duplicate:true，不创建第二条事件
 - [ ] 证据文件上传成功，可通过 URL 访问
-- [ ] 事件列表分页查询正确
+- [ ] 事件列表分页查询正确，时间范围筛选正确
 - [ ] 事件详情返回完整结构化数据 + 证据文件列表
 - [ ] 复核更新成功（confirmed/rejected）
 - [ ] 重复上传不覆盖 review_status
-- [ ] Web 概览页统计数字正确
-- [ ] Web 事件列表缩略图展示、筛选、分页正确
+- [ ] Web 概览页统计数字与 API 一致
+- [ ] Web 事件列表缩略图展示、筛选（含时间范围）、分页正确
 - [ ] Web 事件详情页证据帧可切换、视频可播放
 - [ ] Web 复核确认/驳回操作成功、备注保存、页面刷新
 - [ ] Web 设备状态页显示在线设备信息
