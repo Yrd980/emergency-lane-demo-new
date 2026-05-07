@@ -18,7 +18,7 @@ export default function DeviceStatus() {
     setError(null);
     Promise.all([
       api.getDevices(),
-      api.getEvents({ limit: '8', offset: '0' }),
+      api.getEvents({ limit: '8', offset: '0', sort: 'created_desc' }),
       api.getOperationsStats({ period: '30d' }),
     ])
       .then(([deviceData, eventData, operationData]) => {

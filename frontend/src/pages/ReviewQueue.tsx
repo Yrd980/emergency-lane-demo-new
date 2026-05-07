@@ -11,7 +11,7 @@ import type { OverviewStats } from '../types';
 export default function ReviewQueue() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data, loading, error, filters, setFilters, refetch } = useEvents({ status: 'pending', limit: '50', offset: '0' });
+  const { data, loading, error, filters, setFilters, refetch } = useEvents({ status: 'pending', sort: 'review_priority', limit: '50', offset: '0' });
   const overview = usePolling<OverviewStats>(() => api.getStats(), 5000);
   const firstEvent = data?.items[0];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -34,12 +34,16 @@ export default function ReviewQueue() {
 
   const submitBulkReview = async (reviewStatus: 'validated' | 'false_alarm') => {
     if (selectedIds.length === 0) {
-      setBulkMessage('Select pending events first, then execute bulk review.');
+      setBulkMessage('Select pending events first, then choose a review outcome.');
       return;
     }
     if (bulkStatus !== reviewStatus) {
       setBulkStatus(reviewStatus);
-      setBulkMessage(`Will bulk ${reviewStatus === 'validated' ? 'validate' : 'mark false alarm'} ${selectedIds.length} events. Click again to execute.`);
+      setBulkMessage(
+        reviewStatus === 'validated'
+          ? `Confirm ${selectedIds.length} selected incidents as validated. Bulk confirmation requires complete before, peak, and after evidence. Click again to apply.`
+          : `Mark ${selectedIds.length} selected incidents as false alarms. Click again to apply.`,
+      );
       return;
     }
     setSubmittingBulk(true);
@@ -54,7 +58,7 @@ export default function ReviewQueue() {
       const missingCount = result.missing_event_ids.length;
       setBulkMessage(
         failedCount || missingCount
-          ? `Processed ${result.updated_count} events. ${failedCount} failed policy checks, ${missingCount} missing.`
+          ? `Processed ${result.updated_count} events. ${failedCount} blocked by evidence or status policy, ${missingCount} missing.`
           : `Processed ${result.updated_count} events.`,
       );
       setSelectedIds([]);
@@ -76,7 +80,7 @@ export default function ReviewQueue() {
         description="Process the pending review queue as a work queue. Handle high-priority first, then proceed to the next."
         action={
           firstEvent ? (
-            <PrimaryButton icon="clipboard_check" href={`/events/${firstEvent.event_id}`}>Process Next</PrimaryButton>
+            <PrimaryButton icon="fact_check" href={`/events/${firstEvent.event_id}?from=review`}>Process Next</PrimaryButton>
           ) : (
             <PrimaryButton href="/events">View History</PrimaryButton>
           )
@@ -88,7 +92,7 @@ export default function ReviewQueue() {
           title={firstEvent ? 'Next: Open first queued event' : 'No pending review events'}
           description={firstEvent ? `Queue sorted by priority: ${firstEvent.review_priority_reason ?? 'chronological'}, detail page only advances through pending items.` : 'Wait for new events or check history.'}
           tone={firstEvent ? 'warning' : 'success'}
-          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}`}>Start Review</PrimaryButton> : <PrimaryButton href="/">Back to Workbench</PrimaryButton>}
+          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}?from=review`}>Start Review</PrimaryButton> : <PrimaryButton href="/">Back to Workbench</PrimaryButton>}
         />
       </div>
 
@@ -118,7 +122,7 @@ export default function ReviewQueue() {
           <SurfacePanel className="mb-3 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-body-sm font-semibold text-on-surface">Bulk Review</div>
+                <div className="text-body-sm font-semibold text-on-surface">Selected Review Outcome</div>
                 <div className="mt-1 text-label-xs text-on-surface-variant">
                   <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-primary">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
@@ -135,11 +139,11 @@ export default function ReviewQueue() {
                 >
                   Select Page
                 </button>
-                <PrimaryButton icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('validated')}>
-                  {bulkStatus === 'validated' ? 'Click to Validate' : 'Bulk Validate'}
+                <PrimaryButton tone="light" icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('validated')}>
+                  {bulkStatus === 'validated' ? 'Apply Confirmation' : 'Confirm Selected'}
                 </PrimaryButton>
                 <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('false_alarm')}>
-                  {bulkStatus === 'false_alarm' ? 'Click to Mark False Alarm' : 'Bulk False Alarm'}
+                  {bulkStatus === 'false_alarm' ? 'Apply False Alarm' : 'Mark False Alarm'}
                 </PrimaryButton>
               </div>
             </div>
@@ -151,6 +155,7 @@ export default function ReviewQueue() {
           </SurfacePanel>
 
           <EventTable
+            mode="review"
             items={data.items}
             total={data.total}
             offset={parseInt(filters.offset || '0')}

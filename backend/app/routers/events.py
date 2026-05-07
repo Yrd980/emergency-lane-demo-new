@@ -26,6 +26,7 @@ def list_events(
     roi_id: str = Query(None),
     start_time_from: str = Query(None),
     start_time_to: str = Query(None),
+    sort: Literal["review_priority", "created_desc"] = Query("review_priority"),
     limit: int = Query(50),
     offset: int = Query(0),
 ):
@@ -33,6 +34,7 @@ def list_events(
         status=status, device_id=device_id,
         roi_id=roi_id,
         start_time_from=start_time_from, start_time_to=start_time_to,
+        sort=sort,
         limit=limit, offset=offset,
     )
 

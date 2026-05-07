@@ -89,7 +89,7 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
         assignee = None
         if assigned_to_username:
             assignee = conn.execute(
-                "SELECT * FROM users WHERE username=? AND role IN ('patrol', 'admin')",
+                "SELECT * FROM users WHERE username=? AND role = 'patrol'",
                 (assigned_to_username,),
             ).fetchone()
             if not assignee:

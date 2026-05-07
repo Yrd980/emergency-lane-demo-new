@@ -198,8 +198,8 @@ fun PatrolDashboardScreen(
                 incident = incident,
                 onAccept = { viewModel.acceptTask(incident.taskId) },
                 onComplete = { viewModel.completeTask(incident.taskId) },
-                onOpenEvidence = { navController.navigate("map") },
-                onNavigate = { navController.navigate("map") }
+                onOpenEvidence = { navController.navigate("camera") },
+                onNavigate = { navController.navigate("camera") }
             )
         }
 

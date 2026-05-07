@@ -93,3 +93,14 @@ def logout(token: str | None):
 
 def has_permission(user: dict, permission: str) -> bool:
     return permission in user.get("permissions", [])
+
+
+def list_assignable_users():
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM users WHERE role = 'patrol' ORDER BY display_name"
+        ).fetchall()
+        return [serialize_user(row) for row in rows]
+    finally:
+        conn.close()

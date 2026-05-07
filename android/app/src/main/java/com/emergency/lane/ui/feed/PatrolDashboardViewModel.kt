@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.data.remote.HpApiClient
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -41,84 +43,111 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
     val uiState: StateFlow<PatrolDashboardState> = _uiState
 
     private val settingsStore = SettingsStore(application)
+    private var syncJob: Job? = null
 
     init {
         refresh()
+        startTaskSync()
     }
 
     fun refresh() {
+        refresh(showLoading = true)
+    }
+
+    private fun startTaskSync() {
+        if (syncJob != null) return
+        syncJob = viewModelScope.launch {
+            while (true) {
+                delay(TASK_SYNC_INTERVAL_MS)
+                refresh(showLoading = false)
+            }
+        }
+    }
+
+    private fun refresh(showLoading: Boolean) {
         viewModelScope.launch {
+            loadTasks(showLoading)
+        }
+    }
+
+    override fun onCleared() {
+        syncJob?.cancel()
+        super.onCleared()
+    }
+
+    private suspend fun loadTasks(showLoading: Boolean) {
+        if (showLoading) {
             _uiState.value = _uiState.value.copy(loading = true, error = null)
-            try {
-                val baseUrl = settingsStore.baseUrl.first()
-                if (baseUrl.isBlank()) {
+        }
+        try {
+            val baseUrl = settingsStore.baseUrl.first()
+            if (baseUrl.isBlank()) {
+                _uiState.value = PatrolDashboardState(
+                    loading = false,
+                    error = "Configure the HP backend address before loading tasks.",
+                    needsConfiguration = true
+                )
+                return
+            }
+            val client = HpApiClient(baseUrl)
+            val username = settingsStore.authUsername.first()
+            val password = settingsStore.authPassword.first()
+            val token = if (username.isNotBlank() && password.isNotBlank()) {
+                val login = client.login(username, password).getOrThrow()
+                settingsStore.saveAuthToken(login.token)
+                login.token
+            } else {
+                val storedToken = settingsStore.authToken.first()
+                if (storedToken.isBlank()) {
                     _uiState.value = PatrolDashboardState(
                         loading = false,
-                        error = "Configure the HP backend address before loading tasks.",
-                        needsConfiguration = true
+                        error = "Add HP username and password in Account before loading tasks.",
+                        needsConfiguration = true,
+                        backendUrl = baseUrl
                     )
-                    return@launch
+                    return
                 }
-                val client = HpApiClient(baseUrl)
-                val username = settingsStore.authUsername.first()
-                val password = settingsStore.authPassword.first()
-                val token = if (username.isNotBlank() && password.isNotBlank()) {
-                    val login = client.login(username, password).getOrThrow()
-                    settingsStore.saveAuthToken(login.token)
-                    login.token
-                } else {
-                    val storedToken = settingsStore.authToken.first()
-                    if (storedToken.isBlank()) {
-                        _uiState.value = PatrolDashboardState(
-                            loading = false,
-                            error = "Add HP username and password in Account before loading tasks.",
-                            needsConfiguration = true,
-                            backendUrl = baseUrl
-                        )
-                        return@launch
-                    }
-                    storedToken
-                }
-                val result = client.getTasks(token, limit = 20)
-                result.fold(
-                    onSuccess = { response ->
-                        val items = response.items.map { api ->
-                            IncidentItem(
-                                eventId = api.eventId,
-                                taskId = api.taskId,
-                                status = api.status,
-                                title = "${api.vehicleClass.replaceFirstChar { it.uppercase() }} Patrol Task",
-                                location = "Device: ${api.deviceId}",
-                                detectedAgo = api.status,
-                                detectedTime = api.startTime.takeLast(8),
-                                riskLevel = api.riskLevel,
-                                vehicleClass = api.vehicleClass,
-                                confidence = api.confidence,
-                                thumbnailUrl = absoluteUrl(baseUrl, api.thumbnailUrl)
-                            )
-                        }
-                        val activeCount = items.count { it.status != "completed" }
-                        _uiState.value = PatrolDashboardState(
-                            activeTaskCount = activeCount,
-                            todayCaseCount = response.total,
-                            incidents = items,
-                            loading = false,
-                            username = username,
-                            backendUrl = baseUrl
-                        )
-                    },
-                    onFailure = {
-                        _uiState.value = PatrolDashboardState(
-                            loading = false,
-                            error = it.message,
-                            username = username,
-                            backendUrl = baseUrl
-                        )
-                    }
-                )
-            } catch (e: Exception) {
-                _uiState.value = PatrolDashboardState(loading = false, error = e.message)
+                storedToken
             }
+            val result = client.getTasks(token, limit = 20)
+            result.fold(
+                onSuccess = { response ->
+                    val items = response.items.map { api ->
+                        IncidentItem(
+                            eventId = api.eventId,
+                            taskId = api.taskId,
+                            status = api.status,
+                            title = "${api.vehicleClass.replaceFirstChar { it.uppercase() }} Patrol Task",
+                            location = "Device: ${api.deviceId}",
+                            detectedAgo = api.status,
+                            detectedTime = api.startTime.takeLast(8),
+                            riskLevel = api.riskLevel,
+                            vehicleClass = api.vehicleClass,
+                            confidence = api.confidence,
+                            thumbnailUrl = absoluteUrl(baseUrl, api.thumbnailUrl)
+                        )
+                    }
+                    val activeCount = items.count { it.status != "completed" }
+                    _uiState.value = PatrolDashboardState(
+                        activeTaskCount = activeCount,
+                        todayCaseCount = response.total,
+                        incidents = items,
+                        loading = false,
+                        username = username,
+                        backendUrl = baseUrl
+                    )
+                },
+                onFailure = {
+                    _uiState.value = _uiState.value.copy(
+                        loading = false,
+                        error = it.message,
+                        username = username,
+                        backendUrl = baseUrl
+                    )
+                }
+            )
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(loading = false, error = e.message)
         }
     }
 
@@ -156,5 +185,9 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
         if (path.isBlank()) return ""
         if (path.startsWith("http://") || path.startsWith("https://")) return path
         return baseUrl.trimEnd('/') + "/" + path.trimStart('/')
+    }
+
+    private companion object {
+        const val TASK_SYNC_INTERVAL_MS = 10_000L
     }
 }

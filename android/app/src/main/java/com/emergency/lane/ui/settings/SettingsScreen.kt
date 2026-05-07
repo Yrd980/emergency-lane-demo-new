@@ -2,6 +2,7 @@ package com.emergency.lane.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,6 +74,8 @@ fun SettingsScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf<String?>(null) }
+    var versionTapCount by rememberSaveable { mutableStateOf(0) }
+    var developerMode by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(uiState.baseUrl, uiState.deviceId, uiState.deviceName, uiState.username) {
         baseUrl = uiState.baseUrl
@@ -106,14 +110,14 @@ fun SettingsScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Connection",
+                text = "Device",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AegisOnSurface,
                 letterSpacing = 0.sp
             )
             Text(
-                text = "Connect this phone to the backend and save the patrol login used for task sync.",
+                text = "This phone is connected for patrol tasks and camera capture.",
                 fontSize = 12.sp,
                 color = AegisOnSurfaceVariant
             )
@@ -123,13 +127,21 @@ fun SettingsScreen(
             MiniInfoCard(
                 icon = Icons.Default.Cloud,
                 title = "Backend",
-                value = if (baseUrl.isBlank()) "Not set" else baseUrl,
+                value = when {
+                    baseUrl.isBlank() -> "Not set"
+                    developerMode -> baseUrl
+                    else -> "Connected"
+                },
                 modifier = Modifier.weight(1f)
             )
             MiniInfoCard(
                 icon = Icons.Default.People,
-                title = "Login",
-                value = if (username.isBlank()) "Not set" else username,
+                title = "Account",
+                value = when {
+                    username.isBlank() -> "Not set"
+                    developerMode -> username
+                    else -> "Patrol"
+                },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -141,161 +153,163 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = baseUrl,
-            onValueChange = { baseUrl = it; urlError = null },
-            label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
-            placeholder = { Text("http://192.168.2.103:8000") },
-            isError = urlError != null,
-            supportingText = urlError?.let { { Text(it, color = AegisError) } },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = AegisPrimary,
-                unfocusedBorderColor = AegisOutlineVariant,
-                focusedTextColor = AegisOnSurface,
-                unfocusedTextColor = AegisOnSurface,
-                cursorColor = AegisPrimary,
-                focusedContainerColor = AegisSurfaceContainer,
-                unfocusedContainerColor = AegisSurfaceContainerLow
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = deviceId,
-            onValueChange = { deviceId = it },
-            label = { Text("Device ID", color = AegisOnSurfaceVariant) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = AegisPrimary,
-                unfocusedBorderColor = AegisOutlineVariant,
-                focusedTextColor = AegisOnSurface,
-                unfocusedTextColor = AegisOnSurface,
-                cursorColor = AegisPrimary,
-                focusedContainerColor = AegisSurfaceContainer,
-                unfocusedContainerColor = AegisSurfaceContainerLow
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = deviceName,
-            onValueChange = { deviceName = it },
-            label = { Text("Device Name", color = AegisOnSurfaceVariant) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = AegisPrimary,
-                unfocusedBorderColor = AegisOutlineVariant,
-                focusedTextColor = AegisOnSurface,
-                unfocusedTextColor = AegisOnSurface,
-                cursorColor = AegisPrimary,
-                focusedContainerColor = AegisSurfaceContainer,
-                unfocusedContainerColor = AegisSurfaceContainerLow
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Backend username", color = AegisOnSurfaceVariant) },
-            placeholder = { Text("patrol or admin") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = AegisPrimary,
-                unfocusedBorderColor = AegisOutlineVariant,
-                focusedTextColor = AegisOnSurface,
-                unfocusedTextColor = AegisOnSurface,
-                cursorColor = AegisPrimary,
-                focusedContainerColor = AegisSurfaceContainer,
-                unfocusedContainerColor = AegisSurfaceContainerLow
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password", color = AegisOnSurfaceVariant) },
-            placeholder = {
-                if (uiState.username.isNotBlank()) Text("Leave blank to keep saved password")
-            },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = AegisPrimary,
-                unfocusedBorderColor = AegisOutlineVariant,
-                focusedTextColor = AegisOnSurface,
-                unfocusedTextColor = AegisOnSurface,
-                cursorColor = AegisPrimary,
-                focusedContainerColor = AegisSurfaceContainer,
-                unfocusedContainerColor = AegisSurfaceContainerLow
-            ),
-            shape = RoundedCornerShape(8.dp)
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    val err = validateUrl(baseUrl)
-                    if (err != null) { urlError = err; return@Button }
-                    viewModel.testConnection(baseUrl)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AegisSurfaceContainerHigh,
-                    contentColor = AegisOnSurface
+        if (developerMode) {
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = baseUrl,
+                onValueChange = { baseUrl = it; urlError = null },
+                label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
+                placeholder = { Text("http://192.168.2.103:8000") },
+                isError = urlError != null,
+                supportingText = urlError?.let { { Text(it, color = AegisError) } },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Next
                 ),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Check server", fontSize = 12.sp)
-            }
-            Button(
-                onClick = {
-                    val err = validateUrl(baseUrl)
-                    if (err != null) { urlError = err; return@Button }
-                    val credErr = validateCredentials()
-                    if (credErr != null) { urlError = credErr; return@Button }
-                    viewModel.saveAndRegister(baseUrl, deviceId, deviceName, username, password)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AegisPrimary,
-                    contentColor = AegisOnPrimary
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AegisPrimary,
+                    unfocusedBorderColor = AegisOutlineVariant,
+                    focusedTextColor = AegisOnSurface,
+                    unfocusedTextColor = AegisOnSurface,
+                    cursorColor = AegisPrimary,
+                    focusedContainerColor = AegisSurfaceContainer,
+                    unfocusedContainerColor = AegisSurfaceContainerLow
                 ),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Save and connect", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
+                shape = RoundedCornerShape(8.dp)
+            )
 
-        when (val status = uiState.connectionStatus) {
-            is SettingsUiState.ConnectionStatus.Testing ->
-                Text("Checking backend...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
-            is SettingsUiState.ConnectionStatus.Success ->
-                Text(status.msg, color = AegisPrimary, fontSize = 14.sp)
-            is SettingsUiState.ConnectionStatus.Error ->
-                Text(status.msg, color = AegisError, fontSize = 14.sp)
-            is SettingsUiState.ConnectionStatus.Idle -> {}
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = deviceId,
+                onValueChange = { deviceId = it },
+                label = { Text("Device ID", color = AegisOnSurfaceVariant) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AegisPrimary,
+                    unfocusedBorderColor = AegisOutlineVariant,
+                    focusedTextColor = AegisOnSurface,
+                    unfocusedTextColor = AegisOnSurface,
+                    cursorColor = AegisPrimary,
+                    focusedContainerColor = AegisSurfaceContainer,
+                    unfocusedContainerColor = AegisSurfaceContainerLow
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = deviceName,
+                onValueChange = { deviceName = it },
+                label = { Text("Device Name", color = AegisOnSurfaceVariant) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AegisPrimary,
+                    unfocusedBorderColor = AegisOutlineVariant,
+                    focusedTextColor = AegisOnSurface,
+                    unfocusedTextColor = AegisOnSurface,
+                    cursorColor = AegisPrimary,
+                    focusedContainerColor = AegisSurfaceContainer,
+                    unfocusedContainerColor = AegisSurfaceContainerLow
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Backend account", color = AegisOnSurfaceVariant) },
+                placeholder = { Text("operator account") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AegisPrimary,
+                    unfocusedBorderColor = AegisOutlineVariant,
+                    focusedTextColor = AegisOnSurface,
+                    unfocusedTextColor = AegisOnSurface,
+                    cursorColor = AegisPrimary,
+                    focusedContainerColor = AegisSurfaceContainer,
+                    unfocusedContainerColor = AegisSurfaceContainerLow
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            OutlinedTextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Password", color = AegisOnSurfaceVariant) },
+                placeholder = {
+                    if (uiState.username.isNotBlank()) Text("Leave blank to keep saved password")
+                },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = AegisPrimary,
+                    unfocusedBorderColor = AegisOutlineVariant,
+                    focusedTextColor = AegisOnSurface,
+                    unfocusedTextColor = AegisOnSurface,
+                    cursorColor = AegisPrimary,
+                    focusedContainerColor = AegisSurfaceContainer,
+                    unfocusedContainerColor = AegisSurfaceContainerLow
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = {
+                        val err = validateUrl(baseUrl)
+                        if (err != null) { urlError = err; return@Button }
+                        viewModel.testConnection(baseUrl)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AegisSurfaceContainerHigh,
+                        contentColor = AegisOnSurface
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Check server", fontSize = 12.sp)
+                }
+                Button(
+                    onClick = {
+                        val err = validateUrl(baseUrl)
+                        if (err != null) { urlError = err; return@Button }
+                        val credErr = validateCredentials()
+                        if (credErr != null) { urlError = credErr; return@Button }
+                        viewModel.saveAndRegister(baseUrl, deviceId, deviceName, username, password)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AegisPrimary,
+                        contentColor = AegisOnPrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Save and connect", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            when (val status = uiState.connectionStatus) {
+                is SettingsUiState.ConnectionStatus.Testing ->
+                    Text("Checking backend...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
+                is SettingsUiState.ConnectionStatus.Success ->
+                    Text(status.msg, color = AegisPrimary, fontSize = 14.sp)
+                is SettingsUiState.ConnectionStatus.Error ->
+                    Text(status.msg, color = AegisError, fontSize = 14.sp)
+                is SettingsUiState.ConnectionStatus.Idle -> {}
+            }
         }
 
         if (uiState.isRegistered) {
@@ -314,6 +328,37 @@ fun SettingsScreen(
             }
         }
 
+        if (developerMode) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AegisSurfaceContainerLow)
+                    .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Developer mode", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Advanced device setup is visible. Use ROI editing only when installing or realigning the camera.",
+                        color = AegisOnSurfaceVariant,
+                        fontSize = 12.sp
+                    )
+                    Button(
+                        onClick = { navController.navigate("calibration") },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AegisSurfaceContainerHigh,
+                            contentColor = AegisOnSurface
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Edit ROI", fontSize = 12.sp)
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         Box(
@@ -329,8 +374,23 @@ fun SettingsScreen(
                     Icon(Icons.Default.Password, contentDescription = null, tint = AegisOnSurfaceVariant)
                     Text("Local account is for the backend, not the phone.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
                 }
-                Text("Use patrol / patrol123 for field tasks, or admin / admin123 for settings access.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
-                Text("App Version: ${BuildConfig.VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                Text("Use the account assigned for this device. Role permissions are handled by the backend.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                Text(
+                    "App Version: ${BuildConfig.VERSION_NAME}",
+                    fontSize = 14.sp,
+                    color = if (developerMode) AegisPrimary else AegisOnSurfaceVariant,
+                    modifier = Modifier.clickable {
+                        if (!developerMode) {
+                            versionTapCount += 1
+                            if (versionTapCount >= 7) {
+                                developerMode = true
+                            }
+                        }
+                    }
+                )
+                if (developerMode) {
+                    Text("Developer mode enabled", fontSize = 12.sp, color = AegisPrimary)
+                }
                 Text("Model: ${SettingsStore.MODEL_VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
             }
         }

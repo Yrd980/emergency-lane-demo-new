@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn } from '../utils/format';
 
 type Tone = 'neutral' | 'brand' | 'warning' | 'danger' | 'success';
@@ -58,7 +59,10 @@ export function PrimaryButton({
     </>
   );
 
-  if (href) return <a className={cls} href={href}>{content}</a>;
+  if (href) {
+    const isInternal = href.startsWith('/');
+    return isInternal ? <Link className={cls} to={href}>{content}</Link> : <a className={cls} href={href}>{content}</a>;
+  }
   return <button className={cls} onClick={onClick} disabled={disabled}>{content}</button>;
 }
 
@@ -141,17 +145,25 @@ export function StateBlock({
   action?: React.ReactNode;
   tone?: 'empty' | 'loading' | 'error' | 'success';
 }) {
+  const loadingIndicator = (
+    <span
+      className="h-10 w-10 animate-spin rounded-full border-2 border-outline-variant/30 border-t-primary"
+      aria-hidden="true"
+    />
+  );
+
   return (
     <div className="flex min-h-64 w-full flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/20 bg-surface-container-low p-xl text-center">
-      <span className={cn(
-        'material-symbols-outlined text-4xl',
-        tone === 'loading' && 'animate-spin text-primary',
-        tone === 'error' && 'text-error',
-        tone === 'success' && 'text-primary',
-        tone === 'empty' && 'text-on-surface-variant',
-      )}>
-        {tone === 'loading' ? 'progress_activity' : tone === 'error' ? 'error' : tone === 'success' ? 'check_circle' : 'inventory_2'}
-      </span>
+      {tone === 'loading' ? loadingIndicator : (
+        <span className={cn(
+          'material-symbols-outlined text-4xl',
+          tone === 'error' && 'text-error',
+          tone === 'success' && 'text-primary',
+          tone === 'empty' && 'text-on-surface-variant',
+        )}>
+          {tone === 'error' ? 'error' : tone === 'success' ? 'check_circle' : 'inventory_2'}
+        </span>
+      )}
       <div className="mt-lg text-headline-md font-headline-md text-on-surface">{title}</div>
       <p className="mt-sm w-full max-w-[34rem] text-body-sm leading-6 text-on-surface-variant">{description}</p>
       {action && <div className="mt-lg">{action}</div>}

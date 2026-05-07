@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -23,8 +24,12 @@ class SettingsStore(private val context: Context) {
         val AUTH_TOKEN = stringPreferencesKey("auth_token")
         val AUTH_USERNAME = stringPreferencesKey("auth_username")
         val AUTH_PASSWORD = stringPreferencesKey("auth_password")
+        val NOTIFIED_TASK_IDS = stringSetPreferencesKey("notified_task_ids")
 
         const val MODEL_VERSION_NAME = "yolov8n_vehicle_640x640"
+        const val DEFAULT_BACKEND_URL = "http://192.168.2.103:8000"
+        const val DEFAULT_PATROL_USERNAME = "patrol"
+        const val DEFAULT_PATROL_PASSWORD = "patrol123"
     }
 
     val baseUrl: Flow<String> = context.settingsDs.data.map { it[BASE_URL] ?: "" }
@@ -33,6 +38,7 @@ class SettingsStore(private val context: Context) {
     val authToken: Flow<String> = context.settingsDs.data.map { it[AUTH_TOKEN] ?: "" }
     val authUsername: Flow<String> = context.settingsDs.data.map { it[AUTH_USERNAME] ?: "" }
     val authPassword: Flow<String> = context.settingsDs.data.map { it[AUTH_PASSWORD] ?: "" }
+    val notifiedTaskIds: Flow<Set<String>> = context.settingsDs.data.map { it[NOTIFIED_TASK_IDS] ?: emptySet() }
 
     suspend fun saveConfig(
         baseUrl: String,
@@ -54,6 +60,12 @@ class SettingsStore(private val context: Context) {
     suspend fun saveAuthToken(token: String) {
         context.settingsDs.edit {
             it[AUTH_TOKEN] = token
+        }
+    }
+
+    suspend fun saveNotifiedTaskIds(taskIds: Set<String>) {
+        context.settingsDs.edit {
+            it[NOTIFIED_TASK_IDS] = taskIds
         }
     }
 

@@ -97,6 +97,33 @@ def test_list_pending_events_prioritizes_high_risk(client):
     assert next(item for item in items if item["event_id"] == "evt_priority_high")["risk_level"] == "high"
 
 
+def test_list_events_created_desc_sort_is_chronological(client):
+    high = {
+        **EVENT_PAYLOAD,
+        "event_id": "evt_sort_high_old",
+        "duration_seconds": 12,
+        "confidence": 0.9,
+        "start_time": "2026-05-05T10:00:00+08:00",
+        "end_time": "2026-05-05T10:00:12+08:00",
+    }
+    normal = {
+        **EVENT_PAYLOAD,
+        "event_id": "evt_sort_normal_new",
+        "duration_seconds": 3,
+        "confidence": 0.6,
+        "start_time": "2026-05-05T10:01:00+08:00",
+        "end_time": "2026-05-05T10:01:03+08:00",
+    }
+    client.post("/api/events", json=high)
+    client.post("/api/events", json=normal)
+
+    resp = client.get("/api/events?sort=created_desc&limit=10")
+
+    assert resp.status_code == 200
+    ids = [item["event_id"] for item in resp.json()["items"]]
+    assert ids.index("evt_sort_normal_new") < ids.index("evt_sort_high_old")
+
+
 def test_list_events_invalid_status_returns_422(client):
     resp = client.get("/api/events?status=maybe")
     assert resp.status_code == 422
@@ -249,6 +276,48 @@ def test_bulk_review_reports_failed_confirmations(client, auth_headers):
     detail = client.get("/api/events/evt_bulk_incomplete").json()
     assert detail["review_status"] == "pending"
     assert detail["review_history"] == []
+
+
+def test_bulk_validate_requires_complete_evidence_even_when_setting_is_off(client, auth_headers):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_guard"})
+
+    resp = client.patch("/api/events/review/bulk", headers=auth_headers, json={
+        "event_ids": ["evt_bulk_guard"],
+        "review_status": "validated",
+        "operator_note": "批量确认",
+    })
+
+    assert resp.status_code == 200
+    assert resp.json()["updated_count"] == 0
+    assert resp.json()["failed_event_ids"] == ["evt_bulk_guard"]
+    detail = client.get("/api/events/evt_bulk_guard").json()
+    assert detail["review_status"] == "pending"
+
+
+def test_bulk_validate_accepts_complete_evidence(client, auth_headers):
+    event_id = "evt_bulk_complete"
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": event_id})
+    for evidence_type in ["frame_before", "frame_peak", "frame_after"]:
+        resp = client.post(
+            f"/api/events/{event_id}/evidence",
+            data={"evidence_type": evidence_type},
+            files={"file": (f"{evidence_type}.jpg", b"img", "image/jpeg")},
+        )
+        assert resp.status_code == 200
+
+    resp = client.patch("/api/events/review/bulk", headers=auth_headers, json={
+        "event_ids": [event_id],
+        "review_status": "validated",
+        "operator_note": "完整证据批量确认",
+        "operator_id": "reviewer_bulk",
+    })
+
+    assert resp.status_code == 200
+    assert resp.json()["updated_count"] == 1
+    assert resp.json()["failed_event_ids"] == []
+    detail = client.get(f"/api/events/{event_id}").json()
+    assert detail["review_status"] == "validated"
+    assert detail["review_history"][0]["operator_id"] == "reviewer_bulk"
 
 
 def test_duplicate_upload_does_not_overwrite_review(client, auth_headers):

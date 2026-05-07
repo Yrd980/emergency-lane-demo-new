@@ -41,11 +41,13 @@ export default function ReviewPanel({
   return (
     <div className="rounded-xl border border-outline-variant bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
       <div className="flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="font-semibold text-on-surface">Manual Review</h3>
           <p className="mt-1 text-label-xs text-on-surface-variant">Next: confirm or reject, and leave a traceable note.</p>
         </div>
-        <StatusBadge status={reviewStatus} />
+        <div className="shrink-0">
+          <StatusBadge status={reviewStatus} />
+        </div>
       </div>
 
       {isReviewed ? (
@@ -56,11 +58,11 @@ export default function ReviewPanel({
       ) : (
         <div className="mt-4 space-y-4">
           {submitError && <div className="rounded-lg border border-error/40 bg-error-container/10 p-3 text-body-sm text-error">{submitError}</div>}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2">
             {noteTemplates.map((template) => (
               <button
                 key={template}
-                className="rounded-full border border-outline-variant bg-surface-container px-3 py-1.5 text-label-xs text-on-surface-variant hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all"
+                className="min-h-10 rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-left text-label-xs leading-5 text-on-surface-variant transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                 onClick={() => setNote(template)}
               >
                 {template}

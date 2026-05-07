@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth import current_user, token_from_header
+from app.auth import current_user, require_permission, token_from_header
 from app.models.auth import LoginRequest, LoginResponse, UserPublic
 from app.services import auth_service
 
@@ -18,6 +18,11 @@ def login(body: LoginRequest):
 @router.get("/me", response_model=UserPublic)
 def me(user: dict = Depends(current_user)):
     return user
+
+
+@router.get("/assignees", response_model=list[UserPublic])
+def assignees(user: dict = Depends(require_permission("events:assign"))):
+    return auth_service.list_assignable_users()
 
 
 @router.post("/logout")

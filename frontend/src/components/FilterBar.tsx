@@ -31,6 +31,10 @@ export default function FilterBar({
             <option value="pending">Pending</option>
             <option value="validated">Validated</option>
             <option value="false_alarm">False Alarm</option>
+            <option value="assigned">Assigned</option>
+            <option value="accepted">Accepted</option>
+            <option value="completed">Completed</option>
+            <option value="closed">Closed</option>
           </select>
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">

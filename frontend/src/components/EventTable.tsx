@@ -9,6 +9,7 @@ export default function EventTable({
   offset,
   limit,
   onPage,
+  mode = 'log',
   selectedIds = [],
   onToggleSelect,
   onToggleSelectAll,
@@ -18,6 +19,7 @@ export default function EventTable({
   offset: number;
   limit: number;
   onPage: (offset: number) => void;
+  mode?: 'review' | 'log';
   selectedIds?: string[];
   onToggleSelect?: (eventId: string) => void;
   onToggleSelectAll?: () => void;
@@ -25,6 +27,7 @@ export default function EventTable({
   const navigate = useNavigate();
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
+  const detailHref = (eventId: string) => `/events/${eventId}?from=${mode}`;
   const selectableItems = items.filter((evt) => evt.review_status === 'pending');
   const selectedSet = new Set(selectedIds);
   const allSelected = selectableItems.length > 0 && selectableItems.every((evt) => selectedSet.has(evt.event_id));
@@ -33,7 +36,9 @@ export default function EventTable({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 text-body-sm text-on-surface-variant">
         <span>共 {total} 条事件</span>
-        <span className="hidden sm:inline">高优先级置顶，下一步：选择事件或打开详情复核</span>
+        <span className="hidden sm:inline">
+          {mode === 'review' ? '高优先级置顶，下一步：选择事件或打开详情复核' : '按事件时间追溯，下一步：打开详情查看证据和处理记录'}
+        </span>
       </div>
 
       <div className="hidden overflow-hidden rounded-xl border border-outline-variant bg-surface-container-high shadow-[0_1px_0_rgba(32,32,29,0.04)] lg:block">
@@ -92,7 +97,7 @@ export default function EventTable({
                   </div>
                 </td>
                 <td className="p-3">
-                  <button className="text-left" onClick={() => navigate(`/events/${evt.event_id}`)}>
+                  <button className="text-left" onClick={() => navigate(detailHref(evt.event_id))}>
                     <div className="font-mono-data text-label-xs font-semibold text-on-surface">{evt.event_id}</div>
                     <div className="mt-1 text-label-xs text-on-surface-variant">{formatDateTime(evt.start_time)} · {evt.vehicle_class}</div>
                   </button>
@@ -104,9 +109,9 @@ export default function EventTable({
                 <td className="p-3 text-right">
                   <button
                     className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-label-xs font-semibold text-on-surface hover:bg-surface-container-low"
-                    onClick={() => navigate(`/events/${evt.event_id}`)}
+                    onClick={() => navigate(detailHref(evt.event_id))}
                   >
-                    查看并复核 <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    {mode === 'review' ? '查看并复核' : '查看详情'} <span className="material-symbols-outlined text-sm">arrow_forward</span>
                   </button>
                 </td>
               </tr>
@@ -134,7 +139,7 @@ export default function EventTable({
               </div>
               <StatusBadge status={evt.review_status} />
             </div>
-            <button onClick={() => navigate(`/events/${evt.event_id}`)} className="w-full text-left">
+            <button onClick={() => navigate(detailHref(evt.event_id))} className="w-full text-left">
             <div className="flex gap-3">
               {evt.thumbnail_url ? (
                 <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-lg object-cover ring-1 ring-outline-variant" />

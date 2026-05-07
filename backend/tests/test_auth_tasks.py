@@ -38,6 +38,34 @@ def test_reviewer_cannot_assign(client):
     assert resp.status_code == 403
 
 
+def test_assignable_users_requires_assign_permission(client):
+    reviewer = token(client, "reviewer", "review123")
+    resp = client.get("/api/auth/assignees", headers=reviewer)
+    assert resp.status_code == 403
+
+
+def test_dispatcher_can_list_assignable_users(client):
+    dispatcher = token(client, "dispatcher", "dispatch123")
+    resp = client.get("/api/auth/assignees", headers=dispatcher)
+    assert resp.status_code == 200
+    body = resp.json()
+    usernames = [item["username"] for item in body]
+    assert "patrol" in usernames
+    assert all(item["role"] == "patrol" for item in body)
+
+
+def test_cannot_assign_to_admin_user(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_admin_assign"})
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    resp = client.post("/api/events/evt_admin_assign/assign", headers=dispatcher, json={
+        "assigned_to_username": "admin",
+        "note": "Should not assign to admin",
+    })
+
+    assert resp.status_code == 422
+
+
 def test_dispatch_to_patrol_accept_complete(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_dispatch"})
     dispatcher = token(client, "dispatcher", "dispatch123")

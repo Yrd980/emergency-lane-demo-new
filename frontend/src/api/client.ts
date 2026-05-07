@@ -55,6 +55,8 @@ export const api = {
 
   me: () => request<AuthUser>('/auth/me'),
 
+  getAssignableUsers: () => request<AuthUser[]>('/auth/assignees'),
+
   logout: () => request<{ logged_out: boolean }>('/auth/logout', { method: 'POST' }),
 
   getSystemStatus: () => request<SystemStatus>('/system/status'),

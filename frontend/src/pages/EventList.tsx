@@ -7,6 +7,7 @@ import { PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 export default function EventList() {
   const [searchParams] = useSearchParams();
   const { data, loading, error, filters, setFilters, refetch } = useEvents({
+    sort: 'created_desc',
     ...(searchParams.get('roi_id') ? { roi_id: searchParams.get('roi_id') || '' } : {}),
     ...(searchParams.get('status') ? { status: searchParams.get('status') || '' } : {}),
   });

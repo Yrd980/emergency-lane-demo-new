@@ -28,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,7 +59,6 @@ import com.emergency.lane.ui.theme.AegisOnSurfaceVariant
 import com.emergency.lane.ui.theme.AegisOutlineVariant
 import com.emergency.lane.ui.theme.AegisPrimary
 import com.emergency.lane.ui.theme.AegisSecondaryContainer
-import com.emergency.lane.ui.theme.AegisSurfaceContainer
 import com.emergency.lane.ui.theme.AegisSurfaceContainerHigh
 import com.emergency.lane.ui.theme.AegisSurfaceContainerLow
 
@@ -201,10 +199,6 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         Text("ROI Not Configured", fontWeight = FontWeight.SemiBold, color = AegisOnSurface)
                         Text("Auto detection requires ROI calibration", fontSize = 14.sp, color = AegisOnSurfaceVariant)
                     }
-                    Button(
-                        onClick = { navController.navigate("calibration") },
-                        colors = ButtonDefaults.buttonColors(containerColor = AegisPrimary, contentColor = AegisOnPrimary)
-                    ) { Text("Calibrate") }
                 }
             }
         } else if (!uiState.roiConfigured) {
@@ -255,29 +249,35 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         ) {
             Button(
                 onClick = {
-                    viewModel.leaveScreen()
-                    navController.navigate("feed") {
-                        popUpTo("feed") { inclusive = false }
-                        launchSingleTop = true
+                    if (uiState.isPreviewActive || uiState.isDetecting) {
+                        viewModel.stopDetection()
+                        viewModel.stopPreview()
+                    } else {
+                        viewModel.startDetectionFlow()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.weight(1f)
-            ) { Text("Back", fontSize = 12.sp) }
-            Button(
-                onClick = { viewModel.startDetectionFlow() },
                 enabled = uiState.roiConfigured && uiState.hpConfigured,
-                colors = ButtonDefaults.buttonColors(containerColor = AegisPrimary, contentColor = AegisOnPrimary),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (uiState.isPreviewActive || uiState.isDetecting) {
+                        AegisSurfaceContainerHigh
+                    } else {
+                        AegisPrimary
+                    },
+                    contentColor = if (uiState.isPreviewActive || uiState.isDetecting) {
+                        AegisOnSurface
+                    } else {
+                        AegisOnPrimary
+                    }
+                ),
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.weight(1.4f)
-            ) { Text(if (uiState.isDetecting) "Detecting" else "Start Detection", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+                modifier = Modifier.weight(1.2f)
+            ) {
+                Text(
+                    if (uiState.isPreviewActive || uiState.isDetecting) "Stop Camera" else "Start Detection",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Button(
                 onClick = { viewModel.generateManualEvent() },
                 enabled = uiState.canGenerateEvent && uiState.isPreviewActive,
@@ -285,27 +285,19 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.weight(1f)
             ) { Text("Manual Upload", fontSize = 12.sp) }
-            Button(
-                onClick = { viewModel.stopDetection(); viewModel.stopPreview() },
-                enabled = uiState.isPreviewActive || uiState.isDetecting,
-                colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.weight(1f)
-            ) { Text("Stop Camera", fontSize = 12.sp) }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            TextButton(onClick = { navController.navigate("calibration") }, modifier = Modifier.weight(1f)) {
-                Text("Calibrate ROI", color = AegisPrimary, fontSize = 12.sp)
-            }
-            TextButton(onClick = { navController.navigate("account") }, modifier = Modifier.weight(1f)) {
-                Text("Settings", color = AegisPrimary, fontSize = 12.sp)
-            }
-            TextButton(onClick = { navController.navigate("alerts") }, modifier = Modifier.weight(1f)) {
-                Text("Queue", color = AegisPrimary, fontSize = 12.sp)
+        if (!uiState.roiConfigured || !uiState.hpConfigured) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { navController.navigate("account") },
+                    colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) { Text("Open Account", fontSize = 12.sp) }
             }
         }
 
@@ -340,7 +332,7 @@ private fun DetectionGuide(uiState: DetectionUiState) {
             Text(
                 text = when {
                     !uiState.hpConfigured -> "Set backend URL first, then return here."
-                    !uiState.roiConfigured -> "Calibrate ROI first. Events are created only when a vehicle stays inside ROI long enough."
+                    !uiState.roiConfigured -> "Set the detection region from Account before starting camera detection."
                     uiState.isDetecting -> "Camera is running. Vehicle boxes are tracked and uploaded after the ROI dwell rule is met."
                     uiState.modelStatus is ModelLoadStatus.Ready -> "Model is loaded. Start detection or create one manual upload."
                     else -> "Start Detection opens the camera and loads the local vehicle model."

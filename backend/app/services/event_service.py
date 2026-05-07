@@ -7,6 +7,7 @@ from app.config import settings
 
 VALID_REVIEW_STATUSES = {"pending", "validated", "false_alarm", "assigned", "accepted", "completed", "closed"}
 EVIDENCE_ORDER = {"frame_before": 0, "frame_peak": 1, "frame_after": 2, "video_clip": 3}
+COMPLETE_EVIDENCE_TYPES = {"frame_before", "frame_peak", "frame_after"}
 
 def _now():
     tz = timezone(timedelta(hours=8))
@@ -21,60 +22,68 @@ def create_event(
     vehicle_box: dict, confidence: float, gps_location: dict,
 ):
     conn = get_db()
-    cur = conn.execute(
-        """INSERT OR IGNORE INTO events (event_id, device_id, start_time, end_time, duration_seconds,
-           roi_id, track_id, vehicle_class, vehicle_box_json, confidence, gps_json, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (event_id, device_id, start_time, end_time, duration_seconds,
-         roi_id, track_id, vehicle_class, json.dumps(vehicle_box),
-         confidence, json.dumps(gps_location), _now()),
-    )
-    conn.commit()
-    if cur.rowcount == 0:
-        return {"event_id": event_id, "accepted": False, "duplicate": True}
-    return {"event_id": event_id, "accepted": True, "duplicate": False}
+    try:
+        cur = conn.execute(
+            """INSERT OR IGNORE INTO events (event_id, device_id, start_time, end_time, duration_seconds,
+               roi_id, track_id, vehicle_class, vehicle_box_json, confidence, gps_json, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (event_id, device_id, start_time, end_time, duration_seconds,
+             roi_id, track_id, vehicle_class, json.dumps(vehicle_box),
+             confidence, json.dumps(gps_location), _now()),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return {"event_id": event_id, "accepted": False, "duplicate": True}
+        return {"event_id": event_id, "accepted": True, "duplicate": False}
+    finally:
+        conn.close()
 
 def list_events(
     status: str = None, device_id: str = None, roi_id: str = None,
     start_time_from: str = None, start_time_to: str = None,
-    limit: int = 50, offset: int = 0,
+    sort: str = "review_priority", limit: int = 50, offset: int = 0,
 ):
     limit = max(1, min(limit, 200))
     offset = max(0, offset)
     conn = get_db()
-    clauses = []
-    params = []
+    try:
+        clauses = []
+        params = []
 
-    if status:
-        clauses.append("e.review_status = ?")
-        params.append(status)
-    if device_id:
-        clauses.append("e.device_id = ?")
-        params.append(device_id)
-    if roi_id:
-        clauses.append("e.roi_id = ?")
-        params.append(roi_id)
-    if start_time_from:
-        clauses.append("e.start_time >= ?")
-        params.append(start_time_from)
-    if start_time_to:
-        clauses.append("e.start_time <= ?")
-        params.append(start_time_to)
+        if status:
+            clauses.append("e.review_status = ?")
+            params.append(status)
+        if device_id:
+            clauses.append("e.device_id = ?")
+            params.append(device_id)
+        if roi_id:
+            clauses.append("e.roi_id = ?")
+            params.append(roi_id)
+        if start_time_from:
+            clauses.append("e.start_time >= ?")
+            params.append(start_time_from)
+        if start_time_to:
+            clauses.append("e.start_time <= ?")
+            params.append(start_time_to)
 
-    where = "WHERE " + " AND ".join(clauses) if clauses else ""
+        where = "WHERE " + " AND ".join(clauses) if clauses else ""
 
-    count_sql = f"SELECT COUNT(*) FROM events e {where}"
-    total = conn.execute(count_sql, params).fetchone()[0]
+        count_sql = f"SELECT COUNT(*) FROM events e {where}"
+        total = conn.execute(count_sql, params).fetchone()[0]
 
-    rows = conn.execute(
-        f"""SELECT e.*,
-                   (SELECT file_path FROM evidence_files ef
-                    WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
-                    LIMIT 1) AS thumbnail_file_path
-            FROM events e {where}
-            ORDER BY {_priority_case()}, e.created_at DESC LIMIT ? OFFSET ?""",
-        params + [limit, offset],
-    ).fetchall()
+        order_by = f"{_priority_case()}, e.created_at DESC" if sort == "review_priority" else "e.created_at DESC"
+
+        rows = conn.execute(
+            f"""SELECT e.*,
+                       (SELECT file_path FROM evidence_files ef
+                        WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
+                        LIMIT 1) AS thumbnail_file_path
+                FROM events e {where}
+                ORDER BY {order_by} LIMIT ? OFFSET ?""",
+            params + [limit, offset],
+        ).fetchall()
+    finally:
+        conn.close()
 
     items = []
     for r in rows:
@@ -101,18 +110,31 @@ def list_events(
 
 def get_event(event_id: str):
     conn = get_db()
-    row = conn.execute("SELECT * FROM events WHERE event_id=?", (event_id,)).fetchone()
-    if not row:
-        return None
+    try:
+        row = conn.execute("SELECT * FROM events WHERE event_id=?", (event_id,)).fetchone()
+        if not row:
+            return None
 
-    evidence_rows = conn.execute(
-        "SELECT * FROM evidence_files WHERE event_id=?",
-        (event_id,),
-    ).fetchall()
-    history_rows = conn.execute(
-        "SELECT * FROM review_history WHERE event_id=? ORDER BY reviewed_at DESC, id DESC",
-        (event_id,),
-    ).fetchall()
+        evidence_rows = conn.execute(
+            "SELECT * FROM evidence_files WHERE event_id=?",
+            (event_id,),
+        ).fetchall()
+        history_rows = conn.execute(
+            "SELECT * FROM review_history WHERE event_id=? ORDER BY reviewed_at DESC, id DESC",
+            (event_id,),
+        ).fetchall()
+        prev_row = conn.execute(
+            "SELECT event_id FROM events WHERE created_at < ? ORDER BY created_at DESC LIMIT 1",
+            (row["created_at"],),
+        ).fetchone()
+        next_pending_row = conn.execute(
+            f"""SELECT event_id FROM events
+                WHERE review_status='pending' AND event_id != ?
+                ORDER BY {_priority_case('events')}, created_at DESC LIMIT 1""",
+            (event_id,),
+        ).fetchone()
+    finally:
+        conn.close()
 
     evidence = []
     for ef in sorted(evidence_rows, key=lambda item: EVIDENCE_ORDER.get(item["evidence_type"], 99)):
@@ -134,16 +156,6 @@ def get_event(event_id: str):
         "video_count": sum(1 for item in evidence if item["mime_type"].startswith("video/")),
         "is_complete": {"frame_before", "frame_peak", "frame_after"}.issubset(evidence_types),
     }
-    prev_row = conn.execute(
-        "SELECT event_id FROM events WHERE created_at < ? ORDER BY created_at DESC LIMIT 1",
-        (row["created_at"],),
-    ).fetchone()
-    next_pending_row = conn.execute(
-        f"""SELECT event_id FROM events
-            WHERE review_status='pending' AND event_id != ?
-            ORDER BY {_priority_case('events')}, created_at DESC LIMIT 1""",
-        (event_id,),
-    ).fetchone()
     risk_level = "high" if row["review_status"] in ("pending", "validated", "assigned", "accepted") and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10) else "normal"
 
     return {
@@ -186,51 +198,50 @@ def update_review(event_id: str, review_status: str, operator_note: str, operato
     if review_status not in VALID_REVIEW_STATUSES - {"assigned", "accepted", "completed"}:
         return {"event_id": event_id, "review_status": review_status, "error": "Unsupported review status"}
     conn = get_db()
-    now = _now()
-    event = conn.execute(
-        "SELECT review_status FROM events WHERE event_id=?",
-        (event_id,),
-    ).fetchone()
-    if not event:
-        return None
-    from_status = event["review_status"]
-    operator_id = (operator_id or "本地复核员").strip() or "本地复核员"
-
-    if review_status == "validated":
-        settings_row = conn.execute(
-            "SELECT require_complete_evidence FROM runtime_settings WHERE id=1"
+    try:
+        now = _now()
+        event = conn.execute(
+            "SELECT review_status FROM events WHERE event_id=?",
+            (event_id,),
         ).fetchone()
-        if settings_row and settings_row["require_complete_evidence"]:
-            evidence_types = {
-                r["evidence_type"] for r in
-                conn.execute("SELECT evidence_type FROM evidence_files WHERE event_id=?", (event_id,))
-            }
-            if not {"frame_before", "frame_peak", "frame_after"}.issubset(evidence_types):
-                return {
-                    "event_id": event_id,
-                    "review_status": review_status,
-                    "error": "Complete evidence (before/peak/after) required before confirmation",
-                }
+        if not event:
+            return None
+        from_status = event["review_status"]
+        operator_id = (operator_id or "本地复核员").strip() or "本地复核员"
 
-    cur = conn.execute(
-        "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
-        (review_status, operator_note, now, event_id),
-    )
-    conn.execute(
-        """INSERT INTO review_history (event_id, operator_id, from_status, to_status, operator_note, reviewed_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (event_id, operator_id, from_status, review_status, operator_note, now),
-    )
-    conn.commit()
-    if cur.rowcount == 0:
-        return None
-    return {
-        "event_id": event_id,
-        "review_status": review_status,
-        "operator_note": operator_note,
-        "operator_id": operator_id,
-        "reviewed_at": now,
-    }
+        if review_status == "validated":
+            settings_row = conn.execute(
+                "SELECT require_complete_evidence FROM runtime_settings WHERE id=1"
+            ).fetchone()
+            if settings_row and settings_row["require_complete_evidence"]:
+                if not _has_complete_evidence(conn, event_id):
+                    return {
+                        "event_id": event_id,
+                        "review_status": review_status,
+                        "error": "Complete evidence (before/peak/after) required before confirmation",
+                    }
+
+        cur = conn.execute(
+            "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
+            (review_status, operator_note, now, event_id),
+        )
+        conn.execute(
+            """INSERT INTO review_history (event_id, operator_id, from_status, to_status, operator_note, reviewed_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (event_id, operator_id, from_status, review_status, operator_note, now),
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        return {
+            "event_id": event_id,
+            "review_status": review_status,
+            "operator_note": operator_note,
+            "operator_id": operator_id,
+            "reviewed_at": now,
+        }
+    finally:
+        conn.close()
 
 def bulk_update_review(event_ids: list[str], review_status: str, operator_note: str, operator_id: str = "本地复核员"):
     seen = []
@@ -242,6 +253,15 @@ def bulk_update_review(event_ids: list[str], review_status: str, operator_note: 
     missing_event_ids = []
     failed_event_ids = []
     for event_id in seen:
+        if review_status == "validated":
+            conn = get_db()
+            try:
+                guard = _bulk_validate_guard(conn, event_id)
+            finally:
+                conn.close()
+            if guard:
+                failed_event_ids.append(event_id)
+                continue
         result = update_review(event_id, review_status, operator_note, operator_id)
         if not result:
             missing_event_ids.append(event_id)
@@ -259,6 +279,25 @@ def bulk_update_review(event_ids: list[str], review_status: str, operator_note: 
     }
 
 
+def _has_complete_evidence(conn, event_id: str) -> bool:
+    evidence_types = {
+        r["evidence_type"] for r in
+        conn.execute("SELECT evidence_type FROM evidence_files WHERE event_id=?", (event_id,))
+    }
+    return COMPLETE_EVIDENCE_TYPES.issubset(evidence_types)
+
+
+def _bulk_validate_guard(conn, event_id: str) -> str | None:
+    event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (event_id,)).fetchone()
+    if not event:
+        return None
+    if event["review_status"] != "pending":
+        return "Bulk confirmation only supports pending events"
+    if not _has_complete_evidence(conn, event_id):
+        return "Complete evidence (before/peak/after) required for bulk confirmation"
+    return None
+
+
 def validate_event(event_id: str, note: str, user: dict):
     return update_review(event_id, "validated", note, user["display_name"])
 
@@ -269,13 +308,16 @@ def mark_false_alarm(event_id: str, note: str, user: dict):
 
 def delete_event(event_id: str):
     conn = get_db()
-    conn.execute("DELETE FROM evidence_files WHERE event_id=?", (event_id,))
-    conn.execute("DELETE FROM review_history WHERE event_id=?", (event_id,))
-    cur = conn.execute("DELETE FROM events WHERE event_id=?", (event_id,))
-    conn.commit()
-    if cur.rowcount == 0:
-        return None
-    event_dir = os.path.join(settings.evidence_dir, event_id)
-    if os.path.isdir(event_dir):
-        shutil.rmtree(event_dir)
-    return {"event_id": event_id, "deleted": True}
+    try:
+        conn.execute("DELETE FROM evidence_files WHERE event_id=?", (event_id,))
+        conn.execute("DELETE FROM review_history WHERE event_id=?", (event_id,))
+        cur = conn.execute("DELETE FROM events WHERE event_id=?", (event_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        event_dir = os.path.join(settings.evidence_dir, event_id)
+        if os.path.isdir(event_dir):
+            shutil.rmtree(event_dir)
+        return {"event_id": event_id, "deleted": True}
+    finally:
+        conn.close()

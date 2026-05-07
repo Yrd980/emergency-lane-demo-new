@@ -3,8 +3,11 @@ package com.emergency.lane.ui.settings
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.emergency.lane.BuildConfig
 import com.emergency.lane.data.DeviceRepository
 import com.emergency.lane.data.local.SettingsStore
+import com.emergency.lane.data.remote.DeviceRegisterRequest
+import com.emergency.lane.data.remote.HpApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -71,21 +74,60 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         password: String
     ) {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(connectionStatus = SettingsUiState.ConnectionStatus.Testing)
             val savedPassword = settings.authPassword.first()
+            val actualPassword = password.ifBlank { savedPassword }
+            if (baseUrl.isBlank() || username.isBlank() || actualPassword.isBlank()) {
+                _uiState.value = _uiState.value.copy(
+                    connectionStatus = SettingsUiState.ConnectionStatus.Error("Backend, account, and password are required.")
+                )
+                return@launch
+            }
+
+            val client = HpApiClient(baseUrl)
+            val login = client.login(username, actualPassword).getOrElse {
+                _uiState.value = _uiState.value.copy(
+                    connectionStatus = SettingsUiState.ConnectionStatus.Error(it.message ?: "Login failed")
+                )
+                return@launch
+            }
+
+            val registerResponse = try {
+                client.api.registerDevice(
+                    DeviceRegisterRequest(
+                        deviceId = deviceId,
+                        deviceName = deviceName,
+                        appVersion = BuildConfig.VERSION_NAME,
+                        modelVersion = SettingsStore.MODEL_VERSION_NAME
+                    )
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    connectionStatus = SettingsUiState.ConnectionStatus.Error(e.message ?: "Registration failed")
+                )
+                return@launch
+            }
+
+            if (!registerResponse.isSuccessful) {
+                _uiState.value = _uiState.value.copy(
+                    connectionStatus = SettingsUiState.ConnectionStatus.Error("Registration failed: ${registerResponse.code()}")
+                )
+                return@launch
+            }
+
             settings.saveConfig(
                 baseUrl,
                 deviceId,
                 deviceName,
                 username,
-                password.ifBlank { savedPassword }
+                actualPassword
             )
-            repo.register().fold(
-                onSuccess = {
-                    _uiState.value = _uiState.value.copy(isRegistered = true, connectionStatus = SettingsUiState.ConnectionStatus.Success("已注册: $it"))
-                    repo.startHeartbeat()
-                },
-                onFailure = { _uiState.value = _uiState.value.copy(connectionStatus = SettingsUiState.ConnectionStatus.Error(it.message ?: "注册失败")) }
+            settings.saveAuthToken(login.token)
+            _uiState.value = _uiState.value.copy(
+                isRegistered = true,
+                connectionStatus = SettingsUiState.ConnectionStatus.Success("Connected as $deviceId")
             )
+            repo.startHeartbeat()
         }
     }
 }

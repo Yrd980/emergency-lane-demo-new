@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useEventDetail } from '../hooks/useEventDetail';
 import { useReview } from '../hooks/useReview';
@@ -73,14 +73,34 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showToast } = useToast();
   const { user } = useAuth();
   const { data, loading, error, refetch } = useEventDetail(id!);
   const { submit, submitting } = useReview(id!);
+  const [assignees, setAssignees] = useState<{ username: string; display_name: string; role: string }[]>([]);
+  const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [assignmentNote, setAssignmentNote] = useState('Dispatch from incident detail');
+  const [assigning, setAssigning] = useState(false);
 
   const timeline = useMemo(() => (data ? buildTimeline(data) : []), [data]);
+  const canAssign = Boolean(user?.permissions.includes('events:assign'));
+  const canReview = Boolean(user?.permissions.includes('events:review'));
 
-  if (loading) return <StateBlock tone="loading" title="正在加载事件详情" description="同步证据、结构化字段和复核状态。" />;
+  useEffect(() => {
+    if (!canAssign) return;
+    let cancelled = false;
+    api.getAssignableUsers()
+      .then((users) => {
+        if (cancelled) return;
+        setAssignees(users);
+        setSelectedAssignee((current) => current || users.find((item) => item.role === 'patrol')?.username || users[0]?.username || '');
+      })
+      .catch((e: unknown) => showToast((e as Error).message, 'error'));
+    return () => { cancelled = true; };
+  }, [canAssign, showToast]);
+
+  if (loading && !data) return <StateBlock tone="loading" title="正在加载事件详情" description="同步证据、结构化字段和复核状态。" />;
   if (error) {
     return (
       <StateBlock
@@ -100,6 +120,13 @@ export default function EventDetail() {
   }
   if (!data) return null;
 
+  const source = searchParams.get('from') === 'log' ? 'log' : 'review';
+  const backHref = source === 'log' ? '/events' : '/review';
+  const backLabel = source === 'log' ? '返回日志' : '返回队列';
+  const nextEventId = source === 'log' ? data.previous_event_id : data.next_event_id;
+  const nextHref = nextEventId ? `/events/${nextEventId}?from=${source}` : null;
+  const nextLabel = source === 'log' ? '下一条日志' : '下一条待复核';
+
   const handleReview = async (status: string, note: string, operatorId?: string): Promise<boolean> => {
     const ok = await submit(status, note, operatorId);
     if (ok) {
@@ -112,16 +139,21 @@ export default function EventDetail() {
   const gpsText = formatGpsLocation(data.gps_location);
   const images = data.evidence_files.filter((f) => f.mime_type.startsWith('image/'));
   const hasImages = images.length > 0;
-  const canAssign = Boolean(user?.permissions.includes('events:assign'));
-  const canReview = Boolean(user?.permissions.includes('events:review'));
 
   const assignToPatrol = async () => {
+    if (!selectedAssignee) {
+      showToast('请选择巡查员后再分派', 'error');
+      return;
+    }
+    setAssigning(true);
     try {
-      await api.assignEvent(data.event_id, { assigned_to_username: 'patrol', note: 'Dispatch from incident detail' });
+      await api.assignEvent(data.event_id, { assigned_to_username: selectedAssignee, note: assignmentNote });
       showToast('Task assigned to patrol unit', 'success');
       refetch();
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -131,15 +163,18 @@ export default function EventDetail() {
       <PageHeader
         eyebrow="INCIDENT REVIEW"
         title="Incident Detail"
-        description="先看证据链，再核对结构化字段，最后完成复核。"
+        description={source === 'log' ? '按事件时间线查看证据、状态和处理记录。' : '先看证据链，再核对结构化字段，最后完成复核。'}
         action={
           <>
-            <PrimaryButton tone="light" icon="arrow_back" onClick={() => navigate('/review')}>
-              返回队列
+            <PrimaryButton tone="light" icon="arrow_back" onClick={() => navigate(backHref)}>
+              {backLabel}
             </PrimaryButton>
-            {data.next_event_id && (
-              <PrimaryButton icon="arrow_forward" href={`/events/${data.next_event_id}`}>
-                下一条
+            <PrimaryButton tone="light" icon="refresh" onClick={refetch}>
+              刷新当前
+            </PrimaryButton>
+            {nextHref && (
+              <PrimaryButton icon="arrow_forward" href={nextHref}>
+                {nextLabel}
               </PrimaryButton>
             )}
           </>
@@ -165,13 +200,13 @@ export default function EventDetail() {
         description={
           data.review_status === 'pending'
             ? data.review_priority_reason ?? '请根据证据链作出确认或驳回。'
-            : '可以继续查看下一条，或返回复核队列。'
+            : source === 'log' ? '可以继续按时间线查看下一条，或返回事件日志。' : '可以继续查看下一条待复核事件，或返回复核队列。'
         }
         action={
           data.review_status === 'pending' ? (
             <StatusBadge status={data.risk_level ?? 'normal'} />
           ) : (
-            <PrimaryButton href="/review">回到复核队列</PrimaryButton>
+            <PrimaryButton href={backHref}>{source === 'log' ? '回到事件日志' : '回到复核队列'}</PrimaryButton>
           )
         }
       />
@@ -261,7 +296,7 @@ export default function EventDetail() {
               </div>
             </div>
             <div className="p-4">
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+              <div className="grid grid-cols-2 gap-2">
                 <AiField
                   label="Plate Number"
                   value={data.track_id}
@@ -359,35 +394,73 @@ export default function EventDetail() {
             </SurfacePanel>
           )}
 
-          {/* ─── Action buttons ─── */}
-          {data.review_status === 'pending' && canReview && (
-            <div className="flex flex-col gap-2 pt-4">
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-3 px-4 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
-                onClick={() => void handleReview('validated', 'Evidence validated from incident detail', user?.display_name)}
-              >
-                <span className="material-symbols-outlined">gavel</span>
-                Validate Violation
-              </button>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 py-3 px-4 text-body-sm text-primary transition-all hover:bg-primary/5 active:scale-95"
-                disabled={!canAssign}
-                onClick={() => void assignToPatrol()}
-              >
-                <span className="material-symbols-outlined">local_police</span>
-                Assign to Patrol
-              </button>
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-2 rounded-lg py-2 px-4 text-body-sm text-on-surface-variant transition-all hover:text-error active:opacity-60"
-                onClick={() => void handleReview('false_alarm', 'Marked as false alarm from incident detail', user?.display_name)}
-              >
-                <span className="material-symbols-outlined text-sm">block</span>
-                Invalid / False Alarm
-              </button>
-            </div>
+          {/* ─── Response actions ─── */}
+          {data.review_status === 'pending' && (canReview || canAssign) && (
+            <SurfacePanel className="overflow-hidden">
+              <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base text-primary">rule</span>
+                  <span className="text-sm font-semibold text-on-surface">Response Actions</span>
+                </div>
+              </div>
+              <div className="grid gap-2 p-4">
+                {canReview && (
+                  <button
+                    type="button"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
+                    onClick={() => void handleReview('validated', 'Evidence validated from incident detail', user?.display_name)}
+                  >
+                    <span className="material-symbols-outlined text-base">gavel</span>
+                    Validate Violation
+                  </button>
+                )}
+                {canAssign && (
+                  <div className="rounded-lg border border-outline-variant/20 bg-surface-container p-3">
+                    <div className="grid gap-2">
+                      <label className="grid gap-1 text-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                        Patrol assignee
+                        <select
+                          className="rounded-lg border border-outline-variant bg-background px-3 py-2 text-body-sm normal-case tracking-normal text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                          value={selectedAssignee}
+                          onChange={(e) => setSelectedAssignee(e.target.value)}
+                        >
+                          {assignees.map((assignee) => (
+                            <option key={assignee.username} value={assignee.username}>
+                              {assignee.display_name} ({assignee.username})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <input
+                        className="rounded-lg border border-outline-variant bg-background px-3 py-2 text-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary"
+                        value={assignmentNote}
+                        onChange={(e) => setAssignmentNote(e.target.value)}
+                        placeholder="Dispatch note"
+                      />
+                      <button
+                        type="button"
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-surface-container-high px-4 py-3 text-body-sm font-semibold text-primary transition-all hover:bg-primary/10 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={!selectedAssignee || assigning}
+                        onClick={() => void assignToPatrol()}
+                      >
+                        <span className="material-symbols-outlined text-base">assignment_ind</span>
+                        Assign to Patrol
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {canReview && (
+                  <button
+                    type="button"
+                    className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/20 px-4 py-2.5 text-body-sm text-on-surface-variant transition-all hover:border-error/30 hover:bg-error-container/10 hover:text-error active:opacity-80"
+                    onClick={() => void handleReview('false_alarm', 'Marked as false alarm from incident detail', user?.display_name)}
+                  >
+                    <span className="material-symbols-outlined text-base">block</span>
+                    Invalid / False Alarm
+                  </button>
+                )}
+              </div>
+            </SurfacePanel>
           )}
 
           {/* ─── Review Panel (existing) ─── */}
@@ -432,11 +505,12 @@ function AiField({
   tone?: 'brand' | 'warning' | 'danger';
 }) {
   return (
-    <div className="flex flex-col">
-      <span className="text-label-xs text-on-surface-variant uppercase">{label}</span>
+    <div className="min-w-0 rounded-lg border border-outline-variant/10 bg-surface-container px-3 py-2.5">
+      <span className="block text-[10px] font-semibold uppercase leading-none tracking-wider text-on-surface-variant">{label}</span>
       <span
         className={cn(
-          mono ? 'font-mono-data text-headline-md' : 'text-body-sm',
+          'mt-2 block min-w-0 leading-5',
+          mono ? 'break-all font-mono-data text-body-sm' : 'truncate text-body-sm',
           tone === 'brand' && 'text-primary',
           tone === 'warning' && 'text-secondary',
           tone === 'danger' && 'text-error',
