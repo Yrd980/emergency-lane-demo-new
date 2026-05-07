@@ -7,7 +7,7 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon = 'inventory_2', title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/20 bg-surface-container-low py-16 text-on-surface-variant">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-outline-variant/20 bg-surface-container-low py-16 text-on-surface-variant">
       <span className="material-symbols-outlined text-4xl mb-4 opacity-40">{icon}</span>
       <p className="text-body-sm font-semibold text-on-surface">{title}</p>
       {description && <p className="mt-1 text-body-sm text-on-surface-variant">{description}</p>}

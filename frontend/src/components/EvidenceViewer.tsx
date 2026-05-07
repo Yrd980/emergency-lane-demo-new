@@ -22,7 +22,7 @@ export default function EvidenceViewer({
 
   if (media.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-outline bg-surface-container-high p-8 text-center">
+      <div className="rounded-lg border border-dashed border-outline-variant/40 bg-surface-container-high p-8 text-center">
         <span className="material-symbols-outlined text-2xl text-on-surface-variant mx-auto">hide_image</span>
         <div className="mt-3 font-semibold text-on-surface">Evidence not yet uploaded</div>
         <p className="mt-2 text-body-sm text-on-surface-variant">Next: check Android queue and device network, wait for retransmission then refresh the event.</p>
@@ -32,7 +32,7 @@ export default function EvidenceViewer({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-      <div className="overflow-hidden rounded-xl border border-[#2c2c35] bg-background shadow-[0_18px_46px_rgba(32,32,29,0.12)]">
+      <div className="overflow-hidden rounded-lg border border-outline-variant/30 bg-background shadow-[0_18px_46px_rgba(32,32,29,0.12)]">
         <div className="flex min-h-[300px] items-center justify-center sm:min-h-[480px]">
           {active?.mime_type.startsWith('image/') ? (
             <img src={active.url} alt={labels[active.evidence_type] ?? active.evidence_type} className="max-h-[68vh] max-w-full object-contain" />
@@ -42,7 +42,7 @@ export default function EvidenceViewer({
         </div>
       </div>
       <div className="space-y-3">
-        <div className="rounded-xl border border-outline-variant bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
+        <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
           <div className="text-body-sm font-semibold text-on-surface">Evidence Chain Integrity</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-label-xs">
             <EvidenceMark label="进入前" ok={summary?.has_before ?? false} />
@@ -53,7 +53,7 @@ export default function EvidenceViewer({
             Next: prioritize peak frame, then use before/after to determine if it was a brief pass-through.
           </p>
         </div>
-        <div className="rounded-xl border border-outline-variant bg-surface-container-high p-2 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
+        <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-2 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
           {media.map((item, index) => {
             const isActive = index === activeIdx;
             const isVideo = item.mime_type.startsWith('video/');

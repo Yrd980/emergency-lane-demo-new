@@ -14,12 +14,12 @@ export default function FilterBar({
   };
 
   return (
-    <div className="mb-4 rounded-xl border border-outline-variant/10 bg-surface-container-low p-4">
-      <div className="mb-3 flex items-center gap-2 text-body-sm font-semibold text-on-surface">
-        <span className="material-symbols-outlined text-on-surface-variant text-base">search</span>
-        Narrow scope, reduce review thinking
+    <div className="mb-4 rounded-lg border border-outline-variant/10 bg-surface-container-low p-4">
+      <div className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-on-surface">
+        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+        Narrow scope
       </div>
-      <div className="grid gap-3 md:grid-cols-6">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
           Status
           <select
@@ -74,7 +74,7 @@ export default function FilterBar({
           />
         </label>
         <button
-          className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-body-sm font-semibold text-on-surface hover:bg-surface-container-high"
+          className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-outline-variant/50 bg-surface-container px-3 py-2 text-body-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-high"
           onClick={() => onChange({ limit: '50', offset: '0' })}
         >
           <span className="material-symbols-outlined text-base">refresh</span>

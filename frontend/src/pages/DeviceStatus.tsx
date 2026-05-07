@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
+import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import { formatDateTime } from '../utils/format';
 import type { DeviceInfo, EventListItem, OperationsStats } from '../types';
 
@@ -65,29 +65,19 @@ export default function DeviceStatus() {
       {devices.length > 0 && (
         <>
           {offline.length > 0 || backlog > 0 ? (
-            <div className="rounded-xl border border-secondary-container/40 bg-secondary-container/10 p-lg">
-              <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-semibold text-on-surface">
-                    {offline.length > 0 ? `${offline.length} device(s) offline` : `${backlog} uploads backlogged`}
-                  </div>
-                  <div className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">
-                    {offline.length > 0 ? 'Next: check offline device details, network, backend address, foreground service.' : 'Next: check devices with backlog, wait for retransmission or check network.'}
-                  </div>
-                </div>
-                <PrimaryButton href={offline[0] ? `/devices/${offline[0].device_id}` : '/devices'}>Investigate</PrimaryButton>
-              </div>
-            </div>
+            <ActionPanel
+              tone="warning"
+              title={offline.length > 0 ? `${offline.length} device(s) offline` : `${backlog} uploads backlogged`}
+              description={offline.length > 0 ? 'Next: check offline device details, network, backend address, foreground service.' : 'Next: check devices with backlog, wait for retransmission or check network.'}
+              action={<PrimaryButton href={offline[0] ? `/devices/${offline[0].device_id}` : '/devices'}>Investigate</PrimaryButton>}
+            />
           ) : (
-            <div className="rounded-xl border border-primary/40 bg-primary/10 p-lg">
-              <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-semibold text-on-surface">All Systems Operational</div>
-                  <div className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">Registered devices are reporting within the active heartbeat window.</div>
-                </div>
-                <PrimaryButton href="/events">View Events</PrimaryButton>
-              </div>
-            </div>
+            <ActionPanel
+              tone="success"
+              title="All systems operational"
+              description="Registered devices are reporting within the active heartbeat window."
+              action={<PrimaryButton href="/events">View Events</PrimaryButton>}
+            />
           )}
 
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-4">
@@ -103,7 +93,7 @@ export default function DeviceStatus() {
                 <DeviceCameraCard key={dev.device_id} device={dev} />
               ))}
 
-              <Link to="/setup" className={`relative flex min-h-[220px] items-center justify-center overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container transition-colors hover:bg-surface-container-high ${devices.length === 1 ? 'min-h-[140px]' : ''}`}>
+              <Link to="/setup" className={`relative flex min-h-[220px] items-center justify-center overflow-hidden rounded-lg border border-outline-variant/20 bg-surface-container transition-colors hover:bg-surface-container-high ${devices.length === 1 ? 'min-h-[140px]' : ''}`}>
                 <div className="space-y-md text-center">
                   <span className="material-symbols-outlined text-4xl text-on-surface-variant">add_circle</span>
                   <p className="text-label-xs uppercase tracking-widest text-on-surface-variant">Assign Source</p>
@@ -111,10 +101,10 @@ export default function DeviceStatus() {
               </Link>
             </div>
 
-            <div className="flex min-h-0 flex-col rounded-xl border border-outline-variant/10 bg-surface-container">
+            <div className="flex min-h-0 flex-col rounded-lg border border-outline-variant/10 bg-surface-container">
               <div className="flex items-center justify-between border-b border-outline-variant/10 p-md">
                 <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">Incident Log</h3>
-                <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} ACTIVE</span>
+              <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} ACTIVE</span>
               </div>
               <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto p-sm">
                 {(recentEvents.length ? recentEvents : []).map((event) => (
@@ -146,7 +136,7 @@ export default function DeviceStatus() {
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
             <SparklinePanel title={topHotspot ? `Traffic Flow: ${topHotspot.roi_id}` : 'Traffic Flow'} bars={trendBars} tone="primary" />
             <SparklinePanel title="Violation Trend: Manual Review" bars={hotspotBars} tone="secondary" />
-            <div className="flex flex-col justify-center rounded-xl border border-outline-variant/5 bg-surface-container-low p-md">
+            <div className="flex flex-col justify-center rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
               <p className="mb-sm text-label-xs uppercase tracking-widest text-on-surface-variant">Global Status</p>
               <div className="flex items-center gap-md">
                 <div className="flex -space-x-2">
@@ -166,7 +156,7 @@ export default function DeviceStatus() {
 
 function DeviceCameraCard({ device }: { device: DeviceInfo }) {
   return (
-    <Link to={`/devices/${device.device_id}`} className="group relative min-h-[220px] overflow-hidden rounded-xl border border-outline-variant/20">
+    <Link to={`/devices/${device.device_id}`} className="group relative min-h-[220px] overflow-hidden rounded-lg border border-outline-variant/20">
       <div className="absolute inset-0 bg-surface-container-lowest">
         <div
           className="pointer-events-none absolute inset-0"
@@ -175,7 +165,7 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
               'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(70,69,84,0.10) 2px, rgba(70,69,84,0.10) 4px), repeating-linear-gradient(90deg, transparent, transparent 24px, rgba(70,69,84,0.06) 24px, rgba(70,69,84,0.06) 25px)',
           }}
         />
-        <div className={`pointer-events-none absolute inset-0 ${device.is_online ? 'bg-gradient-to-b from-primary/10 via-transparent to-black/55' : 'bg-black/65'}`} />
+        <div className={`pointer-events-none absolute inset-0 ${device.is_online ? 'bg-gradient-to-b from-primary/10 via-transparent to-surface-container-lowest/70' : 'bg-surface-container-lowest/80'}`} />
       </div>
 
       <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
@@ -193,20 +183,20 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
       </div>
 
       <div className="absolute right-3 top-3 z-10">
-        <span className="rounded bg-black/60 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant shadow-[0_1px_4px_rgba(0,0,0,0.5)]">
+        <span className="rounded bg-surface-container-lowest/70 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant shadow-[0_1px_4px_rgba(14,13,21,0.5)]">
           {device.device_id}
         </span>
       </div>
 
       <div className="absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
-        <div className="rounded-lg bg-black/30 px-3 py-2 text-center">
+        <div className="rounded-lg bg-surface-container-lowest/50 px-3 py-2 text-center">
           <span className="material-symbols-outlined text-lg text-on-surface-variant">{device.is_online ? 'sensors' : 'wifi_off'}</span>
           <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Heartbeat Active' : 'Signal Lost'}</div>
         </div>
       </div>
 
       <div className="absolute bottom-3 left-3 right-3 z-10">
-        <div className="text-sm font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{device.device_name}</div>
+        <div className="text-sm font-semibold text-on-surface drop-shadow-[0_1px_3px_rgba(14,13,21,0.9)]">{device.device_name}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <span className="font-mono-data text-[11px] text-primary">FPS: {device.fps}</span>
           <span className="font-mono-data text-[11px] text-on-surface-variant">Battery: {device.battery_level}%</span>
@@ -219,7 +209,7 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
 
 function SparklinePanel({ title, bars, tone }: { title: string; bars: number[]; tone: 'primary' | 'secondary' }) {
   return (
-    <div className="rounded-xl border border-outline-variant/5 bg-surface-container-low p-md">
+    <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
       <p className="mb-sm truncate text-label-xs uppercase tracking-wider text-on-surface-variant">{title}</p>
       <div className="flex h-16 w-full items-end gap-1">
         {bars.map((height, index) => (

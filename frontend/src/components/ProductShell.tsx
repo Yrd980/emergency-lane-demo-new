@@ -6,19 +6,22 @@ export default function ProductShell({ children }: { children: React.ReactNode }
   const location = useLocation();
   const { user, logout } = useAuth();
   const visibleNavItems = navItems.filter((item) => canAccess(user?.permissions ?? [], item.permissions));
+  const navItemClass =
+    'flex min-h-12 w-full items-center gap-3 rounded-lg px-4 text-[15px] leading-none transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+  const navIconClass = 'material-symbols-outlined text-[24px] leading-none';
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-on-surface font-body-sm">
       {/* Sidebar — Desktop */}
-      <aside className="hidden md:flex flex-col h-full py-lg px-md gap-md bg-surface-container-lowest w-64 shrink-0 border-r border-outline-variant/10">
-        <div className="px-sm mb-lg">
-          <h1 className="text-headline-md font-headline-md text-primary">Aegis Monitoring</h1>
-          <p className="text-label-xs font-label-xs text-on-surface-variant opacity-60 flex items-center gap-xs mt-xs">
+      <aside className="hidden md:flex flex-col h-full w-64 shrink-0 gap-md bg-surface-container-lowest px-sm py-lg border-r border-outline-variant/10">
+        <div className="px-md pb-md">
+          <h1 className="text-[22px] font-semibold leading-tight text-primary">Aegis Monitoring</h1>
+          <p className="mt-sm flex items-center gap-sm text-[13px] font-medium leading-none text-on-surface-variant opacity-80">
             <span className="status-dot-healthy" /> Network Active
           </p>
         </div>
 
-        <nav className="flex-1 flex flex-col gap-xs">
+        <nav className="flex-1 flex flex-col gap-sm">
           {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.to || (item.to === '/' && location.pathname === '/');
             return (
@@ -27,30 +30,30 @@ export default function ProductShell({ children }: { children: React.ReactNode }
                 to={item.to}
                 end={item.to === '/'}
                 className={() =>
-                  `flex items-center gap-md px-md py-sm rounded-lg transition-all duration-200 ${
+                  `${navItemClass} ${
                     isActive
-                      ? 'text-primary font-bold border-r-2 border-primary bg-surface-container-low'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
+                      ? 'bg-surface-container-high text-primary font-semibold shadow-[inset_-1px_0_0_#c2c1ff]'
+                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
                   }`
                 }
               >
-                <span className="material-symbols-outlined">{item.icon}</span>
-                <span className="font-body-sm text-body-sm">{item.label}</span>
+                <span className={navIconClass}>{item.icon}</span>
+                <span>{item.label}</span>
               </NavLink>
             );
           })}
         </nav>
 
-        <div className="mt-auto flex flex-col gap-xs border-t border-outline-variant/10 pt-lg">
-          <a className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors" href="#">
-            <span className="material-symbols-outlined">help</span>
+        <div className="mt-auto flex flex-col gap-sm border-t border-outline-variant/10 pt-md">
+          <a className={`${navItemClass} text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface`} href="#">
+            <span className={navIconClass}>help</span>
             Support
           </a>
           <button
-            className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors w-full text-left"
+            className={`${navItemClass} text-left text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface`}
             onClick={() => void logout()}
           >
-            <span className="material-symbols-outlined">logout</span>
+            <span className={navIconClass}>logout</span>
             Sign Out
           </button>
         </div>
@@ -60,7 +63,7 @@ export default function ProductShell({ children }: { children: React.ReactNode }
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="mx-auto max-w-[100rem] px-margin py-lg">
+          <div className="mx-auto max-w-[100rem] px-md pb-28 pt-lg md:px-margin md:pb-lg">
             {children}
           </div>
         </div>

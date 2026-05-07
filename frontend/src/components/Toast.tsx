@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`flex items-center gap-3 rounded-xl border glass-panel px-4 py-3 text-body-sm ${
+            className={`flex items-center gap-3 rounded-lg border glass-panel px-4 py-3 text-body-sm ${
               item.tone === 'error' ? 'border-error/40 text-error' : 'border-outline-variant/20 text-on-surface'
             }`}
           >

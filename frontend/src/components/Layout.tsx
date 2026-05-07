@@ -8,9 +8,9 @@ const navItems = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-56 bg-slate-800 text-white flex flex-col">
-        <div className="p-4 text-lg font-bold border-b border-slate-700">
+    <div className="flex min-h-screen bg-background text-on-surface">
+      <aside className="flex w-64 flex-col border-r border-outline-variant/10 bg-surface-container-lowest">
+        <div className="border-b border-outline-variant/10 p-4 text-lg font-bold text-primary">
           应急车道检测
         </div>
         <nav className="flex-1 p-2 space-y-1">
@@ -20,10 +20,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `block px-3 py-2 rounded text-sm ${
+                `block min-h-11 rounded-lg px-4 py-3 text-body-sm ${
                   isActive
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-300 hover:bg-slate-700'
+                    ? 'bg-surface-container-high text-primary'
+                    : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
                 }`
               }
             >
@@ -32,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
       </aside>
-      <main className="flex-1 p-6 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto p-6">{children}</main>
     </div>
   );
 }

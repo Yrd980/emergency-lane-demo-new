@@ -134,7 +134,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-lg">
-      <section className="relative overflow-hidden rounded-xl border border-outline-variant/5 bg-surface-container-low">
+      <section className="relative overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low">
         <div className="pointer-events-none absolute left-0 right-0 top-0 h-px bg-primary/30" />
         <div className="relative grid gap-6 p-lg lg:grid-cols-[1.25fr_0.75fr] lg:p-xl">
           <div className="space-y-5">
@@ -181,7 +181,7 @@ export default function Dashboard() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-md">
-        <div className="flex flex-wrap items-center gap-sm rounded-xl border border-outline-variant/10 bg-surface-container p-xs">
+        <div className="flex flex-wrap items-center gap-sm rounded-lg border border-outline-variant/10 bg-surface-container p-xs">
           {PERIODS.map((period) => (
             <button
               key={period.key}
@@ -224,7 +224,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
-        <button className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 lg:col-span-2" onClick={() => navigate(eventHref)} type="button">
+        <button className="flex h-[400px] flex-col overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary lg:col-span-2" onClick={() => navigate(eventHref)} type="button">
           <div className="mb-lg flex items-center justify-between">
             <div>
               <h2 className="text-headline-md font-headline-md text-on-surface">Violation Trend</h2>
@@ -245,7 +245,7 @@ export default function Dashboard() {
                     <stop offset="100%" stopColor="rgba(194, 193, 255, 0)" />
                   </linearGradient>
                 </defs>
-                {[50, 100, 150].map((y) => <line key={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" x1="0" x2="800" y1={y} y2={y} />)}
+                {[50, 100, 150].map((y) => <line key={y} stroke="rgba(145,143,160,0.18)" strokeWidth="1" x1="0" x2="800" y1={y} y2={y} />)}
                 <path d={areaPath} fill="url(#chartGradient)" />
                 <path d={trendPath} fill="none" stroke="#c2c1ff" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
               </svg>
@@ -258,12 +258,12 @@ export default function Dashboard() {
           </div>
         </button>
 
-        <div className="flex h-[400px] flex-col rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg">
+        <div className="flex h-[400px] flex-col rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
           <h2 className="mb-xs text-headline-md font-headline-md text-on-surface">Hotspot Ranking</h2>
           <p className="mb-lg text-label-xs text-on-surface-variant">Most active violation zones</p>
 
           <button className="relative mb-lg h-32 w-full overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container text-left" onClick={() => navigate(eventHref)} type="button">
-            <div className="h-full w-full opacity-[0.08]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+            <div className="h-full w-full opacity-[0.14]" style={{ backgroundImage: 'linear-gradient(rgba(145,143,160,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(145,143,160,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
             <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent" />
             {topHotspots.slice(0, 4).map((item, index) => (
               <span key={item.roi_id} className="absolute block h-2 w-2 rounded-full bg-error" style={{ right: `${10 + index * 18}%`, top: `${12 + (index % 2) * 42}%`, opacity: Math.max(0.35, 1 - index * 0.18) }} title={item.roi_id} />
@@ -290,7 +290,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
-        <div className="rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg">
+        <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
           <div className="mb-lg flex items-center justify-between">
             <h2 className="text-headline-md font-headline-md text-on-surface">Time Distribution</h2>
             <span className="font-mono-data text-label-xs text-on-surface-variant">Rush Hour Peaks</span>
@@ -320,7 +320,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg">
+        <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
           <h2 className="mb-lg text-headline-md font-headline-md text-on-surface">Operator Performance</h2>
           <div className="space-y-sm">
             {(operators.length ? operators : [{ username: 'patrol', display_name: 'Patrol Unit', tasks: 0, completed: 0, completion_rate: 0 }]).map((operator) => (
@@ -347,7 +347,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg">
+      <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
         <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
           <button className="flex items-start gap-sm text-left" onClick={() => selectedSector ? navigate(eventHref) : navigate('/devices')} type="button">
             <span className="material-symbols-outlined text-primary">auto_awesome</span>
@@ -365,7 +365,7 @@ export default function Dashboard() {
 
 function StatusPill({ label, value, onClick }: { label: string; value: string; onClick: () => void }) {
   return (
-    <button className="rounded-xl border border-outline-variant/5 bg-surface-container p-4 text-left transition-all hover:border-primary/20 hover:bg-surface-container-high" onClick={onClick} type="button">
+    <button className="rounded-lg border border-outline-variant/10 bg-surface-container p-4 text-left transition-all hover:border-primary/20 hover:bg-surface-container-high focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" onClick={onClick} type="button">
       <div className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">{label}</div>
       <div className="mt-2 font-mono-data text-headline-md text-on-surface">{value}</div>
     </button>
@@ -375,7 +375,7 @@ function StatusPill({ label, value, onClick }: { label: string; value: string; o
 function MetricCard({ icon, label, value, helper, badge, tone = 'primary', onClick }: { icon: string; label: string; value: string | number; helper: string; badge: string; tone?: 'primary' | 'secondary' | 'tertiary'; onClick: () => void }) {
   const toneClass = tone === 'secondary' ? 'bg-secondary-container/10 text-secondary' : tone === 'tertiary' ? 'bg-tertiary-container/10 text-tertiary' : 'bg-primary-container/10 text-primary';
   return (
-    <button className="group rounded-xl border border-outline-variant/5 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 hover:bg-surface-container" onClick={onClick} type="button">
+    <button className="group rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 hover:bg-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" onClick={onClick} type="button">
       <div className="mb-md flex items-start justify-between">
         <span className={`material-symbols-outlined rounded-lg p-sm ${toneClass}`}>{icon}</span>
         <span className={`max-w-32 truncate rounded-full px-sm py-xs text-label-xs font-label-xs ${toneClass}`}>{badge}</span>

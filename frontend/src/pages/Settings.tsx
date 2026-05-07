@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../access/useRole';
 import { api } from '../api/client';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
-import { inputClassName } from '../components/styles';
+import { inputClassName, selectClassName } from '../components/styles';
 import { useToast } from '../hooks/useToast';
 import type { RuntimeSettingsUpdate } from '../types';
 import { formatDateTime } from '../utils/format';
@@ -120,7 +120,7 @@ export default function Settings() {
       <div className="mt-lg grid gap-4 lg:grid-cols-2">
         <SettingCard icon="shield" title="Review Policy" description="All suspected events must be manually reviewed before confirmation.">
           <select
-            className={inputClassName('mt-3 w-full')}
+            className={selectClassName('mt-3 w-full')}
             value={settings.review_mode}
             onChange={(e) => editable && update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
             disabled={!editable}
@@ -159,7 +159,7 @@ export default function Settings() {
         </SettingCard>
         <SettingCard icon="shield" title="Device Access" description="Current LAN demo defaults to open; production should integrate device tokens.">
           <select
-            className={inputClassName('mt-3 w-full')}
+            className={selectClassName('mt-3 w-full')}
             value={settings.device_access_mode}
             onChange={(e) => editable && update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
             disabled={!editable}

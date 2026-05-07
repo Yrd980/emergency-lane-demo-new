@@ -41,10 +41,10 @@ export default function EventTable({
         </span>
       </div>
 
-      <div className="hidden overflow-hidden rounded-xl border border-outline-variant bg-surface-container-high shadow-[0_1px_0_rgba(32,32,29,0.04)] lg:block">
+      <div className="hidden overflow-hidden rounded-lg border border-outline-variant/40 bg-surface-container-high shadow-[0_1px_0_rgba(32,32,29,0.04)] lg:block">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-outline-variant bg-surface-container-low text-left text-label-xs font-medium text-on-surface-variant">
+            <tr className="border-b border-outline-variant/30 bg-surface-container-low text-left text-label-xs font-medium uppercase tracking-wider text-on-surface-variant">
               {onToggleSelect && (
                 <th className="w-10 p-3">
                   <input
@@ -68,7 +68,7 @@ export default function EventTable({
           </thead>
           <tbody>
             {items.map((evt) => (
-              <tr key={evt.event_id} className="border-b border-outline-variant text-body-sm last:border-b-0 hover:bg-primary/5">
+              <tr key={evt.event_id} className="border-b border-outline-variant/25 text-body-sm last:border-b-0 hover:bg-primary/5">
                 {onToggleSelect && (
                   <td className="p-3 align-middle">
                     <input
@@ -97,7 +97,7 @@ export default function EventTable({
                   </div>
                 </td>
                 <td className="p-3">
-                  <button className="text-left" onClick={() => navigate(detailHref(evt.event_id))}>
+                  <button className="rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => navigate(detailHref(evt.event_id))}>
                     <div className="font-mono-data text-label-xs font-semibold text-on-surface">{evt.event_id}</div>
                     <div className="mt-1 text-label-xs text-on-surface-variant">{formatDateTime(evt.start_time)} · {evt.vehicle_class}</div>
                   </button>
@@ -108,7 +108,7 @@ export default function EventTable({
                 <td className="p-3"><StatusBadge status={evt.review_status} /></td>
                 <td className="p-3 text-right">
                   <button
-                    className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-label-xs font-semibold text-on-surface hover:bg-surface-container-low"
+                    className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 py-2 text-label-xs font-semibold text-on-surface transition-colors hover:bg-surface-container-low focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                     onClick={() => navigate(detailHref(evt.event_id))}
                   >
                     {mode === 'review' ? '查看并复核' : '查看详情'} <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -122,7 +122,7 @@ export default function EventTable({
 
       <div className="space-y-3 lg:hidden">
         {items.map((evt) => (
-          <div key={evt.event_id} className="rounded-xl border border-outline-variant bg-surface-container-high p-3 shadow-[0_1px_0_rgba(32,32,29,0.04)] transition hover:border-primary">
+          <div key={evt.event_id} className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-3 shadow-[0_1px_0_rgba(32,32,29,0.04)] transition hover:border-primary">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {onToggleSelect && (
@@ -139,7 +139,7 @@ export default function EventTable({
               </div>
               <StatusBadge status={evt.review_status} />
             </div>
-            <button onClick={() => navigate(detailHref(evt.event_id))} className="w-full text-left">
+            <button onClick={() => navigate(detailHref(evt.event_id))} className="w-full rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <div className="flex gap-3">
               {evt.thumbnail_url ? (
                 <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-lg object-cover ring-1 ring-outline-variant" />
@@ -162,7 +162,7 @@ export default function EventTable({
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
             disabled={currentPage <= 1}
-            className="rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-body-sm disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-outline-variant/50 bg-surface-container-high px-4 py-2 text-body-sm font-semibold disabled:opacity-50"
             onClick={() => onPage(Math.max(0, offset - limit))}
           >
             上一页
@@ -170,7 +170,7 @@ export default function EventTable({
           <span className="text-body-sm text-on-surface-variant">{currentPage} / {totalPages}</span>
           <button
             disabled={currentPage >= totalPages}
-            className="rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-body-sm disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-outline-variant/50 bg-surface-container-high px-4 py-2 text-body-sm font-semibold disabled:opacity-50"
             onClick={() => onPage(offset + limit)}
           >
             下一页

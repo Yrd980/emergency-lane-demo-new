@@ -73,7 +73,7 @@ export default function ReviewQueue() {
   };
 
   return (
-    <div>
+    <div className="space-y-lg">
       <PageHeader
         eyebrow="REVIEW"
         title="Review Workbench"
@@ -87,7 +87,7 @@ export default function ReviewQueue() {
         }
       />
 
-      <div className="mb-lg">
+      <div>
         <ActionPanel
           title={firstEvent ? 'Next: Open first queued event' : 'No pending review events'}
           description={firstEvent ? `Queue sorted by priority: ${firstEvent.review_priority_reason ?? 'chronological'}, detail page only advances through pending items.` : 'Wait for new events or check history.'}
@@ -119,7 +119,7 @@ export default function ReviewQueue() {
       {data && data.items.length > 0 && (
         <>
           {/* Bulk Actions Bar */}
-          <SurfacePanel className="mb-3 p-4">
+          <SurfacePanel className="p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="text-body-sm font-semibold text-on-surface">Selected Review Outcome</div>
@@ -133,7 +133,7 @@ export default function ReviewQueue() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  className="inline-flex min-h-10 items-center justify-center gap-sm rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-body-sm font-semibold text-on-surface hover:bg-surface-container-highest disabled:opacity-50 transition-all"
+                  className="inline-flex min-h-11 items-center justify-center gap-sm rounded-lg border border-outline-variant/50 bg-surface-container-high px-3 py-2 text-body-sm font-semibold text-on-surface transition-all hover:bg-surface-container-highest disabled:opacity-50"
                   disabled={submittingBulk}
                   onClick={toggleSelectAll}
                 >

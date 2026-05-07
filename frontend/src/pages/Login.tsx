@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../access/useRole';
+import { inputClassName } from '../components/styles';
 
 export default function Login() {
   const { login } = useAuth();
@@ -18,10 +19,32 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-margin text-on-surface">
+    <div className="grid min-h-screen bg-background text-on-surface lg:grid-cols-[1fr_27rem]">
+      <section className="hidden min-h-screen flex-col justify-between border-r border-outline-variant/10 bg-surface-container-lowest p-xl lg:flex">
+        <div>
+          <div className="inline-flex items-center gap-sm text-primary">
+            <span className="material-symbols-outlined text-[28px]">shield</span>
+            <span className="text-[24px] font-semibold leading-tight">Aegis Traffic</span>
+          </div>
+          <h1 className="mt-xl max-w-xl text-[32px] font-semibold leading-tight text-on-surface">
+            Local emergency-lane operations console.
+          </h1>
+          <p className="mt-md max-w-lg text-[15px] leading-6 text-on-surface-variant">
+            Sign in to review evidence, check device health, and route validated incidents to the next action.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-sm text-label-xs text-on-surface-variant">
+          {['Evidence', 'Review', 'Dispatch'].map((item) => (
+            <div key={item} className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-3">
+              <span className="font-semibold text-primary">{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <div className="flex min-h-screen items-center justify-center px-md py-xl">
       <form
         onSubmit={submit}
-        className="rounded-xl border border-outline-variant/10 bg-surface-container-low p-lg"
+        className="w-full rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg"
         style={{ width: 'min(24rem, calc(100vw - 48px))' }}
       >
         <div className="mb-lg">
@@ -35,7 +58,7 @@ export default function Login() {
         <label className="block text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">
           Username
           <input
-            className="mt-sm w-full rounded-lg border border-outline-variant/20 bg-background px-md py-sm text-body-sm text-on-surface outline-none focus:border-primary"
+            className={inputClassName('mt-sm w-full')}
             value={username}
             onChange={(event) => setUsername(event.target.value)}
           />
@@ -43,14 +66,14 @@ export default function Login() {
         <label className="mt-md block text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">
           Password
           <input
-            className="mt-sm w-full rounded-lg border border-outline-variant/20 bg-background px-md py-sm text-body-sm text-on-surface outline-none focus:border-primary"
+            className={inputClassName('mt-sm w-full')}
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
         <button
-          className="mt-lg flex min-h-10 w-full items-center justify-center rounded-lg bg-primary-container px-md py-sm text-label-xs font-bold text-on-primary-container transition-all hover:brightness-110 disabled:opacity-60"
+          className="mt-lg flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-container px-md py-sm text-body-sm font-semibold text-on-primary-container transition-all hover:brightness-110 disabled:opacity-60"
           disabled={submitting}
         >
           {submitting ? 'Signing in...' : 'Sign In'}
@@ -59,6 +82,7 @@ export default function Login() {
           Built-in accounts: admin/admin123, reviewer/review123, dispatcher/dispatch123, patrol/patrol123.
         </div>
       </form>
+      </div>
     </div>
   );
 }

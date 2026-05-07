@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import EvidenceViewer from '../components/EvidenceViewer';
 import ReviewPanel from '../components/ReviewPanel';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
+import { inputClassName, selectClassName } from '../components/styles';
 import { useToast } from '../hooks/useToast';
 import type { EventDetail as EventDetailType, ReviewHistoryItem } from '../types';
 import { cn, formatFullDateTime, formatPercent } from '../utils/format';
@@ -182,7 +183,7 @@ export default function EventDetail() {
       />
 
       {/* ─── Incident badge bar ─── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low p-md">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
         <FieldChip label="Event ID" value={data.event_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
         <FieldChip label="Device" value={data.device_id} mono />
@@ -216,7 +217,7 @@ export default function EventDetail() {
         {/* ════════════ LEFT: EVIDENCE ════════════ */}
         <section className="space-y-5">
           {/* Video player / evidence viewer */}
-          <div className="overflow-hidden rounded-xl border border-outline-variant/10 bg-surface-container-low">
+          <div className="overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low">
             {/* Camera label bar */}
             <div className="flex items-center justify-between border-b border-outline-variant/10 bg-surface-container px-4 py-2.5">
               <div className="flex items-center gap-2.5">
@@ -264,12 +265,12 @@ export default function EventDetail() {
                       alt={file.evidence_type}
                       className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition duration-200 group-hover:bg-black/40">
-                      <span className="material-symbols-outlined text-2xl text-white opacity-0 transition duration-200 group-hover:opacity-100">
+                    <div className="absolute inset-0 flex items-center justify-center bg-surface-container-lowest/0 transition duration-200 group-hover:bg-surface-container-lowest/50">
+                      <span className="material-symbols-outlined text-2xl text-on-surface opacity-0 transition duration-200 group-hover:opacity-100">
                         zoom_in
                       </span>
                     </div>
-                    <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
+                    <span className="absolute bottom-1.5 left-1.5 rounded bg-surface-container-lowest/70 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
                       {file.evidence_type === 'frame_peak'
                         ? 'PEAK'
                         : file.evidence_type === 'frame_before'
@@ -329,7 +330,7 @@ export default function EventDetail() {
               </div>
             </div>
             <div className="p-4">
-              <div className="flex flex-col gap-4 border-l-2 border-outline-variant ml-1 pl-4">
+              <div className="flex flex-col gap-4 border-l border-outline-variant/50 ml-1 pl-4">
                 {timeline.map((entry) => (
                   <div key={entry.id} className="relative">
                     <div
@@ -384,7 +385,7 @@ export default function EventDetail() {
                   </span>
                   <span className="font-mono-data text-xs text-primary">{gpsText}</span>
                 </div>
-                <div className="flex h-40 items-center justify-center overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container">
+                <div className="flex h-40 items-center justify-center overflow-hidden rounded-lg border border-outline-variant/30 bg-surface-container">
                   <div className="text-center">
                     <span className="material-symbols-outlined text-3xl text-on-surface-variant/50">map</span>
                     <p className="mt-2 text-label-xs text-on-surface-variant">{gpsText}</p>
@@ -420,7 +421,7 @@ export default function EventDetail() {
                       <label className="grid gap-1 text-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
                         Patrol assignee
                         <select
-                          className="rounded-lg border border-outline-variant bg-background px-3 py-2 text-body-sm normal-case tracking-normal text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                          className={selectClassName('w-full normal-case tracking-normal')}
                           value={selectedAssignee}
                           onChange={(e) => setSelectedAssignee(e.target.value)}
                         >
@@ -432,7 +433,7 @@ export default function EventDetail() {
                         </select>
                       </label>
                       <input
-                        className="rounded-lg border border-outline-variant bg-background px-3 py-2 text-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50 focus:border-primary focus:ring-1 focus:ring-primary"
+                        className={inputClassName('w-full')}
                         value={assignmentNote}
                         onChange={(e) => setAssignmentNote(e.target.value)}
                         placeholder="Dispatch note"

@@ -39,7 +39,7 @@ export default function ReviewPanel({
   }
 
   return (
-    <div className="rounded-xl border border-outline-variant bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
+    <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold text-on-surface">Manual Review</h3>
@@ -62,7 +62,7 @@ export default function ReviewPanel({
             {noteTemplates.map((template) => (
               <button
                 key={template}
-                className="min-h-10 rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-left text-label-xs leading-5 text-on-surface-variant transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                className="min-h-11 rounded-lg border border-outline-variant/40 bg-surface-container px-3 py-2 text-left text-body-sm leading-5 text-on-surface-variant transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                 onClick={() => setNote(template)}
               >
                 {template}
