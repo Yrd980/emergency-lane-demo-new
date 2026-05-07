@@ -1,6 +1,9 @@
 import json
+import os
+import shutil
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
+from app.config import settings
 
 VALID_REVIEW_STATUSES = {"pending", "confirmed", "rejected"}
 EVIDENCE_ORDER = {"frame_before": 0, "frame_peak": 1, "frame_after": 2, "video_clip": 3}
@@ -187,6 +190,23 @@ def update_review(event_id: str, review_status: str, operator_note: str, operato
         return None
     from_status = event["review_status"]
     operator_id = (operator_id or "本地复核员").strip() or "本地复核员"
+
+    if review_status == "confirmed":
+        settings_row = conn.execute(
+            "SELECT require_complete_evidence FROM runtime_settings WHERE id=1"
+        ).fetchone()
+        if settings_row and settings_row["require_complete_evidence"]:
+            evidence_types = {
+                r["evidence_type"] for r in
+                conn.execute("SELECT evidence_type FROM evidence_files WHERE event_id=?", (event_id,))
+            }
+            if not {"frame_before", "frame_peak", "frame_after"}.issubset(evidence_types):
+                return {
+                    "event_id": event_id,
+                    "review_status": review_status,
+                    "error": "Complete evidence (before/peak/after) required before confirmation",
+                }
+
     cur = conn.execute(
         "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
         (review_status, operator_note, now, event_id),
@@ -228,3 +248,17 @@ def bulk_update_review(event_ids: list[str], review_status: str, operator_note: 
         "missing_event_ids": missing_event_ids,
         "items": results,
     }
+
+
+def delete_event(event_id: str):
+    conn = get_db()
+    conn.execute("DELETE FROM evidence_files WHERE event_id=?", (event_id,))
+    conn.execute("DELETE FROM review_history WHERE event_id=?", (event_id,))
+    cur = conn.execute("DELETE FROM events WHERE event_id=?", (event_id,))
+    conn.commit()
+    if cur.rowcount == 0:
+        return None
+    event_dir = os.path.join(settings.evidence_dir, event_id)
+    if os.path.isdir(event_dir):
+        shutil.rmtree(event_dir)
+    return {"event_id": event_id, "deleted": True}

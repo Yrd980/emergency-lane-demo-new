@@ -8,8 +8,11 @@ import androidx.compose.ui.graphics.Color
 // Aegis Traffic Design System — Dark Theme Colors
 val AegisBackground = Color(0xFF13131b)
 val AegisSurface = Color(0xFF1b1b23)
+val AegisSurfaceContainerLowest = Color(0xFF0e0d15)
+val AegisSurfaceContainerLow = Color(0xFF1b1b23)
 val AegisSurfaceContainer = Color(0xFF1f1f27)
 val AegisSurfaceContainerHigh = Color(0xFF2a2932)
+val AegisSurfaceContainerHighest = Color(0xFF34343d)
 val AegisOnSurface = Color(0xFFe4e1ed)
 val AegisOnSurfaceVariant = Color(0xFFc7c4d7)
 val AegisOutline = Color(0xFF918fa0)
@@ -25,6 +28,11 @@ val AegisOnSecondary = Color(0xFF5f1500)
 val AegisSecondaryContainer = Color(0xFFd73b00)
 val AegisOnSecondaryContainer = Color(0xFFfffbff)
 
+val AegisTertiary = Color(0xFFffb786)
+val AegisOnTertiary = Color(0xFF502400)
+val AegisTertiaryContainer = Color(0xFFae5600)
+val AegisOnTertiaryContainer = Color(0xFFffefe7)
+
 val AegisError = Color(0xFFffb4ab)
 val AegisErrorContainer = Color(0xFF93000a)
 
@@ -37,6 +45,10 @@ private val AegisDarkColorScheme = darkColorScheme(
     onSecondary = AegisOnSecondary,
     secondaryContainer = AegisSecondaryContainer,
     onSecondaryContainer = AegisOnSecondaryContainer,
+    tertiary = AegisTertiary,
+    onTertiary = AegisOnTertiary,
+    tertiaryContainer = AegisTertiaryContainer,
+    onTertiaryContainer = AegisOnTertiaryContainer,
     error = AegisError,
     errorContainer = AegisErrorContainer,
     background = AegisBackground,

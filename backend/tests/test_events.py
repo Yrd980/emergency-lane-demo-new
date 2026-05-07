@@ -220,3 +220,34 @@ def test_duplicate_upload_does_not_overwrite_review(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_keep"})
     resp = client.get("/api/events/evt_keep")
     assert resp.json()["review_status"] == "confirmed"
+
+
+def test_require_complete_evidence_blocks_confirmation(client):
+    client.put("/api/settings", json={
+        "review_mode": "manual",
+        "online_window_seconds": 60,
+        "evidence_retention_days": 30,
+        "require_complete_evidence": True,
+        "device_access_mode": "open",
+    })
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_incomplete"})
+    resp = client.patch("/api/events/evt_incomplete/review", json={
+        "review_status": "confirmed",
+        "operator_note": "no evidence",
+    })
+    assert resp.status_code == 422
+    assert "Complete evidence" in resp.json()["detail"]
+
+
+def test_delete_event_removes_event_and_evidence(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_del"})
+    resp = client.delete("/api/events/evt_del")
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] is True
+    resp = client.get("/api/events/evt_del")
+    assert resp.status_code == 404
+
+
+def test_delete_nonexistent_event_returns_404(client):
+    resp = client.delete("/api/events/nonexistent")
+    assert resp.status_code == 404

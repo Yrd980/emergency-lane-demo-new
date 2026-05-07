@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from app.config import settings as config_settings
 from app.database import get_db
 
 
@@ -10,6 +11,20 @@ DEFAULT_SETTINGS = {
     "require_complete_evidence": False,
     "device_access_mode": "open",
 }
+
+
+def get_effective_online_threshold() -> int:
+    """Read online_window_seconds from runtime_settings, fall back to config."""
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT online_window_seconds FROM runtime_settings WHERE id=1"
+        ).fetchone()
+        if row:
+            return row["online_window_seconds"]
+    except Exception:
+        pass
+    return config_settings.online_threshold_seconds
 
 
 def _now():

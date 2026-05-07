@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
-from app.config import settings
+from app.services.settings_service import get_effective_online_threshold
 
 def _now():
     tz = timezone(timedelta(hours=8))
@@ -21,7 +21,7 @@ def get_overview():
     confirmed = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='confirmed'").fetchone()[0]
     rejected = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='rejected'").fetchone()[0]
 
-    threshold = (now - timedelta(seconds=settings.online_threshold_seconds)).isoformat()
+    threshold = (now - timedelta(seconds=get_effective_online_threshold())).isoformat()
     online = conn.execute(
         "SELECT COUNT(*) FROM devices WHERE last_seen_at >= ?", (threshold,)
     ).fetchone()[0]

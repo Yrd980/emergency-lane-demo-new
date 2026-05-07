@@ -99,6 +99,7 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_events_device ON events(device_id);
         CREATE INDEX IF NOT EXISTS idx_events_status ON events(review_status);
         CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
+        CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
         CREATE INDEX IF NOT EXISTS idx_device_metric_history_device ON device_metric_history(device_id, recorded_at DESC);
         CREATE INDEX IF NOT EXISTS idx_evidence_event ON evidence_files(event_id);
         CREATE INDEX IF NOT EXISTS idx_review_history_event ON review_history(event_id);

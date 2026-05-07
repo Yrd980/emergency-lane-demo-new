@@ -18,6 +18,12 @@ interface HpApiService {
     @POST("/api/events")
     suspend fun createEvent(@Body event: RequestBody): Response<EventCreateResponse>
 
+    @GET("/api/events")
+    suspend fun getEvents(
+        @Query("status") status: String? = null,
+        @Query("limit") limit: Int = 20
+    ): Response<EventListResponse>
+
     @Multipart
     @POST("/api/events/{eventId}/evidence")
     suspend fun uploadEvidence(

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 
 from app.database import get_db
-from app.config import settings
+from app.services.settings_service import get_effective_online_threshold
 
 
 def _now():
@@ -69,7 +69,7 @@ def list_devices():
         last = datetime.fromisoformat(r["last_seen_at"])
         is_online = (
             now_dt - last
-        ).total_seconds() < settings.online_threshold_seconds
+        ).total_seconds() < get_effective_online_threshold()
         result.append(
             {
                 "device_id": r["device_id"],
@@ -97,7 +97,7 @@ def get_device_detail(device_id: str):
     now_dt = datetime.now(timezone(timedelta(hours=8)))
     last = datetime.fromisoformat(row["last_seen_at"])
     seconds_since_seen = int((now_dt - last).total_seconds())
-    is_online = seconds_since_seen < settings.online_threshold_seconds
+    is_online = seconds_since_seen < get_effective_online_threshold()
     recent_events = conn.execute(
         """SELECT event_id, start_time, duration_seconds, vehicle_class, confidence, review_status
            FROM events WHERE device_id=?
@@ -185,3 +185,12 @@ def get_device_detail(device_id: str):
             for event in recent_events
         ],
     }
+
+
+def delete_device(device_id: str):
+    conn = get_db()
+    cur = conn.execute("DELETE FROM devices WHERE device_id=?", (device_id,))
+    conn.commit()
+    if cur.rowcount == 0:
+        return None
+    return {"device_id": device_id, "deleted": True}

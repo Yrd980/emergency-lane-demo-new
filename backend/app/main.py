@@ -28,6 +28,8 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def on_startup():
         init_db()
+        from app.services.evidence_service import cleanup_expired_evidence
+        cleanup_expired_evidence()
 
     return app
 

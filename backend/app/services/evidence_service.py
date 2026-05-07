@@ -1,5 +1,6 @@
 import os
 import hashlib
+import shutil
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
 from app.config import settings
@@ -36,3 +37,26 @@ def save_evidence(event_id: str, evidence_type: str, file_content: bytes, filena
         "url": f"/evidence/{event_id}/{filename}",
         "sha256": sha256,
     }
+
+
+def cleanup_expired_evidence():
+    """Delete evidence for events older than retention_days from runtime_settings."""
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT evidence_retention_days FROM runtime_settings WHERE id=1"
+        ).fetchone()
+        retention_days = row["evidence_retention_days"] if row else 30
+
+        cutoff = datetime.now(timezone(timedelta(hours=8))) - timedelta(days=retention_days)
+        old_events = conn.execute(
+            "SELECT event_id FROM events WHERE created_at < ?", (cutoff.isoformat(),)
+        ).fetchall()
+        for event in old_events:
+            event_dir = os.path.join(settings.evidence_dir, event["event_id"])
+            if os.path.isdir(event_dir):
+                shutil.rmtree(event_dir)
+            conn.execute("DELETE FROM evidence_files WHERE event_id=?", (event["event_id"],))
+        conn.commit()
+    except Exception:
+        pass

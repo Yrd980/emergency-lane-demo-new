@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 from app.config import settings
 from app.database import get_db
+from app.services.settings_service import get_effective_online_threshold
 
 
 def _now():
@@ -13,7 +14,7 @@ def _now():
 def get_status():
     conn = get_db()
     now = _now()
-    threshold = (now - timedelta(seconds=settings.online_threshold_seconds)).isoformat()
+    threshold = (now - timedelta(seconds=get_effective_online_threshold())).isoformat()
 
     devices_total = conn.execute("SELECT COUNT(*) FROM devices").fetchone()[0]
     devices_online = conn.execute(

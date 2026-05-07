@@ -98,6 +98,28 @@ def test_heartbeat_preserves_register_fields(client):
     assert device["device_name"] == "vivo X100"
 
 
+def test_delete_device_removes_device(client):
+    client.post(
+        "/api/devices/register",
+        json={
+            "device_id": "vivo_del",
+            "device_name": "vivo ToDelete",
+            "app_version": "0.1.0",
+            "model_version": "yolov8n-int8",
+        },
+    )
+    resp = client.delete("/api/devices/vivo_del")
+    assert resp.status_code == 200
+    assert resp.json()["deleted"] is True
+    resp = client.get("/api/devices/vivo_del")
+    assert resp.status_code == 404
+
+
+def test_delete_nonexistent_device_returns_404(client):
+    resp = client.delete("/api/devices/nonexistent")
+    assert resp.status_code == 404
+
+
 def test_device_detail_reports_metric_history_and_troubleshooting_codes(client):
     client.post(
         "/api/devices/register",

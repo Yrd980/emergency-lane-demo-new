@@ -41,3 +41,10 @@ def device_heartbeat(body: DeviceHeartbeat):
     if not result:
         raise HTTPException(status_code=404, detail="Device not found")
     return result
+
+@router.delete("/{device_id}")
+def delete_device(device_id: str):
+    result = device_service.delete_device(device_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return result

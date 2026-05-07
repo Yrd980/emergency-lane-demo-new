@@ -27,4 +27,17 @@ class HpApiClient(baseUrl: String) {
         .build()
 
     val api: HpApiService = retrofit.create(HpApiService::class.java)
+
+    suspend fun getEvents(status: String? = null, limit: Int = 20): Result<EventListResponse> {
+        return try {
+            val response = api.getEvents(status, limit)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("Failed to fetch events: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

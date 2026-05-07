@@ -38,3 +38,15 @@ def test_update_settings_validates_ranges(client):
         "device_access_mode": "open",
     })
     assert resp.status_code == 422
+
+
+def test_effective_online_threshold_reads_from_db(client):
+    from app.services.settings_service import get_effective_online_threshold
+    client.put("/api/settings", json={
+        "review_mode": "manual",
+        "online_window_seconds": 180,
+        "evidence_retention_days": 30,
+        "require_complete_evidence": False,
+        "device_access_mode": "open",
+    })
+    assert get_effective_online_threshold() == 180

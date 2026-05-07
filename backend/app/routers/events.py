@@ -47,6 +47,8 @@ def update_review(event_id: str, body: ReviewUpdate):
     result = event_service.update_review(event_id, body.review_status, body.operator_note, body.operator_id)
     if not result:
         raise HTTPException(status_code=404, detail="Event not found")
+    if "error" in result:
+        raise HTTPException(status_code=422, detail=result["error"])
     return result
 
 @router.patch("/review/bulk")
@@ -54,3 +56,10 @@ def bulk_update_review(body: BulkReviewUpdate):
     if body.review_status not in ("confirmed", "rejected"):
         raise HTTPException(status_code=422, detail="review_status must be 'confirmed' or 'rejected'")
     return event_service.bulk_update_review(body.event_ids, body.review_status, body.operator_note, body.operator_id)
+
+@router.delete("/{event_id}")
+def delete_event(event_id: str):
+    result = event_service.delete_event(event_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return result
