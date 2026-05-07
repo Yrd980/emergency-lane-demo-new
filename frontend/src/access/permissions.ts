@@ -1,13 +1,3 @@
-import {
-  Activity,
-  ClipboardCheck,
-  Gauge,
-  MonitorSmartphone,
-  Route,
-  Settings,
-  Siren,
-} from 'lucide-react';
-
 export type Role = 'reviewer' | 'operator' | 'maintainer';
 
 export const roleLabels: Record<Role, string> = {
@@ -23,13 +13,13 @@ export const roleDescriptions: Record<Role, string> = {
 };
 
 export const navItems = [
-  { to: '/', label: '工作台', icon: Gauge, roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
-  { to: '/setup', label: '接入', icon: Route, roles: ['operator', 'maintainer'] as Role[] },
-  { to: '/review', label: '复核', icon: ClipboardCheck, roles: ['reviewer', 'maintainer'] as Role[] },
-  { to: '/events', label: '事件', icon: Siren, roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
-  { to: '/devices', label: '设备', icon: MonitorSmartphone, roles: ['operator', 'maintainer'] as Role[] },
-  { to: '/health', label: '健康', icon: Activity, roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
-  { to: '/settings', label: '设置', icon: Settings, roles: ['maintainer'] as Role[] },
+  { to: '/', label: 'Dashboard', icon: 'dashboard', roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
+  { to: '/review', label: 'Review', icon: 'clipboard_check', roles: ['reviewer', 'maintainer'] as Role[] },
+  { to: '/events', label: 'Events', icon: 'emergency', roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
+  { to: '/devices', label: 'Live Feed', icon: 'videocam', roles: ['operator', 'maintainer'] as Role[] },
+  { to: '/health', label: 'Health', icon: 'monitoring', roles: ['reviewer', 'operator', 'maintainer'] as Role[] },
+  { to: '/settings', label: 'Settings', icon: 'settings', roles: ['maintainer'] as Role[] },
+  { to: '/setup', label: 'Setup', icon: 'add_circle', roles: ['operator', 'maintainer'] as Role[] },
 ] as const;
 
 export const routeAccess = {
