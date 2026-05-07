@@ -24,12 +24,13 @@ class CameraController(
     private val lifecycleOwner: LifecycleOwner
 ) {
     private var imageCapture: ImageCapture? = null
+    private var cameraProvider: ProcessCameraProvider? = null
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     fun startCamera(previewView: PreviewView) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            cameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
@@ -40,8 +41,8 @@ class CameraController(
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
             try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                cameraProvider?.unbindAll()
+                cameraProvider?.bindToLifecycle(
                     lifecycleOwner, cameraSelector, preview, imageCapture
                 )
             } catch (_: Exception) {}
@@ -79,6 +80,10 @@ class CameraController(
     }
 
     fun release() {
+        try {
+            cameraProvider?.unbindAll()
+        } catch (_: Exception) {}
+        imageCapture = null
         cameraExecutor.shutdown()
     }
 }

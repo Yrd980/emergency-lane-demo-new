@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,12 +55,10 @@ import com.emergency.lane.ui.theme.AegisBackground
 import com.emergency.lane.ui.theme.AegisError
 import com.emergency.lane.ui.theme.AegisErrorContainer
 import com.emergency.lane.ui.theme.AegisOnPrimary
-import com.emergency.lane.ui.theme.AegisOnSecondaryContainer
 import com.emergency.lane.ui.theme.AegisOnSurface
 import com.emergency.lane.ui.theme.AegisOnSurfaceVariant
 import com.emergency.lane.ui.theme.AegisOutlineVariant
 import com.emergency.lane.ui.theme.AegisPrimary
-import com.emergency.lane.ui.theme.AegisPrimaryContainer
 import com.emergency.lane.ui.theme.AegisSecondaryContainer
 import com.emergency.lane.ui.theme.AegisSurfaceContainer
 import com.emergency.lane.ui.theme.AegisSurfaceContainerHigh
@@ -81,10 +82,17 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.leaveScreen()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AegisBackground)
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
         // Camera preview with detection overlay
@@ -233,76 +241,72 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         Text("Model Load Failed", fontWeight = FontWeight.SemiBold, color = AegisError)
                         Text(status.error, fontSize = 14.sp, color = AegisOnSurfaceVariant)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Switched to manual simulation mode.", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                        Text("Manual event reporting remains available.", fontSize = 14.sp, color = AegisOnSurfaceVariant)
                     }
                 }
         }
 
-        // Controls row 1
+        DetectionGuide(uiState = uiState)
+
+        // Main controls
         Row(
             modifier = Modifier.fillMaxWidth().padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
-                onClick = { viewModel.startPreview() },
+                onClick = {
+                    viewModel.leaveScreen()
+                    navController.navigate("feed") {
+                        popUpTo("feed") { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Start Preview", fontSize = 12.sp) }
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) { Text("Back", fontSize = 12.sp) }
             Button(
-                onClick = { viewModel.stopPreview() },
-                colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Stop Preview", fontSize = 12.sp) }
-            Button(
-                onClick = { navController.navigate("calibration") },
-                colors = ButtonDefaults.buttonColors(containerColor = AegisPrimaryContainer, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("ROI Calibrate", fontSize = 12.sp) }
-        }
-
-        // Controls row 2
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-            Button(
-                onClick = { viewModel.initDetection() },
+                onClick = { viewModel.startDetectionFlow() },
+                enabled = uiState.roiConfigured && uiState.hpConfigured,
                 colors = ButtonDefaults.buttonColors(containerColor = AegisPrimary, contentColor = AegisOnPrimary),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Load Model", fontSize = 12.sp) }
-            if (uiState.modelStatus is ModelLoadStatus.Ready) {
-                if (uiState.isDetecting) {
-                    Button(
-                        onClick = { viewModel.stopDetection() },
-                        colors = ButtonDefaults.buttonColors(containerColor = AegisErrorContainer, contentColor = AegisError),
-                        shape = RoundedCornerShape(8.dp)
-                    ) { Text("Stop Detection", fontSize = 12.sp) }
-                } else {
-                    Button(
-                        onClick = { viewModel.startDetection() },
-                        colors = ButtonDefaults.buttonColors(containerColor = AegisPrimary, contentColor = AegisOnPrimary),
-                        shape = RoundedCornerShape(8.dp)
-                    ) { Text("Start Detection", fontSize = 12.sp) }
-                }
-            }
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1.4f)
+            ) { Text(if (uiState.isDetecting) "Detecting" else "Start Detection", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
         }
 
-        // Controls row 3
-        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
                 onClick = { viewModel.generateManualEvent() },
-                enabled = uiState.canGenerateEvent,
-                colors = ButtonDefaults.buttonColors(containerColor = AegisPrimary, contentColor = AegisOnPrimary),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Generate Manual Event", fontSize = 12.sp) }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = { navController.navigate("account") },
+                enabled = uiState.canGenerateEvent && uiState.isPreviewActive,
                 colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Settings", fontSize = 12.sp) }
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) { Text("Manual Upload", fontSize = 12.sp) }
             Button(
-                onClick = { navController.navigate("alerts") },
+                onClick = { viewModel.stopDetection(); viewModel.stopPreview() },
+                enabled = uiState.isPreviewActive || uiState.isDetecting,
                 colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
-                shape = RoundedCornerShape(8.dp)
-            ) { Text("Queue", fontSize = 12.sp) }
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) { Text("Stop Camera", fontSize = 12.sp) }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TextButton(onClick = { navController.navigate("calibration") }, modifier = Modifier.weight(1f)) {
+                Text("Calibrate ROI", color = AegisPrimary, fontSize = 12.sp)
+            }
+            TextButton(onClick = { navController.navigate("account") }, modifier = Modifier.weight(1f)) {
+                Text("Settings", color = AegisPrimary, fontSize = 12.sp)
+            }
+            TextButton(onClick = { navController.navigate("alerts") }, modifier = Modifier.weight(1f)) {
+                Text("Queue", color = AegisPrimary, fontSize = 12.sp)
+            }
         }
 
         // Status bar
@@ -316,6 +320,39 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
             if (uiState.isDetecting) {
                 Text("Detecting...", color = AegisPrimary, fontSize = 12.sp)
             }
+        }
+    }
+}
+
+@Composable
+private fun DetectionGuide(uiState: DetectionUiState) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(AegisSurfaceContainerLow)
+            .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Detection", color = AegisOnSurface, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = when {
+                    !uiState.hpConfigured -> "Set backend URL first, then return here."
+                    !uiState.roiConfigured -> "Calibrate ROI first. Events are created only when a vehicle stays inside ROI long enough."
+                    uiState.isDetecting -> "Camera is running. Vehicle boxes are tracked and uploaded after the ROI dwell rule is met."
+                    uiState.modelStatus is ModelLoadStatus.Ready -> "Model is loaded. Start detection or create one manual upload."
+                    else -> "Start Detection opens the camera and loads the local vehicle model."
+                },
+                color = AegisOnSurfaceVariant,
+                fontSize = 12.sp
+            )
+            Text(
+                "Rule: vehicle confidence >= 0.5, inside ROI for 10s, then before/peak/after images are queued. Manual upload also needs the camera running.",
+                color = AegisOnSurfaceVariant,
+                fontSize = 12.sp
+            )
         }
     }
 }

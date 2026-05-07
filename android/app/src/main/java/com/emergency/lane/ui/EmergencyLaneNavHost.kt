@@ -93,7 +93,7 @@ fun EmergencyLaneNavHost() {
         containerColor = AegisBackground,
         topBar = {
             if (showBars) {
-                AegisTopBar()
+                AegisTopBar(navController)
             }
         },
         bottomBar = {
@@ -118,7 +118,7 @@ fun EmergencyLaneNavHost() {
 }
 
 @Composable
-private fun AegisTopBar() {
+private fun AegisTopBar(navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,7 +150,7 @@ private fun AegisTopBar() {
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) {}
+                    ) { navController.navigate("alerts") }
             )
             Icon(
                 imageVector = Icons.Default.Settings,
@@ -162,7 +162,7 @@ private fun AegisTopBar() {
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) {}
+                    ) { navController.navigate("account") }
             )
             Box(
                 modifier = Modifier

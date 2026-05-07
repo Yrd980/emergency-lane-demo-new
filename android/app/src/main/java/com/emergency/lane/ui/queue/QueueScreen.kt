@@ -16,14 +16,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -39,36 +37,62 @@ import com.emergency.lane.ui.theme.AegisOnSurfaceVariant
 import com.emergency.lane.ui.theme.AegisOutlineVariant
 import com.emergency.lane.ui.theme.AegisPrimary
 import com.emergency.lane.ui.theme.AegisSurfaceContainer
-import com.emergency.lane.ui.theme.AegisSurfaceContainerHigh
 import com.emergency.lane.ui.theme.AegisSurfaceContainerLow
+import com.emergency.lane.ui.theme.AegisErrorContainer
+import com.emergency.lane.ui.theme.AegisPrimaryContainer
 
 @Composable
 fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
-    val coroutineScope = rememberCoroutineScope()
+    val visibleStats = listOf(
+        "queued" to (uiState.stats["queued"] ?: 0),
+        "failed" to (uiState.stats["failed"] ?: 0),
+        "uploaded" to (uiState.stats["uploaded"] ?: 0)
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AegisBackground)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Text(
-            text = "Upload Queue",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AegisOnSurface,
-            letterSpacing = (-0.2).sp
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Text(
+                text = "Upload Queue",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AegisOnSurface,
+                letterSpacing = 0.sp
+            )
+            Button(
+                onClick = { viewModel.refresh() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AegisSurfaceContainer,
+                    contentColor = AegisOnSurface
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Refresh", fontSize = 12.sp)
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            uiState.stats.forEach { (state, count) ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            visibleStats.forEach { (state, count) ->
                 Box(
                     modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(AegisSurfaceContainer)
+                        .background(AegisSurfaceContainerLow)
+                        .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
                     Text(
@@ -82,59 +106,148 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
-            onClick = { viewModel.retryAll() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AegisPrimary,
-                contentColor = AegisOnPrimary
-            ),
-            shape = RoundedCornerShape(8.dp)
+        if (uiState.loading) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(color = AegisPrimary)
+            }
+        }
+
+        if (uiState.error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AegisErrorContainer.copy(alpha = 0.15f))
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = uiState.error ?: "Queue load failed",
+                    color = AegisError,
+                    fontSize = 12.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        if (uiState.actionMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(AegisPrimaryContainer.copy(alpha = 0.12f))
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = uiState.actionMessage ?: "",
+                    color = AegisOnSurface,
+                    fontSize = 12.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Retry All Failed", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = { viewModel.retryAll() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AegisPrimary,
+                    contentColor = AegisOnPrimary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Upload Pending", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = { navController.navigate("map") },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AegisSurfaceContainer,
+                    contentColor = AegisOnSurface
+                ),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Open Detection", fontSize = 12.sp)
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(uiState.events) { event ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(AegisSurfaceContainerLow)
-                        .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                        .padding(12.dp)
-                ) {
-                    Column {
-                        Text(
-                            text = event.eventId,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = AegisOnSurface
-                        )
-                        Text(
-                            text = "Status: ${event.uploadState}  |  Attempts: ${event.uploadAttempts}  |  Class: ${event.vehicleClass}",
-                            fontSize = 12.sp,
-                            color = AegisOnSurfaceVariant
-                        )
-                        if (event.lastError.isNotBlank()) {
+        val listModifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+
+        if (uiState.events.isEmpty()) {
+            Box(
+                modifier = listModifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AegisSurfaceContainerLow)
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("No queued uploads", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text("New detections will appear here after capture.", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+                    Button(
+                        onClick = { navController.navigate("map") },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AegisPrimaryContainer,
+                            contentColor = AegisOnPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Go to Detection", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = listModifier
+            ) {
+                items(uiState.events) { event ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(AegisSurfaceContainerLow)
+                            .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                            .padding(12.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = "Error: ${event.lastError}",
-                                fontSize = 12.sp,
-                                color = AegisError
+                                text = event.eventId,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = AegisOnSurface
                             )
-                        }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(onClick = {
-                                viewModel.retryEvent(event.eventId)
-                                coroutineScope.launch {
-                                    // Snackbar removed — use Toast or inline feedback
-                                }
-                            }) {
-                                Text("Retry", color = AegisPrimary)
+                            Text(
+                                text = "Status: ${event.uploadState}  |  Attempts: ${event.uploadAttempts}  |  Class: ${event.vehicleClass}",
+                                fontSize = 12.sp,
+                                color = AegisOnSurfaceVariant
+                            )
+                            if (event.lastError.isNotBlank()) {
+                                Text(
+                                    text = "Error: ${event.lastError}",
+                                    fontSize = 12.sp,
+                                    color = AegisError
+                                )
                             }
-                            TextButton(onClick = { viewModel.deleteEvent(event.eventId) }) {
-                                Text("Delete", color = AegisError)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextButton(onClick = { navController.navigate("map") }) {
+                                    Text("Detection", color = AegisPrimary)
+                                }
+                                TextButton(onClick = { viewModel.retryEvent(event.eventId) }) {
+                                    Text("Retry", color = AegisPrimary)
+                                }
+                                TextButton(onClick = { viewModel.deleteEvent(event.eventId) }) {
+                                    Text("Delete", color = AegisError)
+                                }
                             }
                         }
                     }

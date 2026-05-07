@@ -28,16 +28,79 @@ class HpApiClient(baseUrl: String) {
 
     val api: HpApiService = retrofit.create(HpApiService::class.java)
 
+    suspend fun login(username: String, password: String): Result<LoginResponse> {
+        return try {
+            val response = api.login(LoginRequest(username, password))
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Login failed")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getTasks(token: String, limit: Int = 20): Result<TaskListResponse> {
+        return try {
+            val response = api.getTasks("Bearer $token", true, limit)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to fetch tasks")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun acceptTask(token: String, taskId: String): Result<TaskItem> {
+        return try {
+            val response = api.acceptTask("Bearer $token", taskId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to accept task")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun completeTask(token: String, taskId: String, note: String): Result<TaskItem> {
+        return try {
+            val response = api.completeTask("Bearer $token", taskId, CompleteTaskRequest(note))
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to complete task")))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getEvents(status: String? = null, limit: Int = 20): Result<EventListResponse> {
         return try {
             val response = api.getEvents(status, limit)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception("Failed to fetch events: ${response.code()}"))
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to fetch events")))
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private fun friendlyHttpMessage(code: Int, fallback: String): String {
+        return when (code) {
+            401 -> "Login expired or password is wrong. Save the account again."
+            403 -> "This account does not have permission for that action."
+            404 -> "The requested item no longer exists."
+            422 -> "The server rejected this action for the current status."
+            in 500..599 -> "Backend error $code. Check the server log and retry."
+            else -> "$fallback: $code"
         }
     }
 }

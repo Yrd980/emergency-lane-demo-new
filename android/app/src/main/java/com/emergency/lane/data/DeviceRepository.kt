@@ -1,6 +1,10 @@
 package com.emergency.lane.data
 
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import com.emergency.lane.BuildConfig
 import com.emergency.lane.data.local.EventQueueRepository
 import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.data.remote.DeviceRegisterRequest
@@ -39,7 +43,12 @@ class DeviceRepository(private val context: Context) {
         apiClient = HpApiClient(baseUrl)
         return try {
             val resp = apiClient!!.api.registerDevice(
-                DeviceRegisterRequest(deviceId, deviceName, "0.1.0", "manual-sim-0.1.0")
+                DeviceRegisterRequest(
+                    deviceId,
+                    deviceName,
+                    BuildConfig.VERSION_NAME,
+                    SettingsStore.MODEL_VERSION_NAME
+                )
             )
             if (resp.isSuccessful) Result.success(deviceId)
             else Result.failure(Exception("注册失败: ${resp.code()}"))
@@ -57,11 +66,11 @@ class DeviceRepository(private val context: Context) {
         while (isRunning) {
             try {
                 val deviceId = settings.deviceId.first()
-                apiClient?.api?.heartbeat(
+                currentClient()?.api?.heartbeat(
                     HeartbeatRequest(
                         deviceId = deviceId,
-                        batteryLevel = 85f,
-                        thermalState = "normal",
+                        batteryLevel = currentBatteryPercent(),
+                        thermalState = currentThermalState(),
                         fps = fpsProvider(),
                         pendingUploadCount = pendingProvider()
                     )
@@ -71,5 +80,56 @@ class DeviceRepository(private val context: Context) {
         }
     }
 
+    suspend fun sendHeartbeatOnce(
+        fpsProvider: () -> Float = { RuntimeMetrics.fps },
+        pendingProvider: suspend () -> Int = { queue.getPendingCount() }
+    ): Result<Unit> {
+        val baseUrl = settings.baseUrl.first()
+        val deviceId = settings.deviceId.first()
+        if (baseUrl.isBlank()) return Result.failure(Exception("HP 地址未配置"))
+        return try {
+            HpApiClient(baseUrl).api.heartbeat(
+                HeartbeatRequest(
+                    deviceId = deviceId,
+                    batteryLevel = currentBatteryPercent(),
+                    thermalState = currentThermalState(),
+                    fps = fpsProvider(),
+                    pendingUploadCount = pendingProvider()
+                )
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     fun stopHeartbeat() { isRunning = false }
+
+    private suspend fun currentClient(): HpApiClient? {
+        val existing = apiClient
+        if (existing != null) return existing
+        val baseUrl = settings.baseUrl.first()
+        if (baseUrl.isBlank()) return null
+        return HpApiClient(baseUrl).also { apiClient = it }
+    }
+
+    private fun currentBatteryPercent(): Float {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            ?: return -1f
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        if (level < 0 || scale <= 0) return -1f
+        return level * 100f / scale
+    }
+
+    private fun currentThermalState(): String {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            ?: return "unknown"
+        return when (intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)) {
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "overheat"
+            BatteryManager.BATTERY_HEALTH_COLD -> "cold"
+            BatteryManager.BATTERY_HEALTH_GOOD -> "normal"
+            else -> "unknown"
+        }
+    }
 }

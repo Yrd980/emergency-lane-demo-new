@@ -10,28 +10,44 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.emergency.lane.BuildConfig
+import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.ui.theme.AegisBackground
 import com.emergency.lane.ui.theme.AegisError
 import com.emergency.lane.ui.theme.AegisOnPrimary
@@ -50,10 +66,19 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var baseUrl by remember { mutableStateOf("http://192.168.1.6:8000") }
-    var deviceId by remember { mutableStateOf("vivo_x100_001") }
-    var deviceName by remember { mutableStateOf("vivo X100") }
+    var baseUrl by remember { mutableStateOf("") }
+    var deviceId by remember { mutableStateOf("") }
+    var deviceName by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(uiState.baseUrl, uiState.deviceId, uiState.deviceName, uiState.username) {
+        baseUrl = uiState.baseUrl
+        deviceId = uiState.deviceId
+        deviceName = uiState.deviceName
+        username = uiState.username
+    }
 
     fun validateUrl(url: String): String? {
         if (url.isBlank()) return "Enter HP backend address"
@@ -63,28 +88,72 @@ fun SettingsScreen(
         return null
     }
 
+    fun validateCredentials(): String? {
+        if (username.isBlank()) return "Enter HP username"
+        if (password.isBlank() && uiState.username.isBlank()) return "Enter HP password"
+        return null
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AegisBackground)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .imePadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = "HP Connection",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = AegisOnSurface,
-            letterSpacing = (-0.2).sp
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = "Connection",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AegisOnSurface,
+                letterSpacing = 0.sp
+            )
+            Text(
+                text = "Connect this phone to the backend and save the patrol login used for task sync.",
+                fontSize = 12.sp,
+                color = AegisOnSurfaceVariant
+            )
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MiniInfoCard(
+                icon = Icons.Default.Cloud,
+                title = "Backend",
+                value = if (baseUrl.isBlank()) "Not set" else baseUrl,
+                modifier = Modifier.weight(1f)
+            )
+            MiniInfoCard(
+                icon = Icons.Default.People,
+                title = "Login",
+                value = if (username.isBlank()) "Not set" else username,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        MiniInfoCard(
+            icon = Icons.Default.PhoneAndroid,
+            title = "This phone",
+            value = "${deviceName.ifBlank { "Android device" }} · ${deviceId.ifBlank { "unknown id" }}",
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = baseUrl,
             onValueChange = { baseUrl = it; urlError = null },
-            label = { Text("HP Base URL", color = AegisOnSurfaceVariant) },
+            label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
+            placeholder = { Text("http://192.168.2.103:8000") },
             isError = urlError != null,
             supportingText = urlError?.let { { Text(it, color = AegisError) } },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next
+            ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AegisPrimary,
                 unfocusedBorderColor = AegisOutlineVariant,
@@ -98,9 +167,12 @@ fun SettingsScreen(
         )
 
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = deviceId,
             onValueChange = { deviceId = it },
             label = { Text("Device ID", color = AegisOnSurfaceVariant) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AegisPrimary,
                 unfocusedBorderColor = AegisOutlineVariant,
@@ -114,9 +186,12 @@ fun SettingsScreen(
         )
 
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = deviceName,
             onValueChange = { deviceName = it },
             label = { Text("Device Name", color = AegisOnSurfaceVariant) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = AegisPrimary,
                 unfocusedBorderColor = AegisOutlineVariant,
@@ -129,7 +204,56 @@ fun SettingsScreen(
             shape = RoundedCornerShape(8.dp)
         )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Backend username", color = AegisOnSurfaceVariant) },
+            placeholder = { Text("patrol or admin") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AegisPrimary,
+                unfocusedBorderColor = AegisOutlineVariant,
+                focusedTextColor = AegisOnSurface,
+                unfocusedTextColor = AegisOnSurface,
+                cursorColor = AegisPrimary,
+                focusedContainerColor = AegisSurfaceContainer,
+                unfocusedContainerColor = AegisSurfaceContainerLow
+            ),
+            shape = RoundedCornerShape(8.dp)
+        )
+
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password", color = AegisOnSurfaceVariant) },
+            placeholder = {
+                if (uiState.username.isNotBlank()) Text("Leave blank to keep saved password")
+            },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = AegisPrimary,
+                unfocusedBorderColor = AegisOutlineVariant,
+                focusedTextColor = AegisOnSurface,
+                unfocusedTextColor = AegisOnSurface,
+                cursorColor = AegisPrimary,
+                focusedContainerColor = AegisSurfaceContainer,
+                unfocusedContainerColor = AegisSurfaceContainerLow
+            ),
+            shape = RoundedCornerShape(8.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
                 onClick = {
                     val err = validateUrl(baseUrl)
@@ -140,29 +264,33 @@ fun SettingsScreen(
                     containerColor = AegisSurfaceContainerHigh,
                     contentColor = AegisOnSurface
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Test Connection", fontSize = 12.sp)
+                Text("Check server", fontSize = 12.sp)
             }
             Button(
                 onClick = {
                     val err = validateUrl(baseUrl)
                     if (err != null) { urlError = err; return@Button }
-                    viewModel.saveAndRegister(baseUrl, deviceId, deviceName)
+                    val credErr = validateCredentials()
+                    if (credErr != null) { urlError = credErr; return@Button }
+                    viewModel.saveAndRegister(baseUrl, deviceId, deviceName, username, password)
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AegisPrimary,
                     contentColor = AegisOnPrimary
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Save & Register", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("Save and connect", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         when (val status = uiState.connectionStatus) {
             is SettingsUiState.ConnectionStatus.Testing ->
-                Text("Testing...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
+                Text("Checking backend...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
             is SettingsUiState.ConnectionStatus.Success ->
                 Text(status.msg, color = AegisPrimary, fontSize = 14.sp)
             is SettingsUiState.ConnectionStatus.Error ->
@@ -179,7 +307,7 @@ fun SettingsScreen(
                     .padding(12.dp)
             ) {
                 Text(
-                    "Registered: ${uiState.deviceId}",
+                    "Connected as ${uiState.deviceId}",
                     color = AegisPrimary,
                     fontSize = 14.sp
                 )
@@ -196,10 +324,46 @@ fun SettingsScreen(
                 .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
-            Column {
-                Text("App Version: 0.1.0", fontSize = 14.sp, color = AegisOnSurfaceVariant)
-                Text("Model: manual-sim-0.1.0", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Password, contentDescription = null, tint = AegisOnSurfaceVariant)
+                    Text("Local account is for the backend, not the phone.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                }
+                Text("Use patrol / patrol123 for field tasks, or admin / admin123 for settings access.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                Text("App Version: ${BuildConfig.VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                Text("Model: ${SettingsStore.MODEL_VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun MiniInfoCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(AegisSurfaceContainerLow)
+            .border(1.dp, AegisOutlineVariant.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+            .padding(12.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(icon, contentDescription = null, tint = AegisPrimary)
+            Text(title, fontSize = 12.sp, color = AegisOnSurfaceVariant, fontWeight = FontWeight.Medium)
+            Text(
+                value,
+                fontSize = 13.sp,
+                color = AegisOnSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

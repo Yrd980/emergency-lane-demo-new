@@ -109,6 +109,8 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
     fun startPreview() { _uiState.value = _uiState.value.copy(isPreviewActive = true) }
     fun stopPreview() {
         _uiState.value = _uiState.value.copy(isPreviewActive = false, isDetecting = false)
+        cameraController?.release()
+        cameraController = null
     }
 
     fun onCameraError(msg: String) {
@@ -139,6 +141,16 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
                     modelStatus = ModelLoadStatus.Failed(result.error)
                 )
             }
+        }
+    }
+
+    fun startDetectionFlow() {
+        if (!_uiState.value.isPreviewActive) startPreview()
+        if (_uiState.value.modelStatus !is ModelLoadStatus.Ready) {
+            initDetection()
+        }
+        if (_uiState.value.modelStatus is ModelLoadStatus.Ready) {
+            startDetection()
         }
     }
 
@@ -173,6 +185,11 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun stopDetection() {
         _uiState.value = _uiState.value.copy(isDetecting = false)
+    }
+
+    fun leaveScreen() {
+        stopDetection()
+        stopPreview()
     }
 
     private suspend fun processFrame(bitmap: Bitmap) {
@@ -375,6 +392,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
 
     override fun onCleared() {
         super.onCleared()
+        leaveScreen()
         while (recentFrames.isNotEmpty()) {
             recentFrames.removeFirst().recycle()
         }

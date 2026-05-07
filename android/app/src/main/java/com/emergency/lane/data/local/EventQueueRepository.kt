@@ -40,6 +40,17 @@ class EventQueueRepository(context: Context) {
         refreshPendingCount()
     }
 
+    suspend fun retryEvent(eventId: String) {
+        eventDao.resetToQueued(eventId)
+        refreshPendingCount()
+    }
+
+    suspend fun deleteEvent(eventId: String) {
+        evidenceDao.deleteByEvent(eventId)
+        eventDao.delete(eventId)
+        refreshPendingCount()
+    }
+
     suspend fun getAll(): List<LocalEventEntity> = eventDao.getAll()
 
     suspend fun getEvidenceForEvent(eventId: String): List<EvidenceFileEntity> =

@@ -58,3 +58,53 @@ data class EventListItem(
     @SerialName("risk_level") val riskLevel: String? = null,
     @SerialName("review_priority_reason") val reviewPriorityReason: String? = null
 )
+
+@Serializable
+data class LoginRequest(
+    val username: String,
+    val password: String
+)
+
+@Serializable
+data class LoginResponse(
+    val token: String,
+    val user: AuthUser
+)
+
+@Serializable
+data class AuthUser(
+    val id: Int,
+    val username: String,
+    @SerialName("display_name") val displayName: String,
+    val role: String,
+    val permissions: List<String>
+)
+
+@Serializable
+data class TaskListResponse(
+    val items: List<TaskItem>,
+    val total: Int
+)
+
+@Serializable
+data class TaskItem(
+    @SerialName("task_id") val taskId: String,
+    @SerialName("event_id") val eventId: String,
+    val status: String,
+    val note: String = "",
+    @SerialName("assigned_to_display_name") val assignedToDisplayName: String? = null,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("accepted_at") val acceptedAt: String? = null,
+    @SerialName("completed_at") val completedAt: String? = null,
+    @SerialName("vehicle_class") val vehicleClass: String,
+    val confidence: Double,
+    @SerialName("start_time") val startTime: String,
+    @SerialName("device_id") val deviceId: String,
+    @SerialName("risk_level") val riskLevel: String,
+    @SerialName("thumbnail_url") val thumbnailUrl: String = ""
+)
+
+@Serializable
+data class CompleteTaskRequest(
+    @SerialName("completed_note") val completedNote: String
+)

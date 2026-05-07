@@ -7,12 +7,17 @@ import com.emergency.lane.data.DeviceRepository
 import com.emergency.lane.data.local.SettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
+    val baseUrl: String = "",
+    val deviceName: String = "",
+    val username: String = "",
     val connectionStatus: ConnectionStatus = ConnectionStatus.Idle,
     val isRegistered: Boolean = false,
-    val deviceId: String? = null
+    val deviceId: String = ""
 ) {
     sealed class ConnectionStatus {
         object Idle : ConnectionStatus()
@@ -30,8 +35,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         viewModelScope.launch {
-            settings.deviceId.collect { id ->
-                if (id.isNotBlank()) _uiState.value = _uiState.value.copy(deviceId = id)
+            combine(
+                settings.baseUrl,
+                settings.deviceId,
+                settings.deviceName,
+                settings.authUsername
+            ) { baseUrl, deviceId, deviceName, username ->
+                ConfigFields(baseUrl, deviceId, deviceName, username)
+            }.collect { config ->
+                _uiState.value = _uiState.value.copy(
+                    baseUrl = config.baseUrl,
+                    deviceId = config.deviceId,
+                    deviceName = config.deviceName,
+                    username = config.username
+                )
             }
         }
     }
@@ -46,9 +63,22 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun saveAndRegister(baseUrl: String, deviceId: String, deviceName: String) {
+    fun saveAndRegister(
+        baseUrl: String,
+        deviceId: String,
+        deviceName: String,
+        username: String,
+        password: String
+    ) {
         viewModelScope.launch {
-            settings.saveConfig(baseUrl, deviceId, deviceName)
+            val savedPassword = settings.authPassword.first()
+            settings.saveConfig(
+                baseUrl,
+                deviceId,
+                deviceName,
+                username,
+                password.ifBlank { savedPassword }
+            )
             repo.register().fold(
                 onSuccess = {
                     _uiState.value = _uiState.value.copy(isRegistered = true, connectionStatus = SettingsUiState.ConnectionStatus.Success("已注册: $it"))
@@ -59,3 +89,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 }
+
+private data class ConfigFields(
+    val baseUrl: String,
+    val deviceId: String,
+    val deviceName: String,
+    val username: String
+)

@@ -25,6 +25,9 @@ interface LocalEventDao {
     @Query("UPDATE local_events SET uploadState = :state, uploadAttempts = uploadAttempts + 1, lastError = :error WHERE eventId = :eventId")
     suspend fun updateState(eventId: String, state: String, error: String = "")
 
+    @Query("UPDATE local_events SET uploadState = 'QUEUED', lastError = '' WHERE eventId = :eventId")
+    suspend fun resetToQueued(eventId: String)
+
     @Query("DELETE FROM local_events WHERE eventId = :eventId")
     suspend fun delete(eventId: String)
 }

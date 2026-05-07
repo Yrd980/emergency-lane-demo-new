@@ -1,6 +1,8 @@
 package com.emergency.lane.data.local
 
 import android.content.Context
+import android.os.Build
+import android.provider.Settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -18,19 +20,52 @@ class SettingsStore(private val context: Context) {
         val DEVICE_NAME = stringPreferencesKey("device_name")
         val APP_VERSION = stringPreferencesKey("app_version")
         val MODEL_VERSION = stringPreferencesKey("model_version")
+        val AUTH_TOKEN = stringPreferencesKey("auth_token")
+        val AUTH_USERNAME = stringPreferencesKey("auth_username")
+        val AUTH_PASSWORD = stringPreferencesKey("auth_password")
+
+        const val MODEL_VERSION_NAME = "yolov8n_vehicle_640x640"
     }
 
-    val baseUrl: Flow<String> = context.settingsDs.data.map { it[BASE_URL] ?: "http://192.168.1.6:8000" }
-    val deviceId: Flow<String> = context.settingsDs.data.map { it[DEVICE_ID] ?: "vivo_x100_001" }
-    val deviceName: Flow<String> = context.settingsDs.data.map { it[DEVICE_NAME] ?: "vivo X100" }
+    val baseUrl: Flow<String> = context.settingsDs.data.map { it[BASE_URL] ?: "" }
+    val deviceId: Flow<String> = context.settingsDs.data.map { it[DEVICE_ID] ?: defaultDeviceId() }
+    val deviceName: Flow<String> = context.settingsDs.data.map { it[DEVICE_NAME] ?: defaultDeviceName() }
+    val authToken: Flow<String> = context.settingsDs.data.map { it[AUTH_TOKEN] ?: "" }
+    val authUsername: Flow<String> = context.settingsDs.data.map { it[AUTH_USERNAME] ?: "" }
+    val authPassword: Flow<String> = context.settingsDs.data.map { it[AUTH_PASSWORD] ?: "" }
 
-    suspend fun saveConfig(baseUrl: String, deviceId: String, deviceName: String) {
+    suspend fun saveConfig(
+        baseUrl: String,
+        deviceId: String,
+        deviceName: String,
+        username: String,
+        password: String
+    ) {
         context.settingsDs.edit {
             it[BASE_URL] = baseUrl.trimEnd('/')
             it[DEVICE_ID] = deviceId
             it[DEVICE_NAME] = deviceName
-            it[APP_VERSION] = "0.1.0"
-            it[MODEL_VERSION] = "manual-sim-0.1.0"
+            it[AUTH_USERNAME] = username
+            it[AUTH_PASSWORD] = password
+            it.remove(AUTH_TOKEN)
         }
+    }
+
+    suspend fun saveAuthToken(token: String) {
+        context.settingsDs.edit {
+            it[AUTH_TOKEN] = token
+        }
+    }
+
+    private fun defaultDeviceId(): String {
+        val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        return "android_${androidId ?: Build.MODEL}".lowercase()
+    }
+
+    private fun defaultDeviceName(): String {
+        return listOf(Build.MANUFACTURER, Build.MODEL)
+            .filter { it.isNotBlank() }
+            .joinToString(" ")
+            .ifBlank { "Android patrol device" }
     }
 }

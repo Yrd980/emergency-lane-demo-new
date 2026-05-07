@@ -35,6 +35,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     aaptOptions {
@@ -53,6 +54,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.4")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     // CameraX
     implementation("androidx.camera:camera-core:1.4.1")
