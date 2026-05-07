@@ -1,5 +1,4 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { cn } from '../utils/format';
 import { useRole } from '../access/useRole';
 import { navItems, roleDescriptions, roleLabels } from '../access/permissions';
 
@@ -8,62 +7,53 @@ export default function ProductShell({ children }: { children: React.ReactNode }
   const navigate = useNavigate();
   const { role, setRole } = useRole();
   const visibleNavItems = navItems.filter((item) => item.roles.includes(role));
-  const active = visibleNavItems.find((item) => item.to === location.pathname) ?? visibleNavItems[0];
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[var(--canvas)] text-[var(--text)]">
+    <div className="flex h-screen w-full overflow-hidden bg-background text-on-surface font-body-sm">
       {/* Sidebar — Desktop */}
-      <aside className="hidden md:flex flex-col h-full py-6 px-4 gap-4 bg-[var(--surface-base)] w-64 shrink-0 border-r border-[var(--line)]/20">
-        <div className="px-3 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[var(--brand)] text-2xl">shield</span>
-            <div>
-              <h1 className="text-lg font-semibold text-[var(--brand)] tracking-tight">Aegis Monitoring</h1>
-              <p className="text-[11px] text-[var(--muted)]/60 flex items-center gap-1.5">
-                <span className="status-dot-healthy" /> Network Active
-              </p>
-            </div>
-          </div>
+      <aside className="hidden md:flex flex-col h-full py-lg px-md gap-md bg-surface-container-lowest w-64 shrink-0 border-r border-outline-variant/10">
+        <div className="px-sm mb-lg">
+          <h1 className="text-headline-md font-headline-md text-primary">Aegis Monitoring</h1>
+          <p className="text-label-xs font-label-xs text-on-surface-variant opacity-60 flex items-center gap-xs mt-xs">
+            <span className="status-dot-healthy" /> Network Active
+          </p>
         </div>
 
-        <nav className="flex-1 flex flex-col gap-1">
+        <nav className="flex-1 flex flex-col gap-xs">
           {visibleNavItems.map((item) => {
-            const Icon = item.icon;
             const isActive = location.pathname === item.to || (item.to === '/' && location.pathname === '/');
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
-                className={({ isActive: linkActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm',
-                    (linkActive || isActive)
-                      ? 'text-[var(--brand)] font-semibold border-r-2 border-[var(--brand)] bg-[var(--surface-soft)]'
-                      : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-soft)]',
-                  )
+                className={() =>
+                  `flex items-center gap-md px-md py-sm rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'text-primary font-bold border-r-2 border-primary bg-surface-container-low'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low'
+                  }`
                 }
               >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <span className="material-symbols-outlined">{item.icon}</span>
+                <span className="font-body-sm text-body-sm">{item.label}</span>
               </NavLink>
             );
           })}
         </nav>
 
         {/* Role Switcher */}
-        <div className="rounded-xl border border-[var(--line)]/20 bg-[var(--surface-soft)] p-3">
-          <p className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-widest mb-2">Role</p>
+        <div className="mt-auto rounded-xl border border-outline-variant/10 bg-surface-container-low p-3">
+          <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest mb-2">Role</p>
           <div className="grid gap-1">
             {(['reviewer', 'operator', 'maintainer'] as const).map((r) => (
               <button
                 key={r}
-                className={cn(
-                  'rounded-lg px-3 py-2 text-left text-xs transition-all',
+                className={`rounded-lg px-3 py-2 text-left text-xs transition-all ${
                   role === r
-                    ? 'bg-[var(--brand)] text-[var(--on-brand)] font-semibold'
-                    : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]',
-                )}
+                    ? 'bg-primary text-on-primary font-semibold'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                }`}
                 onClick={() => setRole(r)}
               >
                 <div className="font-semibold">{roleLabels[r]}</div>
@@ -73,93 +63,87 @@ export default function ProductShell({ children }: { children: React.ReactNode }
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 pt-4 border-t border-[var(--line)]/10">
-          <a className="flex items-center gap-3 px-3 py-2 text-[var(--muted)] hover:text-[var(--text)] text-sm rounded-lg transition-colors" href="#">
-            <span className="material-symbols-outlined text-lg">help</span>
+        <div className="flex flex-col gap-xs pt-lg border-t border-outline-variant/10">
+          <a className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors" href="#">
+            <span className="material-symbols-outlined">help</span>
             Support
           </a>
           <button
-            className="flex items-center gap-3 px-3 py-2 text-[var(--muted)] hover:text-[var(--text)] text-sm rounded-lg transition-colors w-full text-left"
+            className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors w-full text-left"
             onClick={() => {
               localStorage.removeItem('laneops-role');
               window.location.reload();
             }}
           >
-            <span className="material-symbols-outlined text-lg">logout</span>
+            <span className="material-symbols-outlined">logout</span>
             Sign Out
           </button>
         </div>
-
-        <div className="text-[10px] text-[var(--muted)]/40 px-3">
-          {active.label} · {roleLabels[role]}
-        </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top App Bar */}
-        <header className="flex justify-between items-center w-full px-6 py-3 z-30 bg-[var(--canvas)]/90 backdrop-blur border-b border-[var(--line)]/10">
-          <div className="flex items-center gap-6">
-            <span className="text-lg font-semibold text-[var(--brand)] tracking-tight md:hidden">Aegis</span>
-            <div className="hidden md:flex items-center bg-[var(--surface-soft)] rounded-lg px-3 py-1.5 border border-[var(--line)]/10 inner-glow-focus">
-              <span className="material-symbols-outlined text-[var(--muted)] text-lg mr-2">search</span>
+        <header className="flex justify-between items-center w-full px-margin py-sm z-30 bg-background border-b border-outline-variant/5">
+          <div className="flex items-center gap-lg">
+            <span className="text-headline-md font-headline-md font-bold text-primary md:hidden">Aegis</span>
+            <div className="hidden md:flex items-center gap-sm bg-surface-container-low rounded-lg px-md py-xs border border-outline-variant/10 inner-glow-focus">
+              <span className="material-symbols-outlined text-on-surface-variant text-lg">search</span>
               <input
-                className="bg-transparent border-none focus:ring-0 text-sm text-[var(--text)] w-56 placeholder:text-[var(--muted)]/50 outline-none"
-                placeholder="Search events, devices..."
+                className="bg-transparent border-none focus:ring-0 text-body-sm text-on-surface w-64 placeholder:text-on-surface-variant/50 outline-none"
+                placeholder="Search analytics..."
                 type="text"
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-md">
             <button
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-soft)] text-[var(--on-brand-container)] rounded-lg text-xs font-semibold hover:brightness-110 transition-all active:scale-95"
+              className="flex items-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-label-xs text-label-xs hover:brightness-110 transition-all active:scale-95"
               onClick={() => navigate('/health')}
             >
               <span className="material-symbols-outlined text-base">download</span>
               Export Report
             </button>
-            <div className="h-6 w-px bg-[var(--line)]/20 mx-1" />
-            <button className="p-1.5 text-[var(--muted)] hover:bg-[var(--surface-raised)] rounded-lg transition-colors" title="Notifications">
+            <div className="h-8 w-px bg-outline-variant/20 mx-xs" />
+            <button className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" title="Notifications">
               <span className="material-symbols-outlined">notifications</span>
             </button>
-            <button className="p-1.5 text-[var(--muted)] hover:bg-[var(--surface-raised)] rounded-lg transition-colors" title="Settings" onClick={() => navigate('/settings')}>
+            <button className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" title="Settings" onClick={() => navigate('/settings')}>
               <span className="material-symbols-outlined">settings</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-[var(--surface-glow)] border border-[var(--line)]/30 overflow-hidden">
-              <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-[var(--brand)]">AD</div>
+            <div className="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/20 overflow-hidden flex items-center justify-center">
+              <span className="text-xs font-semibold text-primary">AD</span>
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="mx-auto max-w-[100rem] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="mx-auto max-w-[100rem] px-margin py-lg">
             {children}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-2 py-2 pb-safe bg-[var(--surface-raised)]/95 backdrop-blur shadow-lg rounded-t-xl border-t border-[var(--line)]/20">
-        {visibleNavItems.slice(0, 5).map((item) => {
-          const Icon = item.icon;
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-high shadow-lg rounded-t-xl">
+        {visibleNavItems.slice(0, 4).map((item) => {
           const isActive = location.pathname === item.to || (item.to === '/' && location.pathname === '/');
           return (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
-              className={({ isActive: linkActive }) =>
-                cn(
-                  'flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-xl transition-all',
-                  (linkActive || isActive)
-                    ? 'bg-[var(--brand-soft)] text-[var(--on-brand-container)]'
-                    : 'text-[var(--muted)]',
-                )
+              className={() =>
+                `flex flex-col items-center justify-center gap-0.5 p-2 rounded-xl transition-all scale-95 duration-100 ${
+                  isActive
+                    ? 'bg-primary-container text-on-primary-container'
+                    : 'text-on-surface-variant'
+                }`
               }
             >
-              <Icon className="h-4 w-4" />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span className="font-label-xs text-label-xs">{item.label}</span>
             </NavLink>
           );
         })}
