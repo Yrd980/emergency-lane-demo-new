@@ -1,3 +1,12 @@
+import type {
+  DeviceDetail,
+  DeviceInfo,
+  EventDetail,
+  EventListResponse,
+  OverviewStats,
+  SystemStatus,
+} from '../types';
+
 const BASE_URL = '/api';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -7,22 +16,29 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
   if (!resp.ok) {
     const body = await resp.text();
-    throw new Error(`HTTP ${resp.status}: ${body}`);
+    throw new Error(readableHttpError(resp.status, body));
   }
   return resp.json();
 }
 
+function readableHttpError(status: number, body: string) {
+  if (status === 404) return '资源不存在，请返回列表刷新后再试';
+  if (status >= 500) return '本地后端暂时不可用，请检查服务日志';
+  if (status === 0) return '无法连接到本地后端';
+  return `请求失败 (${status})${body ? `: ${body.slice(0, 160)}` : ''}`;
+}
+
 export const api = {
-  getStats: () =>
-    request<import('../types').OverviewStats>('/stats/overview'),
+  getSystemStatus: () => request<SystemStatus>('/system/status'),
+
+  getStats: () => request<OverviewStats>('/stats/overview'),
 
   getEvents: (params: Record<string, string>) => {
     const qs = new URLSearchParams(params).toString();
-    return request<import('../types').EventListResponse>(`/events?${qs}`);
+    return request<EventListResponse>(`/events?${qs}`);
   },
 
-  getEvent: (id: string) =>
-    request<import('../types').EventDetail>(`/events/${id}`),
+  getEvent: (id: string) => request<EventDetail>(`/events/${id}`),
 
   reviewEvent: (id: string, review_status: string, operator_note: string) =>
     request(`/events/${id}/review`, {
@@ -30,6 +46,7 @@ export const api = {
       body: JSON.stringify({ review_status, operator_note }),
     }),
 
-  getDevices: () =>
-    request<import('../types').DeviceInfo[]>('/devices'),
+  getDevices: () => request<DeviceInfo[]>('/devices'),
+
+  getDevice: (id: string) => request<DeviceDetail>(`/devices/${id}`),
 };

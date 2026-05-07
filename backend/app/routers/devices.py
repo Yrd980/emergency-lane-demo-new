@@ -11,6 +11,14 @@ def list_devices():
     return device_service.list_devices()
 
 
+@router.get("/{device_id}")
+def get_device(device_id: str):
+    result = device_service.get_device_detail(device_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return result
+
+
 @router.post("/register")
 def register_device(body: DeviceRegister):
     return device_service.register(

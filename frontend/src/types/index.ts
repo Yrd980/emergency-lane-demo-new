@@ -1,3 +1,5 @@
+export type ReviewStatus = 'pending' | 'confirmed' | 'rejected';
+
 export interface VehicleBox {
   x: number;
   y: number;
@@ -19,6 +21,16 @@ export interface EvidenceFile {
   url: string;
 }
 
+export interface EvidenceSummary {
+  has_before: boolean;
+  has_peak: boolean;
+  has_after: boolean;
+  has_video: boolean;
+  image_count: number;
+  video_count: number;
+  is_complete: boolean;
+}
+
 export interface EventDetail {
   event_id: string;
   device_id: string;
@@ -31,11 +43,16 @@ export interface EventDetail {
   vehicle_box: VehicleBox;
   confidence: number;
   gps_location: GpsLocation | null;
-  review_status: string;
+  review_status: ReviewStatus;
   operator_note: string;
   created_at: string;
   reviewed_at: string | null;
   evidence_files: EvidenceFile[];
+  evidence_summary?: EvidenceSummary;
+  risk_level?: 'normal' | 'high';
+  review_priority_reason?: string;
+  previous_event_id?: string | null;
+  next_event_id?: string | null;
 }
 
 export interface EventListItem {
@@ -45,8 +62,10 @@ export interface EventListItem {
   duration_seconds: number;
   vehicle_class: string;
   confidence: number;
-  review_status: string;
+  review_status: ReviewStatus;
   thumbnail_url: string;
+  risk_level?: 'normal' | 'high';
+  review_priority_reason?: string;
 }
 
 export interface EventListResponse {
@@ -75,4 +94,47 @@ export interface DeviceInfo {
   fps: number;
   pending_upload_count: number;
   is_online: boolean;
+}
+
+export interface DeviceIssue {
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  next_action: string;
+}
+
+export interface DeviceDetail extends DeviceInfo {
+  seconds_since_seen: number;
+  issues: DeviceIssue[];
+  recent_events: EventListItem[];
+}
+
+export interface SystemIssue {
+  severity: 'info' | 'warning' | 'critical';
+  code: string;
+  message: string;
+  next_action: string;
+}
+
+export interface SystemStatus {
+  status: 'ready' | 'critical';
+  server_time: string;
+  backend: { status: string };
+  database: { status: string; path: string };
+  evidence: {
+    status: string;
+    dir: string;
+    file_count: number;
+    usage_bytes: number;
+    free_bytes: number;
+  };
+  devices: {
+    total: number;
+    online: number;
+    pending_upload_count: number;
+  };
+  events: {
+    pending_review_count: number;
+    latest_event_at: string | null;
+  };
+  issues: SystemIssue[];
 }
