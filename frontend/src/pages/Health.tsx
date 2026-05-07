@@ -12,6 +12,13 @@ export default function Health() {
   if (!data) return null;
 
   const topIssue = data.issues[0];
+  const nextStepHref =
+    topIssue?.code === 'pending_reviews' ? '/review' :
+    topIssue?.code === 'pending_uploads' && data.devices.backlog_device_id ? `/devices/${data.devices.backlog_device_id}` :
+    topIssue?.code === 'pending_uploads' ? '/devices' :
+    topIssue?.code === 'all_devices_offline' ? '/devices' :
+    topIssue?.code === 'no_devices' ? '/setup' :
+    '/';
 
   return (
     <div className="space-y-lg">
@@ -26,7 +33,7 @@ export default function Health() {
         tone={topIssue ? (topIssue.severity === 'critical' ? 'danger' : 'warning') : 'success'}
         title={topIssue ? topIssue.message : 'No blocking issues'}
         description={topIssue ? topIssue.next_action : 'Next: return to workbench or continue processing pending reviews.'}
-        action={<PrimaryButton href={topIssue?.code === 'pending_reviews' ? '/review' : '/'}>{topIssue ? 'Handle Next Step' : 'Back to Workbench'}</PrimaryButton>}
+        action={<PrimaryButton href={nextStepHref}>{topIssue ? 'Handle Next Step' : 'Back to Workbench'}</PrimaryButton>}
       />
 
       <div className="mt-lg grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -40,16 +47,23 @@ export default function Health() {
         <HealthCard icon="dns" title="FastAPI Backend" status={data.backend.status} body="Handles event ingestion, review state, and web queries." next="Check uvicorn stderr on anomaly." />
         <HealthCard icon="database" title="SQLite Database" status={data.database.status} body={data.database.path} next="Check DB_PATH and write permissions on anomaly." />
         <HealthCard icon="folder" title="Evidence Directory" status={data.evidence.status} body={data.evidence.dir} next="Configure cleanup policy for long-running use." />
-        <HealthCard icon="smartphone" title="Android Devices" status={data.devices.online > 0 ? 'ok' : 'warning'} body={`${data.devices.pending_upload_count} uploads backlogged`} next="Enter device detail to diagnose on backlog." />
+        <HealthCard
+          icon="smartphone"
+          title="Android Devices"
+          status={data.devices.online > 0 && data.devices.pending_upload_count === 0 ? 'ok' : 'warning'}
+          body={`${data.devices.pending_upload_count} uploads backlogged`}
+          next={data.devices.backlog_device_id ? `Open ${data.devices.backlog_device_id} to inspect the queue.` : 'Enter device detail to diagnose on backlog.'}
+          href={data.devices.backlog_device_id ? `/devices/${data.devices.backlog_device_id}` : '/devices'}
+        />
       </div>
     </div>
   );
 }
 
-function HealthCard({ icon, title, status, body, next }: { icon: string; title: string; status: string; body: string; next: string }) {
+function HealthCard({ icon, title, status, body, next, href }: { icon: string; title: string; status: string; body: string; next: string; href?: string }) {
   const ok = status === 'ok';
-  return (
-    <SurfacePanel className="p-4 transition-all hover:border-primary/20 group">
+  const content = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/10 bg-surface-container">
@@ -79,6 +93,20 @@ function HealthCard({ icon, title, status, body, next }: { icon: string; title: 
         <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Next: </span>
         {next}
       </div>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className="block">
+        <SurfacePanel className="p-4 transition-all hover:border-primary/20 group">{content}</SurfacePanel>
+      </a>
+    );
+  }
+
+  return (
+    <SurfacePanel className="p-4 transition-all hover:border-primary/20 group">
+      {content}
     </SurfacePanel>
   );
 }

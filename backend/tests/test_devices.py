@@ -14,7 +14,7 @@ def test_register_device(client):
     assert data["registered"] is True
 
 
-def test_heartbeat_updates_fields(client):
+def test_heartbeat_updates_fields(client, auth_headers):
     client.post(
         "/api/devices/register",
         json={
@@ -36,7 +36,7 @@ def test_heartbeat_updates_fields(client):
     )
     assert resp.status_code == 200
     assert resp.json()["heartbeat_accepted"] is True
-    detail = client.get("/api/devices/vivo_001").json()
+    detail = client.get("/api/devices/vivo_001", headers=auth_headers).json()
     assert detail["metric_history"][0]["fps"] == 15.2
     assert detail["metric_history"][0]["pending_upload_count"] == 3
 
@@ -55,7 +55,7 @@ def test_heartbeat_unknown_device_returns_404(client):
     assert resp.status_code == 404
 
 
-def test_list_devices_returns_registered(client):
+def test_list_devices_returns_registered(client, auth_headers):
     client.post(
         "/api/devices/register",
         json={
@@ -65,7 +65,7 @@ def test_list_devices_returns_registered(client):
             "model_version": "yolov8n-int8",
         },
     )
-    resp = client.get("/api/devices")
+    resp = client.get("/api/devices", headers=auth_headers)
     assert resp.status_code == 200
     devices = resp.json()
     assert len(devices) == 1
@@ -73,7 +73,7 @@ def test_list_devices_returns_registered(client):
     assert devices[0]["is_online"] is True
 
 
-def test_heartbeat_preserves_register_fields(client):
+def test_heartbeat_preserves_register_fields(client, auth_headers):
     client.post(
         "/api/devices/register",
         json={
@@ -91,14 +91,14 @@ def test_heartbeat_preserves_register_fields(client):
             "fps": 10.0,
         },
     )
-    resp = client.get("/api/devices")
+    resp = client.get("/api/devices", headers=auth_headers)
     device = resp.json()[0]
     assert device["battery_level"] == 50.0
     assert device["fps"] == 10.0
     assert device["device_name"] == "vivo X100"
 
 
-def test_delete_device_removes_device(client):
+def test_delete_device_removes_device(client, auth_headers):
     client.post(
         "/api/devices/register",
         json={
@@ -108,19 +108,19 @@ def test_delete_device_removes_device(client):
             "model_version": "yolov8n-int8",
         },
     )
-    resp = client.delete("/api/devices/vivo_del")
+    resp = client.delete("/api/devices/vivo_del", headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json()["deleted"] is True
-    resp = client.get("/api/devices/vivo_del")
+    resp = client.get("/api/devices/vivo_del", headers=auth_headers)
     assert resp.status_code == 404
 
 
-def test_delete_nonexistent_device_returns_404(client):
-    resp = client.delete("/api/devices/nonexistent")
+def test_delete_nonexistent_device_returns_404(client, auth_headers):
+    resp = client.delete("/api/devices/nonexistent", headers=auth_headers)
     assert resp.status_code == 404
 
 
-def test_device_detail_reports_metric_history_and_troubleshooting_codes(client):
+def test_device_detail_reports_metric_history_and_troubleshooting_codes(client, auth_headers):
     client.post(
         "/api/devices/register",
         json={
@@ -141,7 +141,7 @@ def test_device_detail_reports_metric_history_and_troubleshooting_codes(client):
         },
     )
 
-    resp = client.get("/api/devices/vivo_002")
+    resp = client.get("/api/devices/vivo_002", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.json()
     issue_codes = {issue["code"] for issue in data["issues"]}

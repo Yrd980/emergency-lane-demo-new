@@ -142,7 +142,7 @@ export function StateBlock({
   tone?: 'empty' | 'loading' | 'error' | 'success';
 }) {
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/20 bg-surface-container-low p-xl text-center">
+    <div className="flex min-h-64 w-full flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/20 bg-surface-container-low p-xl text-center">
       <span className={cn(
         'material-symbols-outlined text-4xl',
         tone === 'loading' && 'animate-spin text-primary',
@@ -153,7 +153,7 @@ export function StateBlock({
         {tone === 'loading' ? 'progress_activity' : tone === 'error' ? 'error' : tone === 'success' ? 'check_circle' : 'inventory_2'}
       </span>
       <div className="mt-lg text-headline-md font-headline-md text-on-surface">{title}</div>
-      <p className="mt-sm max-w-md text-body-sm text-on-surface-variant">{description}</p>
+      <p className="mt-sm w-full max-w-[34rem] text-body-sm leading-6 text-on-surface-variant">{description}</p>
       {action && <div className="mt-lg">{action}</div>}
     </div>
   );

@@ -1,14 +1,17 @@
-import { defaultRole, isRole, type Role } from './permissions';
+const TOKEN_KEY = 'aegis-auth-token';
 
-const STORAGE_KEY = 'laneops-role';
-
-export function readStoredRole(): Role {
-  if (typeof window === 'undefined') return defaultRole;
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return isRole(stored) ? stored : defaultRole;
+export function readStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(TOKEN_KEY);
 }
 
-export function writeStoredRole(role: Role) {
+export function writeStoredToken(token: string) {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, role);
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearStoredToken() {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem('laneops-role');
 }

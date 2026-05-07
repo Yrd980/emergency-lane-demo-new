@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useRole } from '../access/useRole';
-import { navItems, roleDescriptions, roleLabels } from '../access/permissions';
+import { useAuth } from '../access/useRole';
+import { canAccess, navItems, roleLabels } from '../access/permissions';
 
 export default function ProductShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { role, setRole } = useRole();
-  const visibleNavItems = navItems.filter((item) => item.roles.includes(role));
+  const { user, logout } = useAuth();
+  const [openMenu, setOpenMenu] = useState<'notifications' | 'account' | null>(null);
+  const visibleNavItems = navItems.filter((item) => canAccess(user?.permissions ?? [], item.permissions));
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-on-surface font-body-sm">
@@ -42,38 +44,14 @@ export default function ProductShell({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* Role Switcher */}
-        <div className="mt-auto rounded-xl border border-outline-variant/10 bg-surface-container-low p-3">
-          <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest mb-2">Role</p>
-          <div className="grid gap-1">
-            {(['reviewer', 'operator', 'maintainer'] as const).map((r) => (
-              <button
-                key={r}
-                className={`rounded-lg px-3 py-2 text-left text-xs transition-all ${
-                  role === r
-                    ? 'bg-primary text-on-primary font-semibold'
-                    : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
-                }`}
-                onClick={() => setRole(r)}
-              >
-                <div className="font-semibold">{roleLabels[r]}</div>
-                <div className="mt-0.5 text-[10px] opacity-70 leading-tight">{roleDescriptions[r]}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-xs pt-lg border-t border-outline-variant/10">
+        <div className="mt-auto flex flex-col gap-xs border-t border-outline-variant/10 pt-lg">
           <a className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors" href="#">
             <span className="material-symbols-outlined">help</span>
             Support
           </a>
           <button
             className="flex items-center gap-md px-md py-sm text-on-surface-variant hover:text-on-surface text-body-sm rounded-lg transition-colors w-full text-left"
-            onClick={() => {
-              localStorage.removeItem('laneops-role');
-              window.location.reload();
-            }}
+            onClick={() => void logout()}
           >
             <span className="material-symbols-outlined">logout</span>
             Sign Out
@@ -96,24 +74,85 @@ export default function ProductShell({ children }: { children: React.ReactNode }
               />
             </div>
           </div>
-          <div className="flex items-center gap-md">
+          <div className="relative flex items-center gap-md">
             <button
               className="flex items-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-label-xs text-label-xs hover:brightness-110 transition-all active:scale-95"
-              onClick={() => navigate('/health')}
+              onClick={() => window.dispatchEvent(new CustomEvent('aegis:export-report'))}
             >
               <span className="material-symbols-outlined text-base">download</span>
               Export Report
             </button>
             <div className="h-8 w-px bg-outline-variant/20 mx-xs" />
-            <button className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" title="Notifications">
+            <button
+              className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"
+              title="Notifications"
+              onClick={() => setOpenMenu(openMenu === 'notifications' ? null : 'notifications')}
+            >
               <span className="material-symbols-outlined">notifications</span>
             </button>
-            <button className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" title="Settings" onClick={() => navigate('/settings')}>
-              <span className="material-symbols-outlined">settings</span>
+            {user?.permissions.includes('settings:read') && (
+              <button className="p-xs text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" title="Settings" onClick={() => navigate('/settings')}>
+                <span className="material-symbols-outlined">settings</span>
+              </button>
+            )}
+            <button
+              className="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/20 overflow-hidden flex items-center justify-center hover:border-primary/40 transition-colors"
+              title="Account"
+              onClick={() => setOpenMenu(openMenu === 'account' ? null : 'account')}
+            >
+              <span className="text-xs font-semibold text-primary">{user?.display_name.slice(0, 2).toUpperCase()}</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant/20 overflow-hidden flex items-center justify-center">
-              <span className="text-xs font-semibold text-primary">AD</span>
-            </div>
+
+            {openMenu === 'notifications' && (
+              <div className="absolute right-10 top-12 z-50 w-80 rounded-xl border border-outline-variant/20 bg-surface-container-low p-md shadow-2xl">
+                <div className="mb-sm flex items-center justify-between">
+                  <div className="text-body-sm font-semibold text-on-surface">Operations Inbox</div>
+                  <button className="text-on-surface-variant hover:text-on-surface" onClick={() => setOpenMenu(null)}>
+                    <span className="material-symbols-outlined text-base">close</span>
+                  </button>
+                </div>
+                <div className="space-y-sm">
+                  <button className="w-full rounded-lg bg-surface-container p-3 text-left hover:bg-surface-container-high" onClick={() => { navigate('/review'); setOpenMenu(null); }}>
+                    <div className="text-label-xs font-semibold uppercase tracking-wider text-primary">Review Queue</div>
+                    <div className="mt-xs text-body-sm text-on-surface-variant">Open pending events and validate evidence.</div>
+                  </button>
+                  <button className="w-full rounded-lg bg-surface-container p-3 text-left hover:bg-surface-container-high" onClick={() => { navigate('/devices'); setOpenMenu(null); }}>
+                    <div className="text-label-xs font-semibold uppercase tracking-wider text-primary">Live Feed</div>
+                    <div className="mt-xs text-body-sm text-on-surface-variant">Check devices, feeds, and patrol task readiness.</div>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {openMenu === 'account' && (
+              <div className="absolute right-0 top-12 z-50 w-72 rounded-xl border border-outline-variant/20 bg-surface-container-low p-md shadow-2xl">
+                <div className="flex items-center gap-3 border-b border-outline-variant/10 pb-md">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-container text-label-xs font-bold text-on-primary-container">
+                    {user?.display_name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-body-sm font-semibold text-on-surface">{user?.display_name}</div>
+                    <div className="text-label-xs text-on-surface-variant">{user ? roleLabels[user.role] : 'Unknown'}</div>
+                  </div>
+                </div>
+                <div className="py-sm text-label-xs leading-5 text-on-surface-variant">
+                  {user?.permissions.slice(0, 4).join(', ')}
+                  {(user?.permissions.length ?? 0) > 4 ? '...' : ''}
+                </div>
+                <div className="grid gap-xs">
+                  {user?.permissions.includes('settings:read') && (
+                    <button className="flex items-center gap-sm rounded-lg px-sm py-sm text-left text-body-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface" onClick={() => { navigate('/settings'); setOpenMenu(null); }}>
+                      <span className="material-symbols-outlined text-base">settings</span>
+                      Account Settings
+                    </button>
+                  )}
+                  <button className="flex items-center gap-sm rounded-lg px-sm py-sm text-left text-body-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface" onClick={() => void logout()}>
+                    <span className="material-symbols-outlined text-base">logout</span>
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </header>
 

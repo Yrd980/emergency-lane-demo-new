@@ -7,7 +7,7 @@ def test_system_status_empty_system_guides_setup(client):
     assert any(issue["code"] == "no_devices" for issue in data["issues"])
 
 
-def test_device_detail_includes_next_actions(client):
+def test_device_detail_includes_next_actions(client, auth_headers):
     client.post("/api/devices/register", json={
         "device_id": "vivo_001",
         "device_name": "vivo X100",
@@ -22,7 +22,7 @@ def test_device_detail_includes_next_actions(client):
         "pending_upload_count": 2,
     })
 
-    resp = client.get("/api/devices/vivo_001")
+    resp = client.get("/api/devices/vivo_001", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["device_id"] == "vivo_001"
@@ -30,6 +30,6 @@ def test_device_detail_includes_next_actions(client):
     assert data["issues"][0]["next_action"]
 
 
-def test_device_detail_missing_returns_404(client):
-    resp = client.get("/api/devices/missing")
+def test_device_detail_missing_returns_404(client, auth_headers):
+    resp = client.get("/api/devices/missing", headers=auth_headers)
     assert resp.status_code == 404

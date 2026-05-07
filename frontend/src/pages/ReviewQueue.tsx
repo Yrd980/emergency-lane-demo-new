@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { useRole } from '../access/useRole';
+import { useAuth } from '../access/useRole';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
@@ -10,12 +10,12 @@ import type { OverviewStats } from '../types';
 
 export default function ReviewQueue() {
   const navigate = useNavigate();
-  const { role } = useRole();
+  const { user } = useAuth();
   const { data, loading, error, filters, setFilters, refetch } = useEvents({ status: 'pending', limit: '50', offset: '0' });
   const overview = usePolling<OverviewStats>(() => api.getStats(), 5000);
   const firstEvent = data?.items[0];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkStatus, setBulkStatus] = useState<'confirmed' | 'rejected' | null>(null);
+  const [bulkStatus, setBulkStatus] = useState<'validated' | 'false_alarm' | null>(null);
   const [submittingBulk, setSubmittingBulk] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const pendingIds = useMemo(() => data?.items.filter((item) => item.review_status === 'pending').map((item) => item.event_id) ?? [], [data]);
@@ -32,14 +32,14 @@ export default function ReviewQueue() {
     setSelectedIds(allSelected ? selectedIds.filter((id) => !pendingIds.includes(id)) : Array.from(new Set([...selectedIds, ...pendingIds])));
   };
 
-  const submitBulkReview = async (reviewStatus: 'confirmed' | 'rejected') => {
+  const submitBulkReview = async (reviewStatus: 'validated' | 'false_alarm') => {
     if (selectedIds.length === 0) {
       setBulkMessage('Select pending events first, then execute bulk review.');
       return;
     }
     if (bulkStatus !== reviewStatus) {
       setBulkStatus(reviewStatus);
-      setBulkMessage(`Will bulk ${reviewStatus === 'confirmed' ? 'confirm' : 'reject'} ${selectedIds.length} events. Click again to execute.`);
+      setBulkMessage(`Will bulk ${reviewStatus === 'validated' ? 'validate' : 'mark false alarm'} ${selectedIds.length} events. Click again to execute.`);
       return;
     }
     setSubmittingBulk(true);
@@ -47,10 +47,16 @@ export default function ReviewQueue() {
       const result = await api.bulkReviewEvents(
         selectedIds,
         reviewStatus,
-        reviewStatus === 'confirmed' ? 'Bulk confirm' : 'Bulk reject',
-        role === 'reviewer' ? 'Local Reviewer' : 'Review Manager',
+        reviewStatus === 'validated' ? 'Bulk validate' : 'Bulk false alarm',
+        user?.display_name ?? 'Aegis Reviewer',
       );
-      setBulkMessage(`Processed ${result.updated_count} events.`);
+      const failedCount = result.failed_event_ids?.length ?? 0;
+      const missingCount = result.missing_event_ids.length;
+      setBulkMessage(
+        failedCount || missingCount
+          ? `Processed ${result.updated_count} events. ${failedCount} failed policy checks, ${missingCount} missing.`
+          : `Processed ${result.updated_count} events.`,
+      );
       setSelectedIds([]);
       setBulkStatus(null);
       await refetch();
@@ -89,8 +95,8 @@ export default function ReviewQueue() {
       {overview.data && (
         <div className="mb-lg grid gap-4 sm:grid-cols-3">
           <MetricTile label="Pending Review" value={overview.data.pending_review_count} tone="warning" />
-          <MetricTile label="Confirmed" value={overview.data.confirmed_count} tone="success" />
-          <MetricTile label="Rejected" value={overview.data.rejected_count} tone="danger" />
+          <MetricTile label="Validated" value={overview.data.confirmed_count} tone="success" />
+          <MetricTile label="False Alarm" value={overview.data.rejected_count} tone="danger" />
         </div>
       )}
 
@@ -129,11 +135,11 @@ export default function ReviewQueue() {
                 >
                   Select Page
                 </button>
-                <PrimaryButton icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('confirmed')}>
-                  {bulkStatus === 'confirmed' ? 'Click to Confirm' : 'Bulk Confirm'}
+                <PrimaryButton icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('validated')}>
+                  {bulkStatus === 'validated' ? 'Click to Validate' : 'Bulk Validate'}
                 </PrimaryButton>
-                <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('rejected')}>
-                  {bulkStatus === 'rejected' ? 'Click to Reject' : 'Bulk Reject'}
+                <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('false_alarm')}>
+                  {bulkStatus === 'false_alarm' ? 'Click to Mark False Alarm' : 'Bulk False Alarm'}
                 </PrimaryButton>
               </div>
             </div>

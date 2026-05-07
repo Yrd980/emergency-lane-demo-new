@@ -14,6 +14,8 @@ export default function DeviceDetail() {
   if (!data) return null;
 
   const firstIssue = data.issues[0];
+  const issueActionHref = firstIssue?.code === 'pending_uploads' ? '/events' : firstIssue ? '/setup' : '/events';
+  const issueActionLabel = firstIssue?.code === 'pending_uploads' ? 'View Recent Events' : firstIssue ? 'View Setup Steps' : 'View Events';
 
   return (
     <div className="space-y-lg">
@@ -29,7 +31,7 @@ export default function DeviceDetail() {
           tone={firstIssue ? (firstIssue.severity === 'critical' ? 'danger' : 'warning') : 'success'}
           title={firstIssue ? firstIssue.message : 'Device can continue operating'}
           description={firstIssue ? firstIssue.next_action : 'Next: check recent events, or return to workbench to wait for new events.'}
-          action={<PrimaryButton href={firstIssue ? '/setup' : '/events'}>{firstIssue ? 'View Setup Steps' : 'View Events'}</PrimaryButton>}
+          action={<PrimaryButton href={issueActionHref}>{issueActionLabel}</PrimaryButton>}
         />
       </div>
 

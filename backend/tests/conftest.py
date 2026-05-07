@@ -25,3 +25,10 @@ def client():
     from starlette.testclient import TestClient
     app = create_app()
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers(client):
+    resp = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    assert resp.status_code == 200
+    return {"Authorization": f"Bearer {resp.json()['token']}"}

@@ -127,6 +127,20 @@ def test_get_event_detail(client):
     assert data["evidence_files"] == []
 
 
+def test_create_event_accepts_android_float_vehicle_box(client):
+    payload = {
+        **EVENT_PAYLOAD,
+        "event_id": "evt_float_box",
+        "vehicle_box": {"x": 120.5, "y": 220.25, "width": 180.75, "height": 90.5},
+    }
+    resp = client.post("/api/events", json=payload)
+    assert resp.status_code == 200
+
+    detail = client.get("/api/events/evt_float_box").json()
+    assert detail["vehicle_box"]["x"] == 120.5
+    assert detail["vehicle_box"]["width"] == 180.75
+
+
 def test_get_event_detail_without_gps_returns_null(client):
     payload = {**EVENT_PAYLOAD, "event_id": "evt_no_gps"}
     payload.pop("gps_location")
@@ -136,11 +150,11 @@ def test_get_event_detail_without_gps_returns_null(client):
     assert resp.json()["gps_location"] is None
 
 
-def test_event_detail_next_event_points_to_pending_queue(client):
+def test_event_detail_next_event_points_to_pending_queue(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_a"})
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_b", "track_id": "track_b"})
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_done", "track_id": "track_done"})
-    client.patch("/api/events/evt_next_done/review", json={"review_status": "confirmed"})
+    client.patch("/api/events/evt_next_done/review", headers=auth_headers, json={"review_status": "validated"})
 
     resp = client.get("/api/events/evt_next_a")
 
@@ -151,55 +165,55 @@ def test_event_not_found_returns_404(client):
     resp = client.get("/api/events/nonexistent")
     assert resp.status_code == 404
 
-def test_update_review_confirmed(client):
+def test_update_review_validated(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_rev"})
-    resp = client.patch("/api/events/evt_rev/review", json={
-        "review_status": "confirmed",
+    resp = client.patch("/api/events/evt_rev/review", headers=auth_headers, json={
+        "review_status": "validated",
         "operator_note": "证据清晰",
         "operator_id": "reviewer_a",
     })
     assert resp.status_code == 200
-    assert resp.json()["review_status"] == "confirmed"
+    assert resp.json()["review_status"] == "validated"
     assert resp.json()["operator_id"] == "reviewer_a"
 
     detail = client.get("/api/events/evt_rev").json()
     assert detail["review_history"][0]["operator_id"] == "reviewer_a"
     assert detail["review_history"][0]["from_status"] == "pending"
-    assert detail["review_history"][0]["to_status"] == "confirmed"
+    assert detail["review_history"][0]["to_status"] == "validated"
 
 
-def test_review_history_preserves_rejudgement(client):
+def test_review_history_preserves_rejudgement(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_history"})
-    client.patch("/api/events/evt_history/review", json={
-        "review_status": "confirmed",
+    client.patch("/api/events/evt_history/review", headers=auth_headers, json={
+        "review_status": "validated",
         "operator_note": "初次确认",
         "operator_id": "reviewer_a",
     })
-    client.patch("/api/events/evt_history/review", json={
-        "review_status": "rejected",
+    client.patch("/api/events/evt_history/review", headers=auth_headers, json={
+        "review_status": "false_alarm",
         "operator_note": "复查后驳回",
         "operator_id": "reviewer_b",
     })
 
     detail = client.get("/api/events/evt_history").json()
-    assert detail["review_status"] == "rejected"
+    assert detail["review_status"] == "false_alarm"
     assert len(detail["review_history"]) == 2
     assert detail["review_history"][0]["operator_id"] == "reviewer_b"
-    assert detail["review_history"][0]["from_status"] == "confirmed"
-    assert detail["review_history"][0]["to_status"] == "rejected"
+    assert detail["review_history"][0]["from_status"] == "validated"
+    assert detail["review_history"][0]["to_status"] == "false_alarm"
 
-def test_review_invalid_status_returns_422(client):
+def test_review_invalid_status_returns_422(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_inv"})
-    resp = client.patch("/api/events/evt_inv/review", json={"review_status": "maybe"})
+    resp = client.patch("/api/events/evt_inv/review", headers=auth_headers, json={"review_status": "maybe"})
     assert resp.status_code == 422
 
-def test_bulk_review_updates_events_and_history(client):
+def test_bulk_review_updates_events_and_history(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_a"})
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_b", "track_id": "track_b"})
 
-    resp = client.patch("/api/events/review/bulk", json={
+    resp = client.patch("/api/events/review/bulk", headers=auth_headers, json={
         "event_ids": ["evt_bulk_a", "evt_bulk_b"],
-        "review_status": "rejected",
+        "review_status": "false_alarm",
         "operator_note": "批量排除测试事件",
         "operator_id": "reviewer_bulk",
     })
@@ -209,21 +223,46 @@ def test_bulk_review_updates_events_and_history(client):
     assert resp.json()["missing_event_ids"] == []
     for event_id in ["evt_bulk_a", "evt_bulk_b"]:
         detail = client.get(f"/api/events/{event_id}").json()
-        assert detail["review_status"] == "rejected"
+        assert detail["review_status"] == "false_alarm"
         assert detail["review_history"][0]["operator_id"] == "reviewer_bulk"
 
-def test_duplicate_upload_does_not_overwrite_review(client):
+
+def test_bulk_review_reports_failed_confirmations(client, auth_headers):
+    client.put("/api/settings", headers=auth_headers, json={
+        "review_mode": "manual",
+        "online_window_seconds": 60,
+        "evidence_retention_days": 30,
+        "require_complete_evidence": True,
+        "device_access_mode": "open",
+    })
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_incomplete"})
+
+    resp = client.patch("/api/events/review/bulk", headers=auth_headers, json={
+        "event_ids": ["evt_bulk_incomplete"],
+        "review_status": "validated",
+        "operator_note": "批量确认",
+    })
+
+    assert resp.status_code == 200
+    assert resp.json()["updated_count"] == 0
+    assert resp.json()["failed_event_ids"] == ["evt_bulk_incomplete"]
+    detail = client.get("/api/events/evt_bulk_incomplete").json()
+    assert detail["review_status"] == "pending"
+    assert detail["review_history"] == []
+
+
+def test_duplicate_upload_does_not_overwrite_review(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_keep"})
-    client.patch("/api/events/evt_keep/review", json={
-        "review_status": "confirmed", "operator_note": "已确认",
+    client.patch("/api/events/evt_keep/review", headers=auth_headers, json={
+        "review_status": "validated", "operator_note": "已确认",
     })
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_keep"})
     resp = client.get("/api/events/evt_keep")
-    assert resp.json()["review_status"] == "confirmed"
+    assert resp.json()["review_status"] == "validated"
 
 
-def test_require_complete_evidence_blocks_confirmation(client):
-    client.put("/api/settings", json={
+def test_require_complete_evidence_blocks_confirmation(client, auth_headers):
+    client.put("/api/settings", headers=auth_headers, json={
         "review_mode": "manual",
         "online_window_seconds": 60,
         "evidence_retention_days": 30,
@@ -231,23 +270,23 @@ def test_require_complete_evidence_blocks_confirmation(client):
         "device_access_mode": "open",
     })
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_incomplete"})
-    resp = client.patch("/api/events/evt_incomplete/review", json={
-        "review_status": "confirmed",
+    resp = client.patch("/api/events/evt_incomplete/review", headers=auth_headers, json={
+        "review_status": "validated",
         "operator_note": "no evidence",
     })
     assert resp.status_code == 422
     assert "Complete evidence" in resp.json()["detail"]
 
 
-def test_delete_event_removes_event_and_evidence(client):
+def test_delete_event_removes_event_and_evidence(client, auth_headers):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_del"})
-    resp = client.delete("/api/events/evt_del")
+    resp = client.delete("/api/events/evt_del", headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json()["deleted"] is True
     resp = client.get("/api/events/evt_del")
     assert resp.status_code == 404
 
 
-def test_delete_nonexistent_event_returns_404(client):
-    resp = client.delete("/api/events/nonexistent")
+def test_delete_nonexistent_event_returns_404(client, auth_headers):
+    resp = client.delete("/api/events/nonexistent", headers=auth_headers)
     assert resp.status_code == 404

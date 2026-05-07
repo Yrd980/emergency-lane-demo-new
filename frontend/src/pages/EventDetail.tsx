@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { api } from '../api/client';
 import { useEventDetail } from '../hooks/useEventDetail';
 import { useReview } from '../hooks/useReview';
 import StatusBadge from '../components/StatusBadge';
@@ -9,6 +10,7 @@ import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from
 import { useToast } from '../hooks/useToast';
 import type { EventDetail as EventDetailType, ReviewHistoryItem } from '../types';
 import { cn, formatFullDateTime, formatPercent } from '../utils/format';
+import { useAuth } from '../access/useRole';
 
 function formatGpsLocation(gps: unknown): string {
   if (!gps || typeof gps !== 'object') return '--';
@@ -41,17 +43,17 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
     },
   ];
 
-  if (data.review_status === 'confirmed') {
+  if (data.review_status === 'validated') {
     entries.push({
-      id: 'confirmed',
-      label: 'Review Confirmed',
+      id: 'validated',
+      label: 'Review Validated',
       time: formatFullDateTime(data.reviewed_at),
       tone: 'brand',
     });
-  } else if (data.review_status === 'rejected') {
+  } else if (data.review_status === 'false_alarm') {
     entries.push({
-      id: 'rejected',
-      label: 'Review Rejected',
+      id: 'false_alarm',
+      label: 'False Alarm',
       time: formatFullDateTime(data.reviewed_at),
       tone: 'danger',
     });
@@ -72,6 +74,7 @@ export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const { data, loading, error, refetch } = useEventDetail(id!);
   const { submit, submitting } = useReview(id!);
 
@@ -97,10 +100,10 @@ export default function EventDetail() {
   }
   if (!data) return null;
 
-  const handleReview = async (status: string, note: string, operatorId: string): Promise<boolean> => {
+  const handleReview = async (status: string, note: string, operatorId?: string): Promise<boolean> => {
     const ok = await submit(status, note, operatorId);
     if (ok) {
-      showToast(status === 'confirmed' ? '已确认占用，复核结果已保存' : '已驳回事件，复核结果已保存', 'success');
+      showToast(status === 'validated' ? '已确认占用，复核结果已保存' : '已标记为误报，复核结果已保存', 'success');
       refetch();
     }
     return ok;
@@ -109,6 +112,18 @@ export default function EventDetail() {
   const gpsText = formatGpsLocation(data.gps_location);
   const images = data.evidence_files.filter((f) => f.mime_type.startsWith('image/'));
   const hasImages = images.length > 0;
+  const canAssign = Boolean(user?.permissions.includes('events:assign'));
+  const canReview = Boolean(user?.permissions.includes('events:review'));
+
+  const assignToPatrol = async () => {
+    try {
+      await api.assignEvent(data.event_id, { assigned_to_username: 'patrol', note: 'Dispatch from incident detail' });
+      showToast('Task assigned to patrol unit', 'success');
+      refetch();
+    } catch (e: unknown) {
+      showToast((e as Error).message, 'error');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -345,11 +360,12 @@ export default function EventDetail() {
           )}
 
           {/* ─── Action buttons ─── */}
-          {data.review_status === 'pending' && (
+          {data.review_status === 'pending' && canReview && (
             <div className="flex flex-col gap-2 pt-4">
               <button
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-3 px-4 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
+                onClick={() => void handleReview('validated', 'Evidence validated from incident detail', user?.display_name)}
               >
                 <span className="material-symbols-outlined">gavel</span>
                 Validate Violation
@@ -357,6 +373,8 @@ export default function EventDetail() {
               <button
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 py-3 px-4 text-body-sm text-primary transition-all hover:bg-primary/5 active:scale-95"
+                disabled={!canAssign}
+                onClick={() => void assignToPatrol()}
               >
                 <span className="material-symbols-outlined">local_police</span>
                 Assign to Patrol
@@ -364,6 +382,7 @@ export default function EventDetail() {
               <button
                 type="button"
                 className="flex w-full items-center justify-center gap-2 rounded-lg py-2 px-4 text-body-sm text-on-surface-variant transition-all hover:text-error active:opacity-60"
+                onClick={() => void handleReview('false_alarm', 'Marked as false alarm from incident detail', user?.display_name)}
               >
                 <span className="material-symbols-outlined text-sm">block</span>
                 Invalid / False Alarm
@@ -377,6 +396,7 @@ export default function EventDetail() {
             operatorNote={data.operator_note}
             onSubmit={handleReview}
             submitting={submitting}
+            operatorName={user?.display_name ?? 'Aegis Operator'}
           />
 
           {/* ─── Review History ─── */}

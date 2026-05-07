@@ -19,7 +19,7 @@ export default function FilterBar({
         <span className="material-symbols-outlined text-on-surface-variant text-base">search</span>
         Narrow scope, reduce review thinking
       </div>
-      <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-6">
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
           Status
           <select
@@ -29,8 +29,8 @@ export default function FilterBar({
           >
             <option value="">All</option>
             <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="rejected">Rejected</option>
+            <option value="validated">Validated</option>
+            <option value="false_alarm">False Alarm</option>
           </select>
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
@@ -40,6 +40,15 @@ export default function FilterBar({
             value={filters.device_id || ''}
             onChange={(e) => update('device_id', e.target.value)}
             placeholder="device_id"
+          />
+        </label>
+        <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
+          Sector
+          <input
+            className={inputClassName('mt-1')}
+            value={filters.roi_id || ''}
+            onChange={(e) => update('roi_id', e.target.value)}
+            placeholder="roi_id"
           />
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">

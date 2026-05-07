@@ -1,4 +1,25 @@
-export type ReviewStatus = 'pending' | 'confirmed' | 'rejected';
+export type ReviewStatus = 'pending' | 'validated' | 'false_alarm' | 'assigned' | 'accepted' | 'completed' | 'closed';
+export type Role = 'admin' | 'reviewer' | 'dispatcher' | 'patrol';
+export type Permission =
+  | 'events:read'
+  | 'events:review'
+  | 'events:assign'
+  | 'events:delete'
+  | 'tasks:read'
+  | 'tasks:accept'
+  | 'tasks:complete'
+  | 'devices:read'
+  | 'settings:read'
+  | 'settings:write'
+  | 'stats:read';
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  display_name: string;
+  role: Role;
+  permissions: Permission[];
+}
 
 export interface VehicleBox {
   x: number;
@@ -88,6 +109,34 @@ export interface BulkReviewResponse {
   requested_count: number;
   updated_count: number;
   missing_event_ids: string[];
+  failed_event_ids?: string[];
+}
+
+export interface TaskItem {
+  task_id: string;
+  event_id: string;
+  status: 'assigned' | 'accepted' | 'completed' | 'cancelled';
+  note: string;
+  assigned_to_username: string | null;
+  assigned_to_display_name: string | null;
+  assigned_to_device_id: string | null;
+  assigned_by_username: string;
+  assigned_by_display_name: string;
+  created_at: string;
+  accepted_at: string | null;
+  completed_at: string | null;
+  completed_note: string;
+  vehicle_class: string;
+  confidence: number;
+  start_time: string;
+  device_id: string;
+  risk_level: 'normal' | 'high';
+  thumbnail_url: string;
+}
+
+export interface TaskListResponse {
+  items: TaskItem[];
+  total: number;
 }
 
 export interface OverviewStats {
@@ -97,6 +146,26 @@ export interface OverviewStats {
   rejected_count: number;
   online_device_count: number;
   recent_events: EventListItem[];
+}
+
+export interface OperationsStats {
+  summary: {
+    total_violations: number;
+    pending_review: number;
+    validated: number;
+    false_alarms: number;
+    assigned_tasks: number;
+    completed_tasks: number;
+    avg_response_minutes: number;
+    today_events: number;
+    latest_event_at: string | null;
+    period_label?: string;
+    roi_id?: string | null;
+  };
+  trend: Array<{ day: string; total: number; validated: number }>;
+  hotspots: Array<{ roi_id: string; count: number; pending: number }>;
+  operators: Array<{ username: string; display_name: string; tasks: number; completed: number; completion_rate: number }>;
+  insight: { title: string; message: string; action: string };
 }
 
 export interface DeviceInfo {
@@ -159,6 +228,7 @@ export interface SystemStatus {
     total: number;
     online: number;
     pending_upload_count: number;
+    backlog_device_id?: string | null;
   };
   events: {
     pending_review_count: number;

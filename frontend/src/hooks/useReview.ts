@@ -5,7 +5,7 @@ export function useReview(eventId: string) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (review_status: string, operator_note: string, operator_id: string) => {
+  const submit = async (review_status: string, operator_note: string, operator_id?: string) => {
     setSubmitting(true);
     setError(null);
     try {

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.auth import require_permission
 from app.models.device import DeviceRegister, DeviceHeartbeat
 from app.services import device_service
 
@@ -7,12 +8,12 @@ router = APIRouter(prefix="/api/devices", tags=["devices"])
 
 
 @router.get("")
-def list_devices():
+def list_devices(user: dict = Depends(require_permission("devices:read"))):
     return device_service.list_devices()
 
 
 @router.get("/{device_id}")
-def get_device(device_id: str):
+def get_device(device_id: str, user: dict = Depends(require_permission("devices:read"))):
     result = device_service.get_device_detail(device_id)
     if not result:
         raise HTTPException(status_code=404, detail="Device not found")
@@ -43,7 +44,7 @@ def device_heartbeat(body: DeviceHeartbeat):
     return result
 
 @router.delete("/{device_id}")
-def delete_device(device_id: str):
+def delete_device(device_id: str, user: dict = Depends(require_permission("events:delete"))):
     result = device_service.delete_device(device_id)
     if not result:
         raise HTTPException(status_code=404, detail="Device not found")

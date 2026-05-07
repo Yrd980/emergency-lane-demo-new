@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function usePolling<T>(
   fetcher: () => Promise<T>,
-  intervalMs: number
+  intervalMs: number,
+  refreshKey?: string,
 ): { data: T | null; error: string | null; loading: boolean; refetch: () => Promise<void> } {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,15 @@ export function usePolling<T>(
       clearInterval(id);
     };
   }, [intervalMs, tick]);
+
+  useEffect(() => {
+    if (refreshKey === undefined) return;
+    let cancelled = false;
+    void tick(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey, tick]);
 
   const refetch = async () => {
     setLoading(true);

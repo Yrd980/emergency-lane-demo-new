@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from app.database import get_db
 from app.config import settings
 
-VALID_REVIEW_STATUSES = {"pending", "confirmed", "rejected"}
+VALID_REVIEW_STATUSES = {"pending", "validated", "false_alarm", "assigned", "accepted", "completed", "closed"}
 EVIDENCE_ORDER = {"frame_before": 0, "frame_peak": 1, "frame_after": 2, "video_clip": 3}
 
 def _now():
@@ -35,7 +35,7 @@ def create_event(
     return {"event_id": event_id, "accepted": True, "duplicate": False}
 
 def list_events(
-    status: str = None, device_id: str = None,
+    status: str = None, device_id: str = None, roi_id: str = None,
     start_time_from: str = None, start_time_to: str = None,
     limit: int = 50, offset: int = 0,
 ):
@@ -51,6 +51,9 @@ def list_events(
     if device_id:
         clauses.append("e.device_id = ?")
         params.append(device_id)
+    if roi_id:
+        clauses.append("e.roi_id = ?")
+        params.append(roi_id)
     if start_time_from:
         clauses.append("e.start_time >= ?")
         params.append(start_time_from)
@@ -79,7 +82,7 @@ def list_events(
             f"/evidence/{r['event_id']}/{r['thumbnail_file_path'].split('/')[-1]}"
             if r["thumbnail_file_path"] else ""
         )
-        risk_level = "high" if r["review_status"] == "pending" and (r["confidence"] >= 0.85 or r["duration_seconds"] >= 10) else "normal"
+        risk_level = "high" if r["review_status"] in ("pending", "validated", "assigned", "accepted") and (r["confidence"] >= 0.85 or r["duration_seconds"] >= 10) else "normal"
         priority_reason = "高置信度或长时间停留" if risk_level == "high" else "按时间顺序处理"
         items.append({
             "event_id": r["event_id"],
@@ -141,7 +144,7 @@ def get_event(event_id: str):
             ORDER BY {_priority_case('events')}, created_at DESC LIMIT 1""",
         (event_id,),
     ).fetchone()
-    risk_level = "high" if row["review_status"] == "pending" and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10) else "normal"
+    risk_level = "high" if row["review_status"] in ("pending", "validated", "assigned", "accepted") and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10) else "normal"
 
     return {
         "event_id": row["event_id"],
@@ -180,6 +183,8 @@ def get_event(event_id: str):
     }
 
 def update_review(event_id: str, review_status: str, operator_note: str, operator_id: str = "本地复核员"):
+    if review_status not in VALID_REVIEW_STATUSES - {"assigned", "accepted", "completed"}:
+        return {"event_id": event_id, "review_status": review_status, "error": "Unsupported review status"}
     conn = get_db()
     now = _now()
     event = conn.execute(
@@ -191,7 +196,7 @@ def update_review(event_id: str, review_status: str, operator_note: str, operato
     from_status = event["review_status"]
     operator_id = (operator_id or "本地复核员").strip() or "本地复核员"
 
-    if review_status == "confirmed":
+    if review_status == "validated":
         settings_row = conn.execute(
             "SELECT require_complete_evidence FROM runtime_settings WHERE id=1"
         ).fetchone()
@@ -235,19 +240,31 @@ def bulk_update_review(event_ids: list[str], review_status: str, operator_note: 
 
     results = []
     missing_event_ids = []
+    failed_event_ids = []
     for event_id in seen:
         result = update_review(event_id, review_status, operator_note, operator_id)
-        if result:
-            results.append(result)
-        else:
+        if not result:
             missing_event_ids.append(event_id)
+        elif "error" in result:
+            failed_event_ids.append(event_id)
+        else:
+            results.append(result)
 
     return {
         "requested_count": len(seen),
         "updated_count": len(results),
         "missing_event_ids": missing_event_ids,
+        "failed_event_ids": failed_event_ids,
         "items": results,
     }
+
+
+def validate_event(event_id: str, note: str, user: dict):
+    return update_review(event_id, "validated", note, user["display_name"])
+
+
+def mark_false_alarm(event_id: str, note: str, user: dict):
+    return update_review(event_id, "false_alarm", note, user["display_name"])
 
 
 def delete_event(event_id: str):

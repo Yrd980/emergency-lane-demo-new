@@ -31,6 +31,12 @@ def get_status():
     pending_upload_total = conn.execute(
         "SELECT COALESCE(SUM(pending_upload_count), 0) FROM devices",
     ).fetchone()[0]
+    backlog_device = conn.execute(
+        """SELECT device_id FROM devices
+           WHERE pending_upload_count > 0
+           ORDER BY pending_upload_count DESC, last_seen_at DESC
+           LIMIT 1"""
+    ).fetchone()
 
     db_exists = os.path.exists(settings.db_path)
     evidence_dir_exists = os.path.isdir(settings.evidence_dir)
@@ -91,6 +97,7 @@ def get_status():
             "total": devices_total,
             "online": devices_online,
             "pending_upload_count": pending_upload_total,
+            "backlog_device_id": backlog_device["device_id"] if backlog_device else None,
         },
         "events": {
             "pending_review_count": pending_review,

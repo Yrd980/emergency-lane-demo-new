@@ -1,5 +1,5 @@
-def test_get_settings_returns_defaults(client):
-    resp = client.get("/api/settings")
+def test_get_settings_returns_defaults(client, auth_headers):
+    resp = client.get("/api/settings", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["review_mode"] == "manual"
@@ -10,7 +10,7 @@ def test_get_settings_returns_defaults(client):
     assert data["updated_at"]
 
 
-def test_update_settings_persists(client):
+def test_update_settings_persists(client, auth_headers):
     payload = {
         "review_mode": "strict",
         "online_window_seconds": 120,
@@ -18,19 +18,19 @@ def test_update_settings_persists(client):
         "require_complete_evidence": True,
         "device_access_mode": "token",
     }
-    resp = client.put("/api/settings", json=payload)
+    resp = client.put("/api/settings", headers=auth_headers, json=payload)
     assert resp.status_code == 200
     assert resp.json()["review_mode"] == "strict"
     assert resp.json()["require_complete_evidence"] is True
 
-    saved = client.get("/api/settings").json()
+    saved = client.get("/api/settings", headers=auth_headers).json()
     assert saved["online_window_seconds"] == 120
     assert saved["evidence_retention_days"] == 45
     assert saved["device_access_mode"] == "token"
 
 
-def test_update_settings_validates_ranges(client):
-    resp = client.put("/api/settings", json={
+def test_update_settings_validates_ranges(client, auth_headers):
+    resp = client.put("/api/settings", headers=auth_headers, json={
         "review_mode": "manual",
         "online_window_seconds": 2,
         "evidence_retention_days": 30,
@@ -40,9 +40,9 @@ def test_update_settings_validates_ranges(client):
     assert resp.status_code == 422
 
 
-def test_effective_online_threshold_reads_from_db(client):
+def test_effective_online_threshold_reads_from_db(client, auth_headers):
     from app.services.settings_service import get_effective_online_threshold
-    client.put("/api/settings", json={
+    client.put("/api/settings", headers=auth_headers, json={
         "review_mode": "manual",
         "online_window_seconds": 180,
         "evidence_retention_days": 30,

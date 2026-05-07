@@ -15,25 +15,26 @@ export default function ReviewPanel({
   operatorNote,
   onSubmit,
   submitting,
+  operatorName,
 }: {
   reviewStatus: string;
   operatorNote: string;
-  onSubmit: (status: string, note: string, operatorId: string) => Promise<boolean>;
+  onSubmit: (status: string, note: string, operatorId?: string) => Promise<boolean>;
   submitting: boolean;
+  operatorName: string;
 }) {
   const [note, setNote] = useState(operatorNote);
-  const [operatorId, setOperatorId] = useState('Local Reviewer');
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<'confirmed' | 'rejected' | null>(null);
+  const [confirming, setConfirming] = useState<'validated' | 'false_alarm' | null>(null);
   const isReviewed = reviewStatus !== 'pending';
 
-  async function handleReview(newStatus: 'confirmed' | 'rejected') {
+  async function handleReview(newStatus: 'validated' | 'false_alarm') {
     if (confirming !== newStatus) {
       setConfirming(newStatus);
       return;
     }
     setSubmitError(null);
-    const ok = await onSubmit(newStatus, note, operatorId);
+    const ok = await onSubmit(newStatus, note, operatorName);
     if (!ok) setSubmitError('Review submission failed, check backend and retry');
   }
 
@@ -72,31 +73,25 @@ export default function ReviewPanel({
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          <label className="block text-label-xs font-medium text-on-surface-variant">
-            Operator
-            <input
-              className={inputClassName('mt-2 w-full font-normal')}
-              value={operatorId}
-              onChange={(e) => setOperatorId(e.target.value)}
-              placeholder="e.g. reviewer_a"
-            />
-          </label>
+          <div className="rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">
+            Operator: <span className="font-semibold text-on-surface">{operatorName}</span>
+          </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <PrimaryButton
               tone="dark"
-              icon={confirming === 'confirmed' ? 'send' : 'check_circle'}
+              icon={confirming === 'validated' ? 'send' : 'check_circle'}
               disabled={submitting}
-              onClick={() => handleReview('confirmed')}
+              onClick={() => handleReview('validated')}
             >
-              {submitting ? 'Submitting...' : confirming === 'confirmed' ? 'Click Again to Confirm' : 'Confirm Violation'}
+              {submitting ? 'Submitting...' : confirming === 'validated' ? 'Click Again to Validate' : 'Validate Violation'}
             </PrimaryButton>
             <PrimaryButton
               tone="danger"
-              icon={confirming === 'rejected' ? 'send' : 'cancel'}
+              icon={confirming === 'false_alarm' ? 'send' : 'cancel'}
               disabled={submitting}
-              onClick={() => handleReview('rejected')}
+              onClick={() => handleReview('false_alarm')}
             >
-              {submitting ? 'Submitting...' : confirming === 'rejected' ? 'Click Again to Reject' : 'Reject Event'}
+              {submitting ? 'Submitting...' : confirming === 'false_alarm' ? 'Click Again to Mark False Alarm' : 'False Alarm'}
             </PrimaryButton>
           </div>
         </div>

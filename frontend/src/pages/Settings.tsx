@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useRole } from '../access/useRole';
+import { useAuth } from '../access/useRole';
 import { api } from '../api/client';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import { inputClassName } from '../components/styles';
@@ -8,7 +8,7 @@ import type { RuntimeSettingsUpdate } from '../types';
 import { formatDateTime } from '../utils/format';
 
 export default function Settings() {
-  const { role } = useRole();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [settings, setSettings] = useState<RuntimeSettingsUpdate | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -82,7 +82,7 @@ export default function Settings() {
     );
   }
   if (!settings) return null;
-  const editable = role === 'maintainer';
+  const editable = Boolean(user?.permissions.includes('settings:write'));
 
   return (
     <div className="space-y-lg">
@@ -105,7 +105,7 @@ export default function Settings() {
         <ActionPanel
           tone="warning"
           title="Current role can only view settings"
-          description="Only maintainer can modify runtime parameters. Current role is better suited to checking health and device status."
+          description="Only accounts with settings:write can modify runtime parameters. Current account is limited to operational viewing."
           action={<PrimaryButton href="/health">Go to System Health</PrimaryButton>}
         />
       )}

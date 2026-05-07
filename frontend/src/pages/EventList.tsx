@@ -1,10 +1,15 @@
+import { useSearchParams } from 'react-router-dom';
 import { useEvents } from '../hooks/useEvents';
 import FilterBar from '../components/FilterBar';
 import EventTable from '../components/EventTable';
 import { PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 
 export default function EventList() {
-  const { data, loading, error, filters, setFilters, refetch } = useEvents();
+  const [searchParams] = useSearchParams();
+  const { data, loading, error, filters, setFilters, refetch } = useEvents({
+    ...(searchParams.get('roi_id') ? { roi_id: searchParams.get('roi_id') || '' } : {}),
+    ...(searchParams.get('status') ? { status: searchParams.get('status') || '' } : {}),
+  });
 
   return (
     <div className="space-y-lg">

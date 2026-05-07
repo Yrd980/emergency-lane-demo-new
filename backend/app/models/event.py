@@ -2,10 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 class VehicleBox(BaseModel):
-    x: int
-    y: int
-    width: int
-    height: int
+    x: float
+    y: float
+    width: float
+    height: float
 
 class GpsLocation(BaseModel):
     lat: float = 0.0
@@ -32,3 +32,9 @@ class ReviewUpdate(BaseModel):
 
 class BulkReviewUpdate(ReviewUpdate):
     event_ids: list[str] = Field(default_factory=list, min_length=1)
+
+
+class AssignEventRequest(BaseModel):
+    assigned_to_username: str | None = None
+    assigned_to_device_id: str | None = None
+    note: str = ""

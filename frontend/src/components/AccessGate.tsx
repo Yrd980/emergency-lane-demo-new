@@ -1,17 +1,17 @@
-import { useRole } from '../access/useRole';
-import { canAccess, type Role } from '../access/permissions';
+import { useAuth } from '../access/useRole';
+import { canAccess, type Permission } from '../access/permissions';
 import { ActionPanel, PrimaryButton } from './ProductPrimitives';
 
-export default function AccessGate({ allowed, children }: { allowed: readonly Role[]; children: React.ReactNode }) {
-  const { role } = useRole();
+export default function AccessGate({ allowed, children }: { allowed: readonly Permission[]; children: React.ReactNode }) {
+  const { user } = useAuth();
 
-  if (!canAccess(role, allowed)) {
+  if (!user || !canAccess(user.permissions, allowed)) {
     return (
       <div className="space-y-5">
         <ActionPanel
           tone="warning"
-          title="当前身份没有权限访问该页面"
-          description={`当前角色是 ${role}，这个页面只对指定身份开放。切换身份后可继续。`}
+          title="当前账号没有权限访问该页面"
+          description={`当前账号是 ${user?.display_name ?? '未登录'}，此页面需要 ${allowed.join(', ')} 权限。`}
           action={<PrimaryButton href="/" >返回工作台</PrimaryButton>}
         />
       </div>
