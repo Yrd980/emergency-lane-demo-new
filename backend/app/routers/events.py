@@ -44,7 +44,7 @@ def get_event(event_id: str):
 def update_review(event_id: str, body: ReviewUpdate):
     if body.review_status not in ("confirmed", "rejected"):
         raise HTTPException(status_code=422, detail="review_status must be 'confirmed' or 'rejected'")
-    result = event_service.update_review(event_id, body.review_status, body.operator_note)
+    result = event_service.update_review(event_id, body.review_status, body.operator_note, body.operator_id)
     if not result:
         raise HTTPException(status_code=404, detail="Event not found")
     return result

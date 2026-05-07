@@ -4,6 +4,8 @@ import type {
   EventDetail,
   EventListResponse,
   OverviewStats,
+  RuntimeSettings,
+  RuntimeSettingsUpdate,
   SystemStatus,
 } from '../types';
 
@@ -40,13 +42,21 @@ export const api = {
 
   getEvent: (id: string) => request<EventDetail>(`/events/${id}`),
 
-  reviewEvent: (id: string, review_status: string, operator_note: string) =>
+  reviewEvent: (id: string, review_status: string, operator_note: string, operator_id: string) =>
     request(`/events/${id}/review`, {
       method: 'PATCH',
-      body: JSON.stringify({ review_status, operator_note }),
+      body: JSON.stringify({ review_status, operator_note, operator_id }),
     }),
 
   getDevices: () => request<DeviceInfo[]>('/devices'),
 
   getDevice: (id: string) => request<DeviceDetail>(`/devices/${id}`),
+
+  getSettings: () => request<RuntimeSettings>('/settings'),
+
+  updateSettings: (body: RuntimeSettingsUpdate) =>
+    request<RuntimeSettings>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 };

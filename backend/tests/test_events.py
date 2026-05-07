@@ -115,9 +115,37 @@ def test_update_review_confirmed(client):
     resp = client.patch("/api/events/evt_rev/review", json={
         "review_status": "confirmed",
         "operator_note": "证据清晰",
+        "operator_id": "reviewer_a",
     })
     assert resp.status_code == 200
     assert resp.json()["review_status"] == "confirmed"
+    assert resp.json()["operator_id"] == "reviewer_a"
+
+    detail = client.get("/api/events/evt_rev").json()
+    assert detail["review_history"][0]["operator_id"] == "reviewer_a"
+    assert detail["review_history"][0]["from_status"] == "pending"
+    assert detail["review_history"][0]["to_status"] == "confirmed"
+
+
+def test_review_history_preserves_rejudgement(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_history"})
+    client.patch("/api/events/evt_history/review", json={
+        "review_status": "confirmed",
+        "operator_note": "初次确认",
+        "operator_id": "reviewer_a",
+    })
+    client.patch("/api/events/evt_history/review", json={
+        "review_status": "rejected",
+        "operator_note": "复查后驳回",
+        "operator_id": "reviewer_b",
+    })
+
+    detail = client.get("/api/events/evt_history").json()
+    assert detail["review_status"] == "rejected"
+    assert len(detail["review_history"]) == 2
+    assert detail["review_history"][0]["operator_id"] == "reviewer_b"
+    assert detail["review_history"][0]["from_status"] == "confirmed"
+    assert detail["review_history"][0]["to_status"] == "rejected"
 
 def test_review_invalid_status_returns_422(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_inv"})

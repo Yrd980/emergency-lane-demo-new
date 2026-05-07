@@ -1,8 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { Activity, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useDeviceDetail } from '../hooks/useDeviceDetail';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import StatusBadge from '../components/StatusBadge';
+import type { DeviceMetricSnapshot } from '../types';
 import { formatDateTime } from '../utils/format';
 
 export default function DeviceDetail() {
@@ -51,6 +52,10 @@ export default function DeviceDetail() {
             <Field label="最后心跳" value={formatDateTime(data.last_seen_at)} />
           </div>
         </section>
+        <MetricHistory history={data.metric_history} />
+      </div>
+
+      <div className="mt-5">
         <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-slate-950">最近事件</h2>
@@ -73,6 +78,44 @@ export default function DeviceDetail() {
           )}
         </section>
       </div>
+    </div>
+  );
+}
+
+function MetricHistory({ history }: { history: DeviceMetricSnapshot[] }) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2">
+        <Activity className="h-4 w-4 text-slate-700" />
+        <h2 className="font-semibold text-slate-950">指标历史</h2>
+      </div>
+      {history.length === 0 ? (
+        <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">还没有心跳指标。下一步：确认 Android 端已完成注册并开始上报心跳。</div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {history.slice(0, 8).map((item) => (
+            <div key={item.id} className="grid gap-3 rounded-lg bg-slate-50 p-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <div className="font-medium text-slate-900">{formatDateTime(item.recorded_at)}</div>
+                <div className="mt-1 text-xs text-slate-500">温度：{item.thermal_state} · 电量：{item.battery_level}%</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <MiniMetric label="FPS" value={item.fps} />
+                <MiniMetric label="积压" value={item.pending_upload_count} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="min-w-16 rounded-md border border-slate-200 bg-white px-2 py-1 text-center">
+      <div className="text-[11px] text-slate-500">{label}</div>
+      <div className="font-semibold text-slate-900">{value}</div>
     </div>
   );
 }

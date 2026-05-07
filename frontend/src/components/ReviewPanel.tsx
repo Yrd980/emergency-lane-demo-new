@@ -18,10 +18,11 @@ export default function ReviewPanel({
 }: {
   reviewStatus: string;
   operatorNote: string;
-  onSubmit: (status: string, note: string) => Promise<boolean>;
+  onSubmit: (status: string, note: string, operatorId: string) => Promise<boolean>;
   submitting: boolean;
 }) {
   const [note, setNote] = useState(operatorNote);
+  const [operatorId, setOperatorId] = useState('本地复核员');
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<'confirmed' | 'rejected' | null>(null);
   const isReviewed = reviewStatus !== 'pending';
@@ -32,7 +33,7 @@ export default function ReviewPanel({
       return;
     }
     setSubmitError(null);
-    const ok = await onSubmit(newStatus, note);
+    const ok = await onSubmit(newStatus, note, operatorId);
     if (!ok) setSubmitError('复核提交失败，请检查本地后端后重试');
   }
 
@@ -71,6 +72,15 @@ export default function ReviewPanel({
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
+          <label className="block text-xs font-medium text-slate-600">
+            操作者
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              value={operatorId}
+              onChange={(e) => setOperatorId(e.target.value)}
+              placeholder="例如：reviewer_a"
+            />
+          </label>
           <div className="grid gap-2 sm:grid-cols-2">
             <PrimaryButton
               tone="dark"

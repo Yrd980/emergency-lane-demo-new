@@ -48,11 +48,22 @@ export interface EventDetail {
   created_at: string;
   reviewed_at: string | null;
   evidence_files: EvidenceFile[];
+  review_history: ReviewHistoryItem[];
   evidence_summary?: EvidenceSummary;
   risk_level?: 'normal' | 'high';
   review_priority_reason?: string;
   previous_event_id?: string | null;
   next_event_id?: string | null;
+}
+
+export interface ReviewHistoryItem {
+  id: number;
+  event_id: string;
+  operator_id: string;
+  from_status: ReviewStatus;
+  to_status: Exclude<ReviewStatus, 'pending'>;
+  operator_note: string;
+  reviewed_at: string;
 }
 
 export interface EventListItem {
@@ -98,6 +109,7 @@ export interface DeviceInfo {
 
 export interface DeviceIssue {
   severity: 'info' | 'warning' | 'critical';
+  code?: string;
   message: string;
   next_action: string;
 }
@@ -105,7 +117,17 @@ export interface DeviceIssue {
 export interface DeviceDetail extends DeviceInfo {
   seconds_since_seen: number;
   issues: DeviceIssue[];
+  metric_history: DeviceMetricSnapshot[];
   recent_events: EventListItem[];
+}
+
+export interface DeviceMetricSnapshot {
+  id: number;
+  recorded_at: string;
+  battery_level: number;
+  thermal_state: string;
+  fps: number;
+  pending_upload_count: number;
 }
 
 export interface SystemIssue {
@@ -138,3 +160,14 @@ export interface SystemStatus {
   };
   issues: SystemIssue[];
 }
+
+export interface RuntimeSettings {
+  review_mode: 'manual' | 'strict';
+  online_window_seconds: number;
+  evidence_retention_days: number;
+  require_complete_evidence: boolean;
+  device_access_mode: 'open' | 'token';
+  updated_at: string;
+}
+
+export type RuntimeSettingsUpdate = Omit<RuntimeSettings, 'updated_at'>;

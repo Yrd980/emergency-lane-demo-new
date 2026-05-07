@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, History, RefreshCw } from 'lucide-react';
 import { useEventDetail } from '../hooks/useEventDetail';
 import { useReview } from '../hooks/useReview';
 import StatusBadge from '../components/StatusBadge';
@@ -7,6 +7,7 @@ import EvidenceViewer from '../components/EvidenceViewer';
 import ReviewPanel from '../components/ReviewPanel';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import { useToast } from '../hooks/useToast';
+import type { ReviewHistoryItem } from '../types';
 import { formatFullDateTime, formatPercent } from '../utils/format';
 
 function formatGpsLocation(gps: unknown): string {
@@ -36,8 +37,8 @@ export default function EventDetail() {
   }
   if (!data) return null;
 
-  const handleReview = async (status: string, note: string): Promise<boolean> => {
-    const ok = await submit(status, note);
+  const handleReview = async (status: string, note: string, operatorId: string): Promise<boolean> => {
+    const ok = await submit(status, note, operatorId);
     if (ok) {
       showToast(status === 'confirmed' ? '已确认占用，复核结果已保存' : '已驳回事件，复核结果已保存', 'success');
       refetch();
@@ -97,7 +98,47 @@ export default function EventDetail() {
               </div>
             </div>
           </div>
+          <ReviewHistory history={data.review_history} />
         </aside>
+      </div>
+    </div>
+  );
+}
+
+function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
+  if (history.length === 0) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 font-semibold text-slate-950">
+          <History className="h-4 w-4" />
+          复核历史
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-600">尚无复核记录。下一步：完成确认或驳回后，这里会记录操作者和改判轨迹。</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2 font-semibold text-slate-950">
+        <History className="h-4 w-4" />
+        复核历史
+      </div>
+      <div className="mt-4 space-y-3">
+        {history.map((item) => (
+          <div key={item.id} className="rounded-lg bg-slate-50 p-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium text-slate-900">{item.operator_id}</span>
+              <span className="text-xs text-slate-500">{formatFullDateTime(item.reviewed_at)}</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <StatusBadge status={item.from_status} />
+              <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+              <StatusBadge status={item.to_status} />
+            </div>
+            <p className="mt-2 leading-6 text-slate-600">{item.operator_note || '未填写备注'}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

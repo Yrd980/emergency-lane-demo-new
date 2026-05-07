@@ -100,6 +100,10 @@ def get_event(event_id: str):
         "SELECT * FROM evidence_files WHERE event_id=?",
         (event_id,),
     ).fetchall()
+    history_rows = conn.execute(
+        "SELECT * FROM review_history WHERE event_id=? ORDER BY reviewed_at DESC, id DESC",
+        (event_id,),
+    ).fetchall()
 
     evidence = []
     for ef in sorted(evidence_rows, key=lambda item: EVIDENCE_ORDER.get(item["evidence_type"], 99)):
@@ -149,18 +153,43 @@ def get_event(event_id: str):
         "reviewed_at": row["reviewed_at"],
         "evidence_files": evidence,
         "evidence_summary": evidence_summary,
+        "review_history": [
+            {
+                "id": history["id"],
+                "event_id": history["event_id"],
+                "operator_id": history["operator_id"],
+                "from_status": history["from_status"],
+                "to_status": history["to_status"],
+                "operator_note": history["operator_note"],
+                "reviewed_at": history["reviewed_at"],
+            }
+            for history in history_rows
+        ],
         "risk_level": risk_level,
         "review_priority_reason": "高置信度或长时间停留" if risk_level == "high" else "按时间顺序处理",
         "previous_event_id": prev_row["event_id"] if prev_row else None,
         "next_event_id": next_row["event_id"] if next_row else None,
     }
 
-def update_review(event_id: str, review_status: str, operator_note: str):
+def update_review(event_id: str, review_status: str, operator_note: str, operator_id: str = "本地复核员"):
     conn = get_db()
     now = _now()
+    event = conn.execute(
+        "SELECT review_status FROM events WHERE event_id=?",
+        (event_id,),
+    ).fetchone()
+    if not event:
+        return None
+    from_status = event["review_status"]
+    operator_id = (operator_id or "本地复核员").strip() or "本地复核员"
     cur = conn.execute(
         "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
         (review_status, operator_note, now, event_id),
+    )
+    conn.execute(
+        """INSERT INTO review_history (event_id, operator_id, from_status, to_status, operator_note, reviewed_at)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (event_id, operator_id, from_status, review_status, operator_note, now),
     )
     conn.commit()
     if cur.rowcount == 0:
@@ -169,5 +198,6 @@ def update_review(event_id: str, review_status: str, operator_note: str):
         "event_id": event_id,
         "review_status": review_status,
         "operator_note": operator_note,
+        "operator_id": operator_id,
         "reviewed_at": now,
     }

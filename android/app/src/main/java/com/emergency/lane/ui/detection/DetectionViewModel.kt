@@ -87,6 +87,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
 
     // Performance tracking
     private val recentInferenceMs = ArrayDeque<Long>(20)
+    private val recentFrames = ArrayDeque<Bitmap>(6)
 
     init {
         viewModelScope.launch {
@@ -180,6 +181,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         val sm = stateMachine ?: return
 
         try {
+            rememberFrame(bitmap)
             val (rawOutput, inferenceMs) = engine.runInference(bitmap)
             val boxes = NmsProcessor.parseYoloOutput(
                 rawOutput, engine.modelInfo.outputShape
@@ -262,22 +264,30 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
             createdAt = now.toString()
         )
 
-        var evidencePath = ""
+        val evidenceFiles = mutableListOf<EvidenceFileEntity>()
         try {
+            recentFrames.firstOrNull()?.let { before ->
+                val path = saveBitmapToCache(before, "${eventId}_frame_before.jpg")
+                evidenceFiles.add(evidenceFile(eventId, "frame_before", path))
+            }
             val bitmap = cameraController?.captureFrame()
             if (bitmap != null) {
-                evidencePath = saveBitmapToCache(bitmap, "${eventId}_frame_peak.jpg")
+                val peakPath = saveBitmapToCache(bitmap, "${eventId}_frame_peak.jpg")
+                evidenceFiles.add(evidenceFile(eventId, "frame_peak", peakPath))
+            }
+            delay(250)
+            val after = cameraController?.captureFrame()
+            if (after != null) {
+                val afterPath = saveBitmapToCache(after, "${eventId}_frame_after.jpg")
+                evidenceFiles.add(evidenceFile(eventId, "frame_after", afterPath))
             }
         } catch (_: Exception) {}
 
-        val evidence = EvidenceFileEntity(
-            eventId = eventId,
-            evidenceType = "frame_peak",
-            localPath = evidencePath,
-            mimeType = "image/jpeg"
-        )
+        if (evidenceFiles.none { it.evidenceType == "frame_peak" }) {
+            evidenceFiles.add(evidenceFile(eventId, "frame_peak", ""))
+        }
 
-        eventQueue.enqueueEvent(event, listOf(evidence))
+        eventQueue.enqueueEvent(event, evidenceFiles)
         UploadWorker.enqueue(getApplication())
 
         _uiState.value = _uiState.value.copy(
@@ -303,16 +313,32 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
             val deviceId = settingsStore.deviceId.first()
             val (event, evidence) = EventFactory.createManualEvent(deviceId)
 
-            var evidenceWithPath = evidence
+            val evidenceFiles = mutableListOf<EvidenceFileEntity>()
             try {
+                recentFrames.firstOrNull()?.let { before ->
+                    val path = saveBitmapToCache(before, "${event.eventId}_frame_before.jpg")
+                    evidenceFiles.add(evidenceFile(event.eventId, "frame_before", path))
+                }
                 val bitmap = cameraController?.captureFrame()
                 if (bitmap != null) {
                     val path = saveBitmapToCache(bitmap, "${event.eventId}_frame_peak.jpg")
-                    evidenceWithPath = evidence.copy(localPath = path)
+                    evidenceFiles.add(evidence.copy(localPath = path))
+                } else {
+                    evidenceFiles.add(evidence)
+                }
+                delay(250)
+                val after = cameraController?.captureFrame()
+                if (after != null) {
+                    val path = saveBitmapToCache(after, "${event.eventId}_frame_after.jpg")
+                    evidenceFiles.add(evidenceFile(event.eventId, "frame_after", path))
                 }
             } catch (_: Exception) {}
 
-            eventQueue.enqueueEvent(event, listOf(evidenceWithPath))
+            if (evidenceFiles.isEmpty()) {
+                evidenceFiles.add(evidence)
+            }
+
+            eventQueue.enqueueEvent(event, evidenceFiles)
             _uiState.value = _uiState.value.copy(
                 lastEventId = event.eventId,
                 pendingUploadCount = eventQueue.getPendingCount()
@@ -331,8 +357,27 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         return file.absolutePath
     }
 
+    private fun rememberFrame(bitmap: Bitmap) {
+        recentFrames.addLast(bitmap.copy(Bitmap.Config.ARGB_8888, false))
+        while (recentFrames.size > 6) {
+            recentFrames.removeFirst().recycle()
+        }
+    }
+
+    private fun evidenceFile(eventId: String, evidenceType: String, localPath: String): EvidenceFileEntity {
+        return EvidenceFileEntity(
+            eventId = eventId,
+            evidenceType = evidenceType,
+            localPath = localPath,
+            mimeType = "image/jpeg"
+        )
+    }
+
     override fun onCleared() {
         super.onCleared()
+        while (recentFrames.isNotEmpty()) {
+            recentFrames.removeFirst().recycle()
+        }
         inferenceEngine?.close()
     }
 }

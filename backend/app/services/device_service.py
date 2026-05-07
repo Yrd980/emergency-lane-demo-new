@@ -45,6 +45,13 @@ def heartbeat(
            WHERE device_id=?""",
         (now, battery_level, thermal_state, fps, pending_upload_count, device_id),
     )
+    if cur.rowcount > 0:
+        conn.execute(
+            """INSERT INTO device_metric_history (
+                   device_id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
+               ) VALUES (?, ?, ?, ?, ?, ?)""",
+            (device_id, now, battery_level, thermal_state, fps, pending_upload_count),
+        )
     conn.commit()
     if cur.rowcount == 0:
         return None
@@ -97,25 +104,48 @@ def get_device_detail(device_id: str):
            ORDER BY created_at DESC LIMIT 8""",
         (device_id,),
     ).fetchall()
+    metric_history = conn.execute(
+        """SELECT id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
+           FROM device_metric_history WHERE device_id=?
+           ORDER BY recorded_at DESC, id DESC LIMIT 20""",
+        (device_id,),
+    ).fetchall()
 
     issues = []
     if not is_online:
         issues.append({
             "severity": "critical",
+            "code": "device_offline",
             "message": f"设备已离线 {seconds_since_seen} 秒",
             "next_action": "检查手机网络、后端地址和前台检测服务",
         })
     if row["pending_upload_count"] > 0:
         issues.append({
             "severity": "warning",
+            "code": "pending_uploads",
             "message": f"设备侧还有 {row['pending_upload_count']} 条待上传",
             "next_action": "保持同一局域网连接，等待 WorkManager 自动补传",
+        })
+    if row["thermal_state"] not in ("normal", "cool", ""):
+        issues.append({
+            "severity": "warning",
+            "code": "thermal_pressure",
+            "message": f"设备温度状态：{row['thermal_state']}",
+            "next_action": "降低画面分辨率或暂停检测，等待设备降温",
         })
     if row["fps"] <= 0:
         issues.append({
             "severity": "info",
+            "code": "missing_fps",
             "message": "暂未收到有效 FPS",
             "next_action": "确认 Android 端已启动检测或手动模拟",
+        })
+    elif row["fps"] < 5:
+        issues.append({
+            "severity": "warning",
+            "code": "low_fps",
+            "message": f"检测帧率偏低：{row['fps']} FPS",
+            "next_action": "检查模型版本、手机发热和相机分辨率设置",
         })
 
     return {
@@ -132,6 +162,17 @@ def get_device_detail(device_id: str):
         "pending_upload_count": row["pending_upload_count"],
         "is_online": is_online,
         "issues": issues,
+        "metric_history": [
+            {
+                "id": metric["id"],
+                "recorded_at": metric["recorded_at"],
+                "battery_level": metric["battery_level"],
+                "thermal_state": metric["thermal_state"],
+                "fps": metric["fps"],
+                "pending_upload_count": metric["pending_upload_count"],
+            }
+            for metric in metric_history
+        ],
         "recent_events": [
             {
                 "event_id": event["event_id"],

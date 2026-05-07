@@ -28,3 +28,4 @@ class EventCreate(BaseModel):
 class ReviewUpdate(BaseModel):
     review_status: str
     operator_note: str = ""
+    operator_id: str = "本地复核员"

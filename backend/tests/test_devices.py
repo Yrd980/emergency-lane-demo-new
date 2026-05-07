@@ -36,6 +36,9 @@ def test_heartbeat_updates_fields(client):
     )
     assert resp.status_code == 200
     assert resp.json()["heartbeat_accepted"] is True
+    detail = client.get("/api/devices/vivo_001").json()
+    assert detail["metric_history"][0]["fps"] == 15.2
+    assert detail["metric_history"][0]["pending_upload_count"] == 3
 
 
 def test_heartbeat_unknown_device_returns_404(client):
@@ -93,3 +96,34 @@ def test_heartbeat_preserves_register_fields(client):
     assert device["battery_level"] == 50.0
     assert device["fps"] == 10.0
     assert device["device_name"] == "vivo X100"
+
+
+def test_device_detail_reports_metric_history_and_troubleshooting_codes(client):
+    client.post(
+        "/api/devices/register",
+        json={
+            "device_id": "vivo_002",
+            "device_name": "vivo X90",
+            "app_version": "0.1.0",
+            "model_version": "yolov8n-int8",
+        },
+    )
+    client.post(
+        "/api/devices/heartbeat",
+        json={
+            "device_id": "vivo_002",
+            "battery_level": 42,
+            "thermal_state": "hot",
+            "fps": 3.2,
+            "pending_upload_count": 4,
+        },
+    )
+
+    resp = client.get("/api/devices/vivo_002")
+    assert resp.status_code == 200
+    data = resp.json()
+    issue_codes = {issue["code"] for issue in data["issues"]}
+    assert "pending_uploads" in issue_codes
+    assert "thermal_pressure" in issue_codes
+    assert "low_fps" in issue_codes
+    assert len(data["metric_history"]) == 1
