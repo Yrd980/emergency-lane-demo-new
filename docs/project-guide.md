@@ -1,84 +1,96 @@
-# 项目指南
+# 项目说明
 
-## 项目定位
+## 1. 项目定位
 
-这是一个可本地演示的高速应急车道疑似占用检测系统。系统由 Android 端、HP 电脑本地后端和 Web 管理端组成，用于跑通“手机端发现疑似事件 -> 本地服务接收留证 -> Web 端人工复核和查询”的闭环。
+本项目是一套本地部署的高速应急车道疑似占用检测产品原型。
 
-首版定位是项目演示和人工辅助复核，不是自动执法或自动处罚系统。
-
-## 功能范围
-
-- Android 端摄像头采集、ROI 标定、车辆检测、轻量跟踪和疑似事件生成。
-- Android 端离线缓存事件，网络恢复后上传到 HP 电脑端。
-- FastAPI 后端接收设备心跳、事件数据和证据文件。
-- SQLite 保存设备、事件、证据和复核状态。
-- React Web 管理端展示统计、设备状态、事件列表、事件详情和证据。
-- Web 管理端支持人工确认或驳回疑似事件。
-
-## 项目结构
+它不是单页 CRUD，也不是一次性演示页面。当前产品要服务一个可长期使用的操作闭环：
 
 ```text
-.
-├── android/    # Kotlin Compose Android 应用
-├── backend/    # FastAPI + SQLite 本地服务
-├── frontend/   # React + TypeScript + Vite 管理界面
-├── docs/       # 需求、设计、验收和图表文档
-└── AGENTS.md   # 给代码代理使用的协作约束
+接入设备
+  -> 监控设备和系统状态
+  -> 接收疑似占用事件
+  -> 查看证据链
+  -> 人工复核
+  -> 继续处理下一条或排查异常
 ```
 
-## 技术栈
+## 2. 子系统
 
-- 后端：Python 3.11+、FastAPI、SQLite、pytest、uv
-- 前端：React、TypeScript、Vite、Tailwind CSS、Bun
-- Android：Kotlin、Jetpack Compose、CameraX、TFLite、Room、DataStore、WorkManager、Retrofit
+### Android 端
 
-## 本地运行
+职责：
 
-### 启动后端
+- 摄像头采集。
+- ROI 标定。
+- 车辆检测和轻量跟踪。
+- 疑似占用事件生成。
+- 本地队列缓存。
+- 上传事件、证据和设备心跳。
 
-```powershell
-cd backend
-uv sync
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+关键入口：
 
-后端默认配置：
+- `android/app/src/main/java/com/emergency/lane/MainActivity.kt`
+- `android/app/src/main/java/com/emergency/lane/ui/EmergencyLaneNavHost.kt`
+- `android/app/src/main/java/com/emergency/lane/camera/`
+- `android/app/src/main/java/com/emergency/lane/data/remote/`
 
-- API 地址：`http://localhost:8000`
-- 数据库：`backend/data/app.db`
-- 证据目录：`backend/data/evidence`
+### 后端
 
-可用环境变量：
+职责：
 
-- `DB_PATH`
-- `EVIDENCE_DIR`
-- `ONLINE_THRESHOLD_SECONDS`
+- 提供局域网 API。
+- 保存设备、事件、证据和复核状态。
+- 提供统计、设备详情和系统健康状态。
+- 保持上传幂等，避免重复事件破坏已复核结果。
 
-### 启动前端
+关键入口：
 
-```powershell
-cd frontend
-bun install
-bun run dev
-```
+- `backend/app/main.py`
+- `backend/app/routers/`
+- `backend/app/services/`
+- `backend/app/database.py`
 
-Vite 开发服务会把 `/api` 和 `/evidence` 代理到 `http://localhost:8000`。
+### Web 工作台
 
-### 构建 Android
+职责：
 
-```powershell
-cd android
-.\gradlew.bat assembleDebug
-```
+- 引导设备接入。
+- 展示系统工作台。
+- 处理待复核事件。
+- 查询历史事件。
+- 查看设备运营状态。
+- 查看系统健康和运行设置。
 
-Android 端需要把后端地址配置为手机可访问的 HP 电脑局域网地址，例如 `http://192.168.x.x:8000`，不能使用手机本机的 `localhost`。
+关键入口：
 
-## 常用接口
+- `frontend/src/App.tsx`
+- `frontend/src/api/client.ts`
+- `frontend/src/pages/`
+- `frontend/src/components/`
+
+## 3. 页面结构
+
+Web 当前页面：
+
+- `/`：工作台，显示系统当前最重要的下一步行动。
+- `/setup`：接入向导，指导配置 Android 后端地址和生成测试事件。
+- `/review`：复核工作台，处理待复核事件队列。
+- `/events`：事件查询，用于历史检索和追溯。
+- `/events/:id`：事件复核详情，围绕证据链和人工复核展开。
+- `/devices`：设备运营中心。
+- `/devices/:id`：单设备详情。
+- `/health`：系统健康。
+- `/settings`：运行设置。
+
+## 4. 常用接口
 
 - `GET /api/health`
+- `GET /api/system/status`
 - `POST /api/devices/register`
 - `POST /api/devices/heartbeat`
 - `GET /api/devices`
+- `GET /api/devices/{device_id}`
 - `POST /api/events`
 - `GET /api/events`
 - `GET /api/events/{event_id}`
@@ -86,49 +98,62 @@ Android 端需要把后端地址配置为手机可访问的 HP 电脑局域网�
 - `POST /api/events/{event_id}/evidence`
 - `GET /api/stats/overview`
 
-事件上传以 `event_id` 去重。重复上传不会覆盖已复核结果。
+## 5. 本地运行
 
-## 测试与检查
+后端：
 
-后端测试：
-
-```powershell
+```bash
 cd backend
-uv run pytest
+uv sync
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-前端构建和 lint：
+前端：
 
-```powershell
+```bash
 cd frontend
-bun run build
+bun install
+bun run dev --host 0.0.0.0
+```
+
+Android：
+
+```bash
+cd android
+./gradlew assembleDebug
+```
+
+## 6. 验证
+
+后端：
+
+```bash
+cd backend
+uv run pytest tests/ -q
+```
+
+前端：
+
+```bash
+cd frontend
 bun run lint
+bun run build
 ```
 
-Android 单元测试：
+Android：
 
-```powershell
+```bash
 cd android
-.\gradlew.bat :app:testDebugUnitTest
+./gradlew assembleDebug
 ```
 
-Android 调试包构建：
+## 7. 当前边界
 
-```powershell
-cd android
-.\gradlew.bat assembleDebug
-```
+当前版本聚焦本地产品闭环，不承诺：
 
-## 演示流程
-
-1. 在 HP 电脑启动后端服务。
-2. 启动 Web 管理端并打开事件列表或仪表盘。
-3. 手机和 HP 电脑连接到同一局域网。
-4. 在 Android App 中配置 HP 电脑后端地址。
-5. 完成应急车道 ROI 标定。
-6. 启动检测。
-7. 车辆进入 ROI 并超过停留阈值后生成疑似事件。
-8. Android 端上传事件和证据。
-9. Web 管理端查看事件详情和证据。
-10. 复核人员将事件标记为 `confirmed` 或 `rejected`。
-
+- 自动处罚。
+- 执法系统对接。
+- 云端多租户。
+- 大规模并发。
+- 复杂账号权限。
+- 24 小时无人值守生产运行。
