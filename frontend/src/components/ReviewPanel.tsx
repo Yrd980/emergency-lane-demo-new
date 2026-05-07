@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { CheckCircle2, Send, XCircle } from 'lucide-react';
 import { PrimaryButton } from './ProductPrimitives';
 import { inputClassName } from './styles';
 import StatusBadge from './StatusBadge';
@@ -85,7 +84,7 @@ export default function ReviewPanel({
           <div className="grid gap-2 sm:grid-cols-2">
             <PrimaryButton
               tone="dark"
-              icon={confirming === 'confirmed' ? Send : CheckCircle2}
+              icon={confirming === 'confirmed' ? 'send' : 'check_circle'}
               disabled={submitting}
               onClick={() => handleReview('confirmed')}
             >
@@ -93,7 +92,7 @@ export default function ReviewPanel({
             </PrimaryButton>
             <PrimaryButton
               tone="danger"
-              icon={confirming === 'rejected' ? Send : XCircle}
+              icon={confirming === 'rejected' ? 'send' : 'cancel'}
               disabled={submitting}
               onClick={() => handleReview('rejected')}
             >

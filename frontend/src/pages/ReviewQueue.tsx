@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import { CheckCircle2, ClipboardCheck, RefreshCw, XCircle } from 'lucide-react';
 import { useRole } from '../access/useRole';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
@@ -71,7 +70,7 @@ export default function ReviewQueue() {
         description="Process the pending review queue as a work queue. Handle high-priority first, then proceed to the next."
         action={
           firstEvent ? (
-            <PrimaryButton icon={ClipboardCheck} href={`/events/${firstEvent.event_id}`}>Process Next</PrimaryButton>
+            <PrimaryButton icon="clipboard_check" href={`/events/${firstEvent.event_id}`}>Process Next</PrimaryButton>
           ) : (
             <PrimaryButton href="/events">View History</PrimaryButton>
           )
@@ -96,7 +95,7 @@ export default function ReviewQueue() {
       )}
 
       {error && (
-        <StateBlock tone="error" title="Review queue failed to load" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>Retry</PrimaryButton>} />
+        <StateBlock tone="error" title="Review queue failed to load" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>Retry</PrimaryButton>} />
       )}
       {loading && !data && <StateBlock tone="loading" title="Loading review queue" description="Fetching pending events." />}
       {data && data.items.length === 0 && !error && !loading && (
@@ -130,10 +129,10 @@ export default function ReviewQueue() {
                 >
                   Select Page
                 </button>
-                <PrimaryButton icon={CheckCircle2} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('confirmed')}>
+                <PrimaryButton icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('confirmed')}>
                   {bulkStatus === 'confirmed' ? 'Click to Confirm' : 'Bulk Confirm'}
                 </PrimaryButton>
-                <PrimaryButton tone="danger" icon={XCircle} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('rejected')}>
+                <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('rejected')}>
                   {bulkStatus === 'rejected' ? 'Click to Reject' : 'Bulk Reject'}
                 </PrimaryButton>
               </div>

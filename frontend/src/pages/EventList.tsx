@@ -1,4 +1,3 @@
-import { RefreshCw } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents';
 import FilterBar from '../components/FilterBar';
 import EventTable from '../components/EventTable';
@@ -29,7 +28,7 @@ export default function EventList() {
       </div>
 
       <FilterBar filters={filters} onChange={setFilters} />
-      {error && <StateBlock tone="error" title="事件加载失败" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>重试</PrimaryButton>} />}
+      {error && <StateBlock tone="error" title="事件加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />}
       {loading && !data && <StateBlock tone="loading" title="正在加载事件" description="系统正在同步事件列表和证据缩略图。" />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock

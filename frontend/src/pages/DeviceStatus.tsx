@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Battery, Clock, Gauge, HardDrive, List, RefreshCw, WifiOff } from 'lucide-react';
+import { AlertTriangle, Battery, Clock, Gauge, HardDrive, List, WifiOff } from 'lucide-react';
 import { api } from '../api/client';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import StatusBadge from '../components/StatusBadge';
@@ -59,7 +59,7 @@ export default function DeviceStatus() {
         />
       )}
 
-      {error && <StateBlock tone="error" title="设备加载失败" description={error} action={<PrimaryButton icon={RefreshCw} onClick={loadDevices}>重试</PrimaryButton>} />}
+      {error && <StateBlock tone="error" title="设备加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>重试</PrimaryButton>} />}
       {loading && <StateBlock tone="loading" title="正在加载设备" description="同步心跳、版本和上传积压。" />}
       {!loading && devices.length === 0 && !error && (
         <StateBlock

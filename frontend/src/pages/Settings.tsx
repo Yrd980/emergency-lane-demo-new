@@ -1,4 +1,4 @@
-import { RefreshCw, Save, Shield, Trash2, Wifi } from 'lucide-react';
+import { Shield, Trash2, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRole } from '../access/useRole';
 import { api } from '../api/client';
@@ -80,7 +80,7 @@ export default function Settings() {
         tone="error"
         title="设置读取失败"
         description={error}
-        action={<PrimaryButton icon={RefreshCw} onClick={load}>重试读取</PrimaryButton>}
+        action={<PrimaryButton icon="refresh" onClick={load}>重试读取</PrimaryButton>}
       />
     );
   }
@@ -95,7 +95,7 @@ export default function Settings() {
         description="先把长期使用时最容易影响信任的配置显性化：复核方式、在线窗口、证据保留和设备访问。"
         action={
           editable ? (
-            <PrimaryButton icon={Save} onClick={save} disabled={saving}>
+            <PrimaryButton icon="save" onClick={save} disabled={saving}>
               {saving ? '正在保存' : '保存设置'}
             </PrimaryButton>
           ) : (
@@ -117,7 +117,7 @@ export default function Settings() {
         tone={error ? 'danger' : 'success'}
         title={error ? '最近一次保存失败' : '设置已接入后端持久化'}
         description={error ? `${error}。请确认本地后端可用后重试。` : `最近保存：${updatedAt ? formatDateTime(updatedAt) : '等待首次保存'}。下一步：查看系统健康确认运行状态。`}
-        action={error ? <PrimaryButton icon={RefreshCw} onClick={save}>重新保存</PrimaryButton> : <PrimaryButton href="/health">查看系统健康</PrimaryButton>}
+        action={error ? <PrimaryButton icon="refresh" onClick={save}>重新保存</PrimaryButton> : <PrimaryButton href="/health">查看系统健康</PrimaryButton>}
       />
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">

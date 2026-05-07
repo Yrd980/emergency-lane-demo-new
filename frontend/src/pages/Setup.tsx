@@ -109,7 +109,7 @@ export default function Setup() {
           <StateBlock
             title="等待第一台设备注册"
             description="下一步：把上面的后端地址填入 Android App，确认手机和 HP 在同一局域网。"
-            action={<PrimaryButton icon={Copy} onClick={copy}>复制后端地址</PrimaryButton>}
+            action={<PrimaryButton icon="copy" onClick={copy}>复制后端地址</PrimaryButton>}
           />
         ) : (
           <ActionPanel

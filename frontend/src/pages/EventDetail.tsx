@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Camera,
   CheckCircle2,
@@ -10,7 +9,6 @@ import {
   History,
   MapPin,
   Play,
-  RefreshCw,
   X,
 } from 'lucide-react';
 import { useEventDetail } from '../hooks/useEventDetail';
@@ -105,7 +103,7 @@ export default function EventDetail() {
         description={error}
         action={
           <PrimaryButton
-            icon={error.includes('不存在') ? ArrowLeft : RefreshCw}
+            icon={error.includes('不存在') ? 'arrow_back' : 'refresh'}
             onClick={() => (error.includes('不存在') ? navigate('/events') : refetch())}
           >
             {error.includes('不存在') ? '返回事件列表' : '重试'}
@@ -137,11 +135,11 @@ export default function EventDetail() {
         description="先看证据链，再核对结构化字段，最后完成复核。"
         action={
           <>
-            <PrimaryButton tone="light" icon={ArrowLeft} onClick={() => navigate('/review')}>
+            <PrimaryButton tone="light" icon="arrow_back" onClick={() => navigate('/review')}>
               返回队列
             </PrimaryButton>
             {data.next_event_id && (
-              <PrimaryButton icon={ArrowRight} href={`/events/${data.next_event_id}`}>
+              <PrimaryButton icon="arrow_forward" href={`/events/${data.next_event_id}`}>
                 下一条
               </PrimaryButton>
             )}

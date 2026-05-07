@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Activity, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { useDeviceDetail } from '../hooks/useDeviceDetail';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import StatusBadge from '../components/StatusBadge';
@@ -11,7 +11,7 @@ export default function DeviceDetail() {
   const { data, loading, error, refetch } = useDeviceDetail(id!);
 
   if (loading) return <StateBlock tone="loading" title="正在加载设备详情" description="同步心跳、上传积压和最近事件。" />;
-  if (error) return <StateBlock tone="error" title="设备详情加载失败" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>重试</PrimaryButton>} />;
+  if (error) return <StateBlock tone="error" title="设备详情加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />;
   if (!data) return null;
 
   const firstIssue = data.issues[0];
@@ -22,7 +22,7 @@ export default function DeviceDetail() {
         eyebrow="DEVICE DETAIL"
         title={data.device_name}
         description="查看单台设备是否适合继续采集：心跳、性能、上传积压和最近事件。"
-        action={<PrimaryButton tone="light" icon={ArrowLeft} href="/devices">返回设备</PrimaryButton>}
+        action={<PrimaryButton tone="light" icon="arrow_back" href="/devices">返回设备</PrimaryButton>}
       />
 
       <div className="mb-5">

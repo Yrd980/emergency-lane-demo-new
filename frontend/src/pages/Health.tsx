@@ -1,4 +1,4 @@
-import { Database, FolderArchive, RefreshCw, Server, Smartphone } from 'lucide-react';
+import { Database, FolderArchive, Server, Smartphone } from 'lucide-react';
 import { api } from '../api/client';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import { usePolling } from '../hooks/usePolling';
@@ -9,7 +9,7 @@ export default function Health() {
   const { data, loading, error, refetch } = usePolling<SystemStatus>(() => api.getSystemStatus(), 5000);
 
   if (loading) return <StateBlock tone="loading" title="正在检查系统健康" description="同步后端、数据库、证据目录和设备心跳。" />;
-  if (error) return <StateBlock tone="error" title="健康检查失败" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>重试检查</PrimaryButton>} />;
+  if (error) return <StateBlock tone="error" title="健康检查失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试检查</PrimaryButton>} />;
   if (!data) return null;
 
   const topIssue = data.issues[0];
@@ -20,7 +20,7 @@ export default function Health() {
         eyebrow="SYSTEM HEALTH"
         title="系统健康"
         description="长期使用要先知道系统能不能持续运行，再进入事件复核。"
-        action={<PrimaryButton icon={RefreshCw} onClick={refetch}>立即刷新</PrimaryButton>}
+        action={<PrimaryButton icon="refresh" onClick={refetch}>立即刷新</PrimaryButton>}
       />
 
       <ActionPanel

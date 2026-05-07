@@ -1,6 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
-import { AlertTriangle, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '../utils/format';
+
+type Tone = 'neutral' | 'brand' | 'warning' | 'danger' | 'success';
 
 export function PageHeader({
   eyebrow,
@@ -14,57 +14,52 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 border-b border-[var(--line)]/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mb-lg flex flex-col gap-md border-b border-outline-variant/10 pb-lg lg:flex-row lg:items-end lg:justify-between">
       <div className="max-w-3xl">
         {eyebrow && (
-          <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--brand)] uppercase tracking-wider">
+          <div className="mb-1 inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-label-xs font-label-xs text-primary uppercase tracking-wider">
             {eyebrow}
           </div>
         )}
-        <h1 className="text-2xl font-semibold text-[var(--text)] tracking-tight sm:text-3xl">{title}</h1>
-        {description && <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">{description}</p>}
+        <h1 className="text-headline-md font-headline-md text-on-surface">{title}</h1>
+        {description && <p className="mt-sm max-w-2xl text-body-sm text-on-surface-variant">{description}</p>}
       </div>
-      {action && <div className="flex shrink-0 flex-wrap gap-2">{action}</div>}
+      {action && <div className="flex shrink-0 flex-wrap gap-sm">{action}</div>}
     </div>
   );
 }
 
 export function PrimaryButton({
   children,
-  icon: Icon = ArrowRight,
+  icon,
   onClick,
   href,
   tone = 'dark',
   disabled,
 }: {
   children: React.ReactNode;
-  icon?: LucideIcon;
+  icon?: string;
   onClick?: () => void;
   href?: string;
   tone?: 'dark' | 'light' | 'danger';
   disabled?: boolean;
 }) {
   const cls = cn(
-    'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all active:scale-95',
-    tone === 'dark' && 'bg-[var(--brand)] text-[var(--on-brand)] shadow-[0_4px_16px_rgba(94,92,230,0.25)] hover:bg-[var(--brand-strong)] hover:text-[var(--on-brand)]',
-    tone === 'light' && 'border border-[var(--line)] bg-[var(--surface-raised)] text-[var(--text)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-glow)]',
-    tone === 'danger' && 'bg-[var(--danger-soft)] text-[var(--danger)] hover:bg-[#b0000a]',
-    disabled && 'pointer-events-none opacity-50',
+    'inline-flex min-h-10 items-center justify-center gap-sm rounded-lg px-md py-sm text-label-xs font-label-xs font-bold transition-all active:scale-95 disabled:pointer-events-none disabled:opacity-50',
+    tone === 'dark' && 'bg-primary text-on-primary hover:brightness-110',
+    tone === 'light' && 'border border-outline-variant/30 bg-surface-container-high text-on-surface hover:bg-surface-container-highest',
+    tone === 'danger' && 'bg-error-container text-on-error-container hover:brightness-110',
   );
-  if (href) {
-    return (
-      <a className={cls} href={href}>
-        {children}
-        <Icon className="h-4 w-4" />
-      </a>
-    );
-  }
-  return (
-    <button className={cls} onClick={onClick} disabled={disabled}>
+
+  const content = (
+    <>
+      {icon && <span className="material-symbols-outlined text-base">{icon}</span>}
       {children}
-      <Icon className="h-4 w-4" />
-    </button>
+    </>
   );
+
+  if (href) return <a className={cls} href={href}>{content}</a>;
+  return <button className={cls} onClick={onClick} disabled={disabled}>{content}</button>;
 }
 
 export function MetricTile({
@@ -72,32 +67,35 @@ export function MetricTile({
   value,
   helper,
   tone = 'neutral',
+  icon,
+  trend,
 }: {
   label: string;
   value: string | number;
   helper?: string;
-  tone?: 'neutral' | 'warning' | 'success' | 'danger';
+  tone?: Tone;
+  icon?: string;
+  trend?: { value: string; positive?: boolean };
 }) {
   return (
-    <div className="rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)] p-4 hover:border-[var(--brand)]/20 transition-all group">
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-wider">{label}</span>
-        {tone === 'warning' && <span className="material-symbols-outlined text-[var(--warning-soft)] text-base">warning</span>}
-        {tone === 'success' && <span className="material-symbols-outlined text-[var(--brand-soft)] text-base">check_circle</span>}
-        {tone === 'danger' && <span className="material-symbols-outlined text-[var(--danger)] text-base">error</span>}
-      </div>
-      <div
-        className={cn(
-          'mt-1 font-mono text-2xl font-semibold tracking-tight sm:text-3xl',
-          tone === 'warning' && 'text-[var(--warning)]',
-          tone === 'success' && 'text-[var(--brand)]',
-          tone === 'danger' && 'text-[var(--danger)]',
-          tone === 'neutral' && 'text-[var(--text)]',
+    <div className="bg-surface-container-low p-lg rounded-xl border border-outline-variant/5 hover:border-primary/20 transition-all group">
+      <div className="flex justify-between items-start mb-md">
+        {icon && <span className={`p-sm rounded-lg material-symbols-outlined ${tone === 'brand' || tone === 'success' ? 'bg-primary-container/10 text-primary' : tone === 'warning' ? 'bg-secondary-container/10 text-secondary' : tone === 'danger' ? 'bg-error-container/10 text-error' : 'bg-surface-container-high text-on-surface-variant'}`}>{icon}</span>}
+        {trend && (
+          <span className={cn(
+            'text-label-xs font-label-xs px-sm py-xs rounded-full',
+            trend.positive ? 'text-primary bg-primary/10' : 'text-secondary bg-secondary/10',
+          )}>{trend.value}</span>
         )}
-      >
-        {value}
       </div>
-      {helper && <div className="mt-2 text-[11px] text-[var(--muted)]">{helper}</div>}
+      <h3 className="text-on-surface-variant font-label-xs text-label-xs uppercase tracking-wider mb-xs">{label}</h3>
+      <p className={cn(
+        'font-mono-data text-display-lg',
+        tone === 'brand' || tone === 'success' ? 'text-primary' :
+        tone === 'warning' ? 'text-secondary' :
+        tone === 'danger' ? 'text-error' : 'text-on-surface',
+      )}>{value}</p>
+      {helper && <p className="text-label-xs text-on-surface-variant mt-sm">{helper}</p>}
     </div>
   );
 }
@@ -114,19 +112,17 @@ export function ActionPanel({
   tone?: 'default' | 'warning' | 'danger' | 'success';
 }) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border p-4',
-        tone === 'default' && 'border-[var(--line)]/10 bg-[var(--surface-soft)]',
-        tone === 'warning' && 'border-[var(--warning-soft)]/40 bg-[var(--warning-soft)]/10',
-        tone === 'danger' && 'border-[var(--danger-soft)]/40 bg-[var(--danger-soft)]/10',
-        tone === 'success' && 'border-[var(--brand-soft)]/40 bg-[var(--brand-soft)]/10',
-      )}
-    >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className={cn(
+      'rounded-xl border p-lg',
+      tone === 'default' && 'border-outline-variant/10 bg-surface-container-low',
+      tone === 'warning' && 'border-secondary-container/40 bg-secondary-container/10',
+      tone === 'danger' && 'border-error-container/40 bg-error-container/10',
+      tone === 'success' && 'border-primary-container/40 bg-primary-container/10',
+    )}>
+      <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="font-semibold text-[var(--text)]">{title}</div>
-          <div className="mt-1 max-w-2xl text-sm leading-6 text-[var(--muted)]">{description}</div>
+          <div className="font-semibold text-on-surface">{title}</div>
+          <div className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">{description}</div>
         </div>
         <div className="shrink-0">{action}</div>
       </div>
@@ -145,44 +141,37 @@ export function StateBlock({
   action?: React.ReactNode;
   tone?: 'empty' | 'loading' | 'error' | 'success';
 }) {
-  const Icon = tone === 'loading' ? Loader2 : tone === 'error' ? AlertTriangle : CheckCircle2;
   return (
-    <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface-soft)] p-8 text-center">
-      <Icon
-        className={cn(
-          'h-10 w-10',
-          tone === 'loading' && 'animate-spin text-[var(--brand)]',
-          tone === 'error' && 'text-[var(--danger)]',
-          tone === 'success' && 'text-[var(--brand)]',
-          tone === 'empty' && 'text-[var(--muted)]',
-        )}
-      />
-      <div className="mt-4 text-base font-semibold text-[var(--text)]">{title}</div>
-      <p className="mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">{description}</p>
-      {action && <div className="mt-5">{action}</div>}
+    <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/20 bg-surface-container-low p-xl text-center">
+      <span className={cn(
+        'material-symbols-outlined text-4xl',
+        tone === 'loading' && 'animate-spin text-primary',
+        tone === 'error' && 'text-error',
+        tone === 'success' && 'text-primary',
+        tone === 'empty' && 'text-on-surface-variant',
+      )}>
+        {tone === 'loading' ? 'progress_activity' : tone === 'error' ? 'error' : tone === 'success' ? 'check_circle' : 'inventory_2'}
+      </span>
+      <div className="mt-lg text-headline-md font-headline-md text-on-surface">{title}</div>
+      <p className="mt-sm max-w-md text-body-sm text-on-surface-variant">{description}</p>
+      {action && <div className="mt-lg">{action}</div>}
     </div>
   );
 }
 
 export function SkeletonGrid({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-gutter sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="h-28 animate-pulse rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)]" />
+        <div key={index} className="h-28 animate-pulse rounded-xl border border-outline-variant/5 bg-surface-container-low" />
       ))}
     </div>
   );
 }
 
-export function SurfacePanel({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function SurfacePanel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)]', className)}>
+    <div className={cn('rounded-xl border border-outline-variant/5 bg-surface-container-low', className)}>
       {children}
     </div>
   );

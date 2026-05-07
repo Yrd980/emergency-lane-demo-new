@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, CheckCircle2, MonitorSmartphone, RefreshCw, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle2, MonitorSmartphone, ShieldAlert } from 'lucide-react';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, SkeletonGrid, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
@@ -30,7 +30,7 @@ export default function Dashboard() {
         description={overview.error || system.error || 'Check that FastAPI backend is running.'}
         action={
           <PrimaryButton
-            icon={RefreshCw}
+            icon="refresh"
             onClick={() => {
               overview.refetch();
               system.refetch();
