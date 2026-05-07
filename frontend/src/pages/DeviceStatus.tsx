@@ -27,7 +27,7 @@ export default function DeviceStatus() {
   const backlog = devices.reduce((sum, device) => sum + device.pending_upload_count, 0);
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="DEVICES"
         title="设备运营中心"
@@ -58,7 +58,7 @@ export default function DeviceStatus() {
       {devices.length > 0 && (
         <div className="grid gap-4 lg:grid-cols-2">
           {devices.map((dev) => (
-            <Link key={dev.device_id} to={`/devices/${dev.device_id}`} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-amber-300 hover:shadow-md">
+            <Link key={dev.device_id} to={`/devices/${dev.device_id}`} className="rounded-md border border-slate-200 bg-white p-4 shadow-sm transition hover:border-cyan-200 hover:shadow-md">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-semibold text-slate-950">{dev.device_name}</div>
@@ -83,7 +83,7 @@ export default function DeviceStatus() {
 
 function DeviceMetric({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-slate-50 p-3">
+    <div className="rounded-md bg-slate-50 p-3">
       <Icon className="h-4 w-4 text-slate-500" />
       <div className="mt-2 text-xs text-slate-500">{label}</div>
       <div className="mt-1 truncate text-sm font-semibold text-slate-900">{value}</div>

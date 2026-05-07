@@ -17,7 +17,7 @@ export default function DeviceDetail() {
   const firstIssue = data.issues[0];
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="DEVICE DETAIL"
         title={data.device_name}
@@ -42,7 +42,7 @@ export default function DeviceDetail() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="font-semibold text-slate-950">设备信息</h2>
           <div className="mt-3 space-y-2 text-sm">
             <Field label="设备 ID" value={data.device_id} />
@@ -84,17 +84,17 @@ export default function DeviceDetail() {
 
 function MetricHistory({ history }: { history: DeviceMetricSnapshot[] }) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2">
         <Activity className="h-4 w-4 text-slate-700" />
         <h2 className="font-semibold text-slate-950">指标历史</h2>
       </div>
       {history.length === 0 ? (
-        <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">还没有心跳指标。下一步：确认 Android 端已完成注册并开始上报心跳。</div>
+        <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm text-slate-600">还没有心跳指标。下一步：确认 Android 端已完成注册并开始上报心跳。</div>
       ) : (
         <div className="mt-4 space-y-3">
           {history.slice(0, 8).map((item) => (
-            <div key={item.id} className="grid gap-3 rounded-lg bg-slate-50 p-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
+            <div key={item.id} className="grid gap-3 rounded-md bg-slate-50 p-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
               <div>
                 <div className="font-medium text-slate-900">{formatDateTime(item.recorded_at)}</div>
                 <div className="mt-1 text-xs text-slate-500">温度：{item.thermal_state} · 电量：{item.battery_level}%</div>

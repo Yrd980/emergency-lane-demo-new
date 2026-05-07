@@ -84,7 +84,7 @@ export default function Settings() {
   if (!settings) return null;
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="SETTINGS"
         title="运行设置"
@@ -102,14 +102,14 @@ export default function Settings() {
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <SettingCard icon={Shield} title="复核策略" description="所有疑似事件必须人工复核后才进入已确认。">
           <select
-            className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             value={settings.review_mode}
             onChange={(e) => update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
           >
             <option value="manual">人工复核优先</option>
             <option value="strict">证据完整才允许确认</option>
           </select>
-          <label className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+          <label className="mt-3 flex items-start gap-2 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
             <input
               className="mt-1"
               type="checkbox"
@@ -137,7 +137,7 @@ export default function Settings() {
         </SettingCard>
         <SettingCard icon={Shield} title="设备访问" description="当前局域网演示默认开放，产品化应接入设备 token。">
           <select
-            className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             value={settings.device_access_mode}
             onChange={(e) => update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
           >
@@ -164,7 +164,7 @@ function toEditableSettings(settings: { review_mode: RuntimeSettingsUpdate['revi
 function NumberInput({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (value: number) => void }) {
   return (
     <input
-      className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+      className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
       type="number"
       min={min}
       max={max}
@@ -176,9 +176,9 @@ function NumberInput({ value, min, max, onChange }: { value: number; min: number
 
 function SettingCard({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
           <Icon className="h-5 w-5 text-slate-700" />
         </div>
         <div>

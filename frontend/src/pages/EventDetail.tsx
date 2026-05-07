@@ -47,7 +47,7 @@ export default function EventDetail() {
   };
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="EVIDENCE REVIEW"
         title="事件复核"
@@ -80,7 +80,7 @@ export default function EventDetail() {
             onSubmit={handleReview}
             submitting={submitting}
           />
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="font-semibold text-slate-950">事件字段</h2>
             <div className="mt-3 space-y-2 text-sm">
               <Field label="事件 ID" value={data.event_id} mono />
@@ -108,7 +108,7 @@ export default function EventDetail() {
 function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
   if (history.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-2 font-semibold text-slate-950">
           <History className="h-4 w-4" />
           复核历史
@@ -119,14 +119,14 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 font-semibold text-slate-950">
         <History className="h-4 w-4" />
         复核历史
       </div>
       <div className="mt-4 space-y-3">
         {history.map((item) => (
-          <div key={item.id} className="rounded-lg bg-slate-50 p-3 text-sm">
+          <div key={item.id} className="rounded-md bg-slate-50 p-3 text-sm">
             <div className="flex items-center justify-between gap-3">
               <span className="font-medium text-slate-900">{item.operator_id}</span>
               <span className="text-xs text-slate-500">{formatFullDateTime(item.reviewed_at)}</span>

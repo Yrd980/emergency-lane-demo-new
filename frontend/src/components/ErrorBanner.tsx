@@ -5,14 +5,14 @@ interface ErrorBannerProps {
 
 export default function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+    <div className="my-4 rounded-md border border-rose-200 bg-rose-50 p-4">
       <div className="flex items-center gap-3">
-        <span className="text-red-600 font-medium">错误</span>
-        <span className="text-red-700 text-sm">{message}</span>
+        <span className="font-medium text-rose-700">错误</span>
+        <span className="text-sm text-rose-700">{message}</span>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="ml-auto px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+            className="ml-auto rounded-md bg-rose-600 px-3 py-1 text-sm text-white hover:bg-rose-700"
           >
             重试
           </button>

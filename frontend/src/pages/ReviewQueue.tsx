@@ -39,15 +39,15 @@ export default function ReviewQueue() {
 
       {overview.data && (
         <div className="mb-5 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
             <div className="text-xs text-slate-500">待复核</div>
             <div className="mt-1 text-2xl font-semibold text-amber-700">{overview.data.pending_review_count}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
             <div className="text-xs text-slate-500">已确认</div>
             <div className="mt-1 text-2xl font-semibold text-emerald-700">{overview.data.confirmed_count}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
             <div className="text-xs text-slate-500">已驳回</div>
             <div className="mt-1 text-2xl font-semibold text-red-700">{overview.data.rejected_count}</div>
           </div>

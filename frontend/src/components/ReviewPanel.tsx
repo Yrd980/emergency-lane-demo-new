@@ -38,7 +38,7 @@ export default function ReviewPanel({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="font-semibold text-slate-950">人工复核</h3>
@@ -48,13 +48,13 @@ export default function ReviewPanel({
       </div>
 
       {isReviewed ? (
-        <div className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-700">
+        <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm text-slate-700">
           <div className="font-semibold">已完成复核</div>
           <div className="mt-2">{operatorNote || '未填写备注'}</div>
         </div>
       ) : (
         <div className="mt-4 space-y-4">
-          {submitError && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{submitError}</div>}
+          {submitError && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{submitError}</div>}
           <div className="flex flex-wrap gap-2">
             {noteTemplates.map((template) => (
               <button
@@ -67,7 +67,7 @@ export default function ReviewPanel({
             ))}
           </div>
           <textarea
-            className="min-h-28 w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+            className="min-h-28 w-full rounded-md border border-slate-200 p-3 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             placeholder="填写复核备注，方便后续追溯"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -75,7 +75,7 @@ export default function ReviewPanel({
           <label className="block text-xs font-medium text-slate-600">
             操作者
             <input
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
               value={operatorId}
               onChange={(e) => setOperatorId(e.target.value)}
               placeholder="例如：reviewer_a"

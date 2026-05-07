@@ -23,7 +23,7 @@ export default function EvidenceViewer({
 
   if (media.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+      <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center">
         <ImageOff className="mx-auto h-8 w-8 text-slate-400" />
         <div className="mt-3 font-semibold text-slate-950">证据还没有上传完成</div>
         <p className="mt-2 text-sm text-slate-600">下一步：检查 Android 队列和设备网络，等待补传后刷新事件。</p>
@@ -33,7 +33,7 @@ export default function EvidenceViewer({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-[#0b1118] shadow-sm">
+      <div className="overflow-hidden rounded-md border border-slate-200 bg-[#0b1118] shadow-sm">
         <div className="flex min-h-[300px] items-center justify-center sm:min-h-[480px]">
           {active?.mime_type.startsWith('image/') ? (
             <img src={active.url} alt={labels[active.evidence_type] ?? active.evidence_type} className="max-h-[68vh] max-w-full object-contain" />
@@ -43,7 +43,7 @@ export default function EvidenceViewer({
         </div>
       </div>
       <div className="space-y-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
           <div className="text-sm font-semibold text-slate-950">证据链完整度</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
             <EvidenceMark label="进入前" ok={summary?.has_before ?? false} />
@@ -54,7 +54,7 @@ export default function EvidenceViewer({
             下一步：优先查看峰值帧，再用进入前/离开后判断是否短暂经过。
           </p>
         </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="rounded-md border border-slate-200 bg-white p-2 shadow-sm">
           {media.map((item, index) => {
             const isActive = index === activeIdx;
             const isVideo = item.mime_type.startsWith('video/');

@@ -7,17 +7,17 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon = "📋", title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-      <span className="text-4xl mb-4">{icon}</span>
-      <p className="text-lg font-medium text-gray-500">{title}</p>
-      {description && <p className="text-sm text-gray-400 mt-1">{description}</p>}
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-slate-300 bg-white py-16 text-slate-500">
+      <span className="mb-4 text-4xl">{icon}</span>
+      <p className="text-base font-semibold text-slate-900">{title}</p>
+      {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
       {action && (
         action.href ? (
-          <a href={action.href} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+          <a href={action.href} className="mt-4 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
             {action.label}
           </a>
         ) : (
-          <button onClick={action.onClick} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
+          <button onClick={action.onClick} className="mt-4 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
             {action.label}
           </button>
         )

@@ -16,7 +16,7 @@ export default function Health() {
   const topIssue = data.issues[0];
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="SYSTEM HEALTH"
         title="系统健康"
@@ -51,10 +51,10 @@ export default function Health() {
 function HealthCard({ icon: Icon, title, status, body, next }: { icon: React.ElementType; title: string; status: string; body: string; next: string }) {
   const ok = status === 'ok';
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
             <Icon className="h-5 w-5 text-slate-700" />
           </div>
           <div>
@@ -64,7 +64,7 @@ function HealthCard({ icon: Icon, title, status, body, next }: { icon: React.Ele
         </div>
         <StatusBadge status={ok ? 'online' : 'pending'} label={status} />
       </div>
-      <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">下一步：{next}</div>
+      <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600">下一步：{next}</div>
     </div>
   );
 }

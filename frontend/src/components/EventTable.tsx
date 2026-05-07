@@ -23,15 +23,15 @@ export default function EventTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm text-slate-500">
+      <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
         <span>共 {total} 条事件</span>
-        <span>下一步：打开事件详情完成证据复核</span>
+        <span className="hidden sm:inline">下一步：打开事件详情完成证据复核</span>
       </div>
 
-      <div className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm lg:block">
+      <div className="hidden overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm lg:block">
         <table className="w-full">
           <thead>
-            <tr className="border-b bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-b bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
               <th className="p-3">证据</th>
               <th className="p-3">事件</th>
               <th className="p-3">设备</th>
@@ -43,10 +43,10 @@ export default function EventTable({
           </thead>
           <tbody>
             {items.map((evt) => (
-              <tr key={evt.event_id} className="border-b text-sm last:border-b-0 hover:bg-amber-50/40">
+              <tr key={evt.event_id} className="border-b text-sm last:border-b-0 hover:bg-cyan-50/30">
                 <td className="p-3">
                   {evt.thumbnail_url ? (
-                    <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-14 w-24 rounded-md object-cover" />
+                    <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-14 w-24 rounded-md object-cover ring-1 ring-slate-200" />
                   ) : (
                     <div className="flex h-14 w-24 items-center justify-center rounded-md bg-slate-100 text-xs text-slate-400">
                       待上传
@@ -66,7 +66,7 @@ export default function EventTable({
                 <td className="p-3"><StatusBadge status={evt.review_status} /></td>
                 <td className="p-3 text-right">
                   <button
-                    className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                     onClick={() => navigate(`/events/${evt.event_id}`)}
                   >
                     查看并复核 <ArrowRight className="h-3.5 w-3.5" />
@@ -83,11 +83,11 @@ export default function EventTable({
           <button
             key={evt.event_id}
             onClick={() => navigate(`/events/${evt.event_id}`)}
-            className="w-full rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm"
+            className="w-full rounded-md border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-cyan-200 hover:shadow-md"
           >
             <div className="flex gap-3">
               {evt.thumbnail_url ? (
-                <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-md object-cover" />
+                <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-md object-cover ring-1 ring-slate-200" />
               ) : (
                 <div className="flex h-20 w-28 items-center justify-center rounded-md bg-slate-100 text-xs text-slate-400">待上传</div>
               )}
@@ -106,7 +106,7 @@ export default function EventTable({
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
             disabled={currentPage <= 1}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50"
             onClick={() => onPage(Math.max(0, offset - limit))}
           >
             上一页
@@ -114,7 +114,7 @@ export default function EventTable({
           <span className="text-sm text-slate-500">{currentPage} / {totalPages}</span>
           <button
             disabled={currentPage >= totalPages}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50"
+            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50"
             onClick={() => onPage(offset + limit)}
           >
             下一页

@@ -8,7 +8,7 @@ export default function EventList() {
   const { data, loading, error, filters, setFilters, refetch } = useEvents();
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageHeader
         eyebrow="EVENTS"
         title="事件查询"

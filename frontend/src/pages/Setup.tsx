@@ -25,7 +25,7 @@ export default function Setup() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
         eyebrow="ONBOARDING"
         title="接入向导"
@@ -33,20 +33,37 @@ export default function Setup() {
         action={<PrimaryButton href="/devices">查看设备状态</PrimaryButton>}
       />
 
-      <ActionPanel
-        title="Android 后端地址"
-        description={backendUrl}
-        action={<PrimaryButton icon={Copy} onClick={copy}>复制地址</PrimaryButton>}
-      />
+      <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+        <ActionPanel
+          title="Android 后端地址"
+          description={backendUrl}
+          action={<PrimaryButton icon={Copy} onClick={copy}>复制地址</PrimaryButton>}
+        />
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-slate-950">接入进度</div>
+              <p className="mt-1 text-sm text-slate-500">先把连通性做实，再看设备注册和事件进入。</p>
+            </div>
+            <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端可用' : '等待后端'} />
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <ProgressChip label="设备注册" ok={(data?.devices.total ?? 0) > 0} />
+            <ProgressChip label="设备在线" ok={(data?.devices.online ?? 0) > 0} />
+            <ProgressChip label="事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
+            <ProgressChip label="可生成测试事件" ok={(data?.devices.total ?? 0) > 0} />
+          </div>
+        </div>
+      </section>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-4">
+      <section className="grid gap-4 lg:grid-cols-4">
         {steps.map((step, index) => {
           const Icon = step.icon;
           const done = data ? (index === 0 || (index >= 2 && data.devices.total > 0)) : false;
           return (
-            <div key={step.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={step.title} className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
                   <Icon className="h-5 w-5 text-slate-700" />
                 </div>
                 {done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <span className="text-xs font-semibold text-slate-400">STEP {index + 1}</span>}
@@ -56,9 +73,9 @@ export default function Setup() {
             </div>
           );
         })}
-      </div>
+      </section>
 
-      <div className="mt-5">
+      <section>
         {loading ? (
           <StateBlock tone="loading" title="正在检查接入状态" description="系统会自动刷新设备注册和心跳状态。" />
         ) : error ? (
@@ -77,17 +94,16 @@ export default function Setup() {
             action={<PrimaryButton href="/review">进入复核工作台</PrimaryButton>}
           />
         )}
-      </div>
+      </section>
+    </div>
+  );
+}
 
-      <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 font-semibold text-slate-950">当前接入状态</div>
-        <div className="flex flex-wrap gap-2">
-          <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label="后端" />
-          <StatusBadge status={(data?.devices.total ?? 0) > 0 ? 'online' : 'offline'} label="设备注册" />
-          <StatusBadge status={(data?.devices.online ?? 0) > 0 ? 'online' : 'offline'} label="设备在线" />
-          <StatusBadge status={(data?.events.pending_review_count ?? 0) > 0 ? 'pending' : 'normal'} label="事件队列" />
-        </div>
-      </div>
+function ProgressChip({ label, ok }: { label: string; ok: boolean }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</div>
+      <div className="mt-1 font-semibold text-slate-950">{ok ? '已就绪' : '未就绪'}</div>
     </div>
   );
 }
