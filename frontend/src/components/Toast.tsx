@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { CheckCircle2, Info, X } from 'lucide-react';
 import { ToastContext, type ToastTone } from './toastContext';
 
 type ToastItem = { id: number; message: string; tone: ToastTone };
@@ -24,22 +23,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`flex items-center gap-3 rounded-xl border glass-panel px-4 py-3 text-sm ${
-              item.tone === 'error' ? 'border-[var(--danger-soft)]/40 text-[var(--danger)]' : 'border-[var(--line)]/20 text-[var(--text)]'
+            className={`flex items-center gap-3 rounded-xl border glass-panel px-4 py-3 text-body-sm ${
+              item.tone === 'error' ? 'border-error/40 text-error' : 'border-outline-variant/20 text-on-surface'
             }`}
           >
             {item.tone === 'success' ? (
-              <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />
+              <span className="material-symbols-outlined text-primary text-base">check_circle</span>
             ) : (
-              <Info className="h-4 w-4 text-[var(--brand)]" />
+              <span className="material-symbols-outlined text-primary text-base">info</span>
             )}
             <span className="flex-1">{item.message}</span>
             <button
               aria-label="关闭提示"
               onClick={() => setItems((prev) => prev.filter((entry) => entry.id !== item.id))}
-              className="rounded p-1 text-[var(--faint)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
+              className="rounded p-1 text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
             >
-              <X className="h-3.5 w-3.5" />
+              <span className="material-symbols-outlined text-sm">close</span>
             </button>
           </div>
         ))}

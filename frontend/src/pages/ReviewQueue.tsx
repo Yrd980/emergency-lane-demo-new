@@ -77,7 +77,7 @@ export default function ReviewQueue() {
         }
       />
 
-      <div className="mb-5">
+      <div className="mb-lg">
         <ActionPanel
           title={firstEvent ? 'Next: Open first queued event' : 'No pending review events'}
           description={firstEvent ? `Queue sorted by priority: ${firstEvent.review_priority_reason ?? 'chronological'}, detail page only advances through pending items.` : 'Wait for new events or check history.'}
@@ -87,7 +87,7 @@ export default function ReviewQueue() {
       </div>
 
       {overview.data && (
-        <div className="mb-5 grid gap-4 sm:grid-cols-3">
+        <div className="mb-lg grid gap-4 sm:grid-cols-3">
           <MetricTile label="Pending Review" value={overview.data.pending_review_count} tone="warning" />
           <MetricTile label="Confirmed" value={overview.data.confirmed_count} tone="success" />
           <MetricTile label="Rejected" value={overview.data.rejected_count} tone="danger" />
@@ -112,10 +112,10 @@ export default function ReviewQueue() {
           <SurfacePanel className="mb-3 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-sm font-semibold text-[var(--text)]">Bulk Review</div>
-                <div className="mt-1 text-xs text-[var(--muted)]">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)]/10 px-2 py-0.5 text-[var(--brand)]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-soft)]" />
+                <div className="text-body-sm font-semibold text-on-surface">Bulk Review</div>
+                <div className="mt-1 text-label-xs text-on-surface-variant">
+                  <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-primary">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     {selectedIds.length} selected
                   </span>
                   {' '}pending items from current queue.
@@ -123,7 +123,7 @@ export default function ReviewQueue() {
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-glow)] disabled:opacity-50 transition-all"
+                  className="inline-flex min-h-10 items-center justify-center gap-sm rounded-lg border border-outline-variant bg-surface-container-high px-3 py-2 text-body-sm font-semibold text-on-surface hover:bg-surface-container-highest disabled:opacity-50 transition-all"
                   disabled={submittingBulk}
                   onClick={toggleSelectAll}
                 >
@@ -138,7 +138,7 @@ export default function ReviewQueue() {
               </div>
             </div>
             {bulkMessage && (
-              <div className="mt-3 rounded-lg bg-[var(--surface)] px-3 py-2 text-sm text-[var(--muted)] border border-[var(--line)]/10">
+              <div className="mt-3 rounded-lg bg-surface-container px-3 py-2 text-body-sm text-on-surface-variant border border-outline-variant/10">
                 {bulkMessage}
               </div>
             )}

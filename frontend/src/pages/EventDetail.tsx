@@ -132,26 +132,14 @@ export default function EventDetail() {
       />
 
       {/* ─── Incident badge bar ─── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Event ID</span>
-          <span className="rounded-md bg-surface-container px-2.5 py-1 font-mono-data text-xs font-medium text-primary">
-            {data.event_id}
-          </span>
-        </div>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low p-md">
+        <FieldChip label="Event ID" value={data.event_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <div className="flex items-center gap-2">
-          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Device</span>
-          <span className="font-mono-data text-xs text-on-surface">{data.device_id}</span>
-        </div>
+        <FieldChip label="Device" value={data.device_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <div className="flex items-center gap-2">
-          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Priority</span>
-          <StatusBadge status={data.risk_level ?? 'normal'} />
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Status</span>
-          <StatusBadge status={data.review_status} />
+        <FieldChip label="Priority" value={<StatusBadge status={data.risk_level ?? 'normal'} />} />
+        <div className="ml-auto">
+          <FieldChip label="Status" value={<StatusBadge status={data.review_status} />} />
         </div>
       </div>
 
@@ -401,18 +389,13 @@ export default function EventDetail() {
 
 /* ─── Sub-components ─── */
 
-function FieldChip({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function FieldChip({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-sm">
       <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">{label}</span>
-      <span
-        className={cn(
-          'rounded-md bg-surface-container px-2.5 py-1 text-xs font-medium',
-          mono ? 'font-mono-data text-primary' : 'text-on-surface',
-        )}
-      >
-        {value}
-      </span>
+      {typeof value === 'string' ? (
+        <span className={cn('rounded-md bg-surface-container px-sm py-xs text-label-xs font-medium', mono ? 'font-mono-data text-primary' : 'text-on-surface')}>{value}</span>
+      ) : value}
     </div>
   );
 }

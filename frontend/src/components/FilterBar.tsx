@@ -1,4 +1,3 @@
-import { RotateCcw, Search } from 'lucide-react';
 import { inputClassName } from './styles';
 
 export default function FilterBar({
@@ -15,27 +14,27 @@ export default function FilterBar({
   };
 
   return (
-    <div className="mb-4 rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)] p-4">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
-        <Search className="h-4 w-4 text-[var(--muted)]" />
-        缩小范围，减少复核思考
+    <div className="mb-4 rounded-xl border border-outline-variant/10 bg-surface-container-low p-4">
+      <div className="mb-3 flex items-center gap-2 text-body-sm font-semibold text-on-surface">
+        <span className="material-symbols-outlined text-on-surface-variant text-base">search</span>
+        Narrow scope, reduce review thinking
       </div>
       <div className="grid gap-3 md:grid-cols-5">
-        <label className="flex flex-col text-xs font-medium text-[var(--muted)]">
-          状态
+        <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
+          Status
           <select
             className={inputClassName('mt-1')}
             value={filters.status || ''}
             onChange={(e) => update('status', e.target.value)}
           >
-            <option value="">全部</option>
-            <option value="pending">待复核</option>
-            <option value="confirmed">已确认</option>
-            <option value="rejected">已驳回</option>
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="rejected">Rejected</option>
           </select>
         </label>
-        <label className="flex flex-col text-xs font-medium text-[var(--muted)]">
-          设备
+        <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
+          Device
           <input
             className={inputClassName('mt-1')}
             value={filters.device_id || ''}
@@ -43,8 +42,8 @@ export default function FilterBar({
             placeholder="device_id"
           />
         </label>
-        <label className="flex flex-col text-xs font-medium text-[var(--muted)]">
-          开始时间起
+        <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
+          Start From
           <input
             type="datetime-local"
             className={inputClassName('mt-1')}
@@ -52,8 +51,8 @@ export default function FilterBar({
             onChange={(e) => update('start_time_from', e.target.value ? `${e.target.value}:00+08:00` : '')}
           />
         </label>
-        <label className="flex flex-col text-xs font-medium text-[var(--muted)]">
-          开始时间止
+        <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
+          Start To
           <input
             type="datetime-local"
             className={inputClassName('mt-1')}
@@ -62,11 +61,11 @@ export default function FilterBar({
           />
         </label>
         <button
-          className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-raised)]"
+          className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2 text-body-sm font-semibold text-on-surface hover:bg-surface-container-high"
           onClick={() => onChange({ limit: '50', offset: '0' })}
         >
-          <RotateCcw className="h-4 w-4" />
-          重置筛选
+          <span className="material-symbols-outlined text-base">refresh</span>
+          Reset Filters
         </button>
       </div>
     </div>

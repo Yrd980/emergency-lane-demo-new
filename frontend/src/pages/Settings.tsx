@@ -1,4 +1,3 @@
-import { Shield, Trash2, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRole } from '../access/useRole';
 import { api } from '../api/client';
@@ -46,9 +45,7 @@ export default function Settings() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const update = <K extends keyof RuntimeSettingsUpdate>(key: K, value: RuntimeSettingsUpdate[K]) => {
@@ -63,24 +60,24 @@ export default function Settings() {
       setSettings(toEditableSettings(saved));
       setUpdatedAt(saved.updated_at);
       setError(null);
-      showToast('设置已保存到本地后端，刷新页面后仍会保留。', 'success');
+      showToast('Settings saved to local backend, persisted across page reloads.', 'success');
     } catch (e: unknown) {
       const message = (e as Error).message;
       setError(message);
-      showToast(`设置保存失败：${message}`, 'error');
+      showToast(`Settings save failed: ${message}`, 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <StateBlock tone="loading" title="正在读取运行设置" description="同步后端保存的复核、在线判定和证据保留策略。" />;
+  if (loading) return <StateBlock tone="loading" title="Loading runtime settings" description="Syncing review, online detection, and evidence retention policies." />;
   if (error && !settings) {
     return (
       <StateBlock
         tone="error"
-        title="设置读取失败"
+        title="Settings load failed"
         description={error}
-        action={<PrimaryButton icon="refresh" onClick={load}>重试读取</PrimaryButton>}
+        action={<PrimaryButton icon="refresh" onClick={load}>Retry Load</PrimaryButton>}
       />
     );
   }
@@ -88,18 +85,18 @@ export default function Settings() {
   const editable = role === 'maintainer';
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-lg">
       <PageHeader
         eyebrow="SETTINGS"
-        title="运行设置"
-        description="先把长期使用时最容易影响信任的配置显性化：复核方式、在线窗口、证据保留和设备访问。"
+        title="Runtime Settings"
+        description="Surface the configs that most affect trust during long-running use: review mode, online window, evidence retention, and device access."
         action={
           editable ? (
             <PrimaryButton icon="save" onClick={save} disabled={saving}>
-              {saving ? '正在保存' : '保存设置'}
+              {saving ? 'Saving...' : 'Save Settings'}
             </PrimaryButton>
           ) : (
-            <PrimaryButton href="/health">查看系统健康</PrimaryButton>
+            <PrimaryButton href="/health">View System Health</PrimaryButton>
           )
         }
       />
@@ -107,42 +104,42 @@ export default function Settings() {
       {!editable && (
         <ActionPanel
           tone="warning"
-          title="当前身份只能查看设置"
-          description="只有管理员可以修改运行参数。当前身份适合先看健康和设备状态。"
-          action={<PrimaryButton href="/health">转到系统健康</PrimaryButton>}
+          title="Current role can only view settings"
+          description="Only maintainer can modify runtime parameters. Current role is better suited to checking health and device status."
+          action={<PrimaryButton href="/health">Go to System Health</PrimaryButton>}
         />
       )}
 
       <ActionPanel
         tone={error ? 'danger' : 'success'}
-        title={error ? '最近一次保存失败' : '设置已接入后端持久化'}
-        description={error ? `${error}。请确认本地后端可用后重试。` : `最近保存：${updatedAt ? formatDateTime(updatedAt) : '等待首次保存'}。下一步：查看系统健康确认运行状态。`}
-        action={error ? <PrimaryButton icon="refresh" onClick={save}>重新保存</PrimaryButton> : <PrimaryButton href="/health">查看系统健康</PrimaryButton>}
+        title={error ? 'Last save failed' : 'Settings backed by backend persistence'}
+        description={error ? `${error}. Confirm local backend is available and retry.` : `Last saved: ${updatedAt ? formatDateTime(updatedAt) : 'Awaiting first save'}. Next: check system health to confirm runtime state.`}
+        action={error ? <PrimaryButton icon="refresh" onClick={save}>Re-save</PrimaryButton> : <PrimaryButton href="/health">View System Health</PrimaryButton>}
       />
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <SettingCard icon={Shield} title="复核策略" description="所有疑似事件必须人工复核后才进入已确认。">
+      <div className="mt-lg grid gap-4 lg:grid-cols-2">
+        <SettingCard icon="shield" title="Review Policy" description="All suspected events must be manually reviewed before confirmation.">
           <select
             className={inputClassName('mt-3 w-full')}
             value={settings.review_mode}
             onChange={(e) => editable && update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
             disabled={!editable}
           >
-            <option value="manual">人工复核优先</option>
-            <option value="strict">证据完整才允许确认</option>
+            <option value="manual">Manual Review Priority</option>
+            <option value="strict">Complete Evidence Required</option>
           </select>
-          <label className="mt-3 flex items-start gap-3 rounded-lg border border-[var(--line)]/10 bg-[var(--surface)] p-3 text-sm text-[var(--muted)] transition-all hover:border-[var(--brand)]/20">
+          <label className="mt-3 flex items-start gap-3 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant transition-all hover:border-primary/20">
             <input
               type="checkbox"
               checked={settings.require_complete_evidence}
               onChange={(e) => editable && update('require_complete_evidence', e.target.checked)}
               disabled={!editable}
-              className="mt-0.5 h-4 w-4 rounded border-[var(--line)] bg-[var(--canvas)] text-[var(--brand)] focus:ring-[var(--brand-soft)] focus:ring-offset-0"
+              className="mt-0.5 h-4 w-4 rounded border-outline-variant bg-background text-primary focus:ring-primary focus:ring-offset-0"
             />
-            <span>确认事件前要求 before / peak / after 证据完整</span>
+            <span>Require before / peak / after evidence completeness before confirming</span>
           </label>
         </SettingCard>
-        <SettingCard icon={Wifi} title="在线判定窗口" description="超过该秒数没有心跳，设备会显示为离线。">
+        <SettingCard icon="wifi" title="Online Detection Window" description="Devices are shown as offline after exceeding this number of seconds without a heartbeat.">
           <NumberInput
             value={settings.online_window_seconds}
             min={10}
@@ -151,7 +148,7 @@ export default function Settings() {
             disabled={!editable}
           />
         </SettingCard>
-        <SettingCard icon={Trash2} title="证据保留" description="长期运行时需要控制证据目录增长。">
+        <SettingCard icon="delete" title="Evidence Retention" description="Control evidence directory growth during long-running use.">
           <NumberInput
             value={settings.evidence_retention_days}
             min={1}
@@ -160,17 +157,17 @@ export default function Settings() {
             disabled={!editable}
           />
         </SettingCard>
-        <SettingCard icon={Shield} title="设备访问" description="当前局域网演示默认开放，产品化应接入设备 token。">
+        <SettingCard icon="shield" title="Device Access" description="Current LAN demo defaults to open; production should integrate device tokens.">
           <select
             className={inputClassName('mt-3 w-full')}
             value={settings.device_access_mode}
             onChange={(e) => editable && update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
             disabled={!editable}
           >
-            <option value="open">局域网开放接入</option>
-            <option value="token">要求设备 token（后续 Android 接入）</option>
+            <option value="open">LAN Open Access</option>
+            <option value="token">Require Device Token (future Android integration)</option>
           </select>
-          <div className="mt-3 rounded-lg border border-[var(--line)]/10 bg-[var(--surface)] p-3 text-sm text-[var(--faint)]">下一步：Android 上传携带 token 后再切换到强制校验。</div>
+          <div className="mt-3 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">Next: enforce token check after Android upload carries tokens.</div>
         </SettingCard>
       </div>
     </div>
@@ -201,16 +198,16 @@ function NumberInput({ value, min, max, onChange, disabled }: { value: number; m
   );
 }
 
-function SettingCard({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode }) {
+function SettingCard({ icon, title, description, children }: { icon: string; title: string; description: string; children: React.ReactNode }) {
   return (
-    <SurfacePanel className="p-4 transition-all hover:border-[var(--brand)]/20 group">
+    <SurfacePanel className="p-4 transition-all hover:border-primary/20 group">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--line)]/10 bg-[var(--surface)]">
-          <Icon className="h-5 w-5 text-[var(--brand)]" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-outline-variant/10 bg-surface-container">
+          <span className="material-symbols-outlined text-primary text-xl">{icon}</span>
         </div>
         <div className="flex-1">
-          <div className="font-semibold text-[var(--text)]">{title}</div>
-          <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{description}</p>
+          <div className="font-semibold text-on-surface">{title}</div>
+          <p className="mt-1 text-body-sm leading-6 text-on-surface-variant">{description}</p>
         </div>
       </div>
       {children}
