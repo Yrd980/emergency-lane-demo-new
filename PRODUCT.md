@@ -6,34 +6,42 @@ product
 
 ## Users
 
-现场人员、复核人员和维护人员在同一个本地系统里协作。现场人员负责 Android 端接入、相机画面、ROI 标定和检测运行；复核人员在 Web 端查看证据并确认或驳回疑似占用事件；维护人员判断设备、后端、数据库和证据目录是否可以持续运行。
+Aegis Traffic serves traffic-operations teams who need to detect, review, and respond to suspected emergency-lane occupation in a local or controlled deployment.
 
-他们通常处在局域网、本地演示或长期值守环境中，需要快速判断系统是否可用、问题卡在哪里、下一步应该做什么。
+The durable user groups are operators who keep the system running, reviewers who decide whether evidence is trustworthy, coordinators who route response work, and field users who act on assigned incidents. These may map to different product roles over time, but their jobs remain stable.
+
+The use context is practical and time-sensitive. Users need to know whether the detection loop is healthy, whether evidence is complete enough to trust, what requires human review, and what action should happen next. The interface can feel like a traffic operations console, but it must remain honest about the deployment boundary and the capabilities actually present.
 
 ## Product Purpose
 
-LaneOps 是一个本地可长期演示和使用的应急车道疑似占用检测工作台。它把设备接入、事件上传、证据查看、人工复核、历史查询、设备状态和系统健康串成一个闭环。
+Aegis Traffic is an emergency-lane detection and review workbench. It turns road-side detections into reviewable incidents by connecting capture, evidence, system health, human judgment, operational history, and response assignment into one loop.
 
-成功的界面应该让用户在任何页面都清楚看到当前状态、阻断问题、主行动、操作反馈和恢复路径。产品不追求自动处罚、执法系统对接、云端多租户或复杂账号体系，首版重点是本地闭环可信、可复核、可排障。
+The product exists to close the loop from detection to human decision: receive suspected incidents, show the evidence and context required to trust or reject them, surface system problems that affect reliability, and route validated work to the right next action.
+
+Success means a user can answer five questions quickly on any screen: is the system healthy, is evidence complete, what needs review, what has already happened, and what action should happen next.
 
 ## Brand Personality
 
-冷静、可靠、专业。
+Precise, vigilant, controlled.
 
-界面语气应该像一套可信的本地运维工具：判断清楚、动作明确、不过度渲染紧张感。它可以有指挥台的秩序感，但不应为了“科技感”牺牲可读性和长期使用舒适度。
+The interface should feel like a high-performance operations instrument: technically advanced, serious about public safety, and calm under pressure. It can feel futuristic through precision, contrast, and instrumentation, but it should never become a decorative "command center" skin that competes with evidence, status, and review actions.
+
+The voice is terse and operational. Labels should be concrete, verb-led, and tied to the next decision. Avoid marketing copy and avoid over-explaining controls inside the product.
 
 ## Anti-references
 
-不要像一次性 demo 页面，不要像泛后台 CRUD 模板，不要做营销页式大 hero，不要做花哨科技大屏。避免装饰性强于信息的视觉效果、过度渐变、夸张卡片堆叠、无意义大数字、只有颜色区分状态的提示。
+Do not make it look like a landing page, SaaS marketing dashboard, generic admin template, cyberpunk control-room poster, decorative smart-city demo, or a production law-enforcement platform that hides its constraints.
+
+Avoid fake drama: oversized hero claims, glowing ornament, excessive glass effects, repeated metric cards without workflow value, decorative maps, and alert colors used as decoration. Avoid implying automatic enforcement, legal adjudication, external integrations, or availability guarantees unless the product actually supports them.
 
 ## Design Principles
 
-1. 先给下一步：每个页面都应该指出当前最重要的行动，尤其是没有设备、待复核、设备离线、证据缺失和系统异常时。
-2. 证据优先于字段：事件详情先服务复核判断，再补充结构化字段和历史记录。
-3. 状态必须可恢复：loading、empty、error、success 和 partial data 都要告诉用户如何继续。
-4. 面向长期使用：布局要稳定、信息密度适中、移动端可用，避免只适合首次演示的视觉噱头。
-5. 不破坏系统契约：前端、后端和 Android 之间的数据含义保持清晰，界面不暗示尚未实现的能力。
+1. Close the loop: capture, evidence, system health, review, history, and response should feel connected rather than like separate tools.
+2. Evidence before decoration: media, detection metadata, time, location, confidence, history, and state must carry the interface.
+3. Action follows state: empty, loading, error, pending, degraded, complete, and resolved states should all point to a useful next step.
+4. Preserve operational rhythm: monitoring, review, detail, history, health, settings, setup, and field workflows should share severity language and status behavior.
+5. Severity is redundant: risk, health, review, assignment, completion, and failure states must use text, iconography, shape, and position in addition to color.
 
 ## Accessibility & Inclusion
 
-目标按 WCAG AA 的方向设计。关键状态不只依赖颜色区分，按钮和主行动使用明确文字，移动端导航和事件卡片必须可用。动效应克制，并尊重用户的减少动效倾向。错误、空状态和危险操作需要提供可理解的恢复建议或确认路径。
+Target WCAG AA contrast. Critical actions and severity states must not rely on color alone. The UI should support reduced motion, keyboard-accessible controls on desktop, large enough mobile touch targets, visible focus states, and readable timestamps/IDs. Alert language should be direct without panic, because operators need fast judgment rather than emotional amplification.

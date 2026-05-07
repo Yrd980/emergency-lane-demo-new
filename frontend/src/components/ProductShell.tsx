@@ -117,8 +117,8 @@ export default function ProductShell({ children }: { children: React.ReactNode }
                     <div className="mt-xs text-body-sm text-on-surface-variant">Open pending events and validate evidence.</div>
                   </button>
                   <button className="w-full rounded-lg bg-surface-container p-3 text-left hover:bg-surface-container-high" onClick={() => { navigate('/devices'); setOpenMenu(null); }}>
-                    <div className="text-label-xs font-semibold uppercase tracking-wider text-primary">Live Feed</div>
-                    <div className="mt-xs text-body-sm text-on-surface-variant">Check devices, feeds, and patrol task readiness.</div>
+                    <div className="text-label-xs font-semibold uppercase tracking-wider text-primary">Devices</div>
+                    <div className="mt-xs text-body-sm text-on-surface-variant">Check device heartbeats, upload backlog, and patrol task readiness.</div>
                   </button>
                 </div>
               </div>

@@ -51,8 +51,8 @@ export default function DeviceStatus() {
     <div className="space-y-lg">
       <PageHeader
         eyebrow="DEVICES"
-        title="Live Camera Feed"
-        description="Long-running monitoring: device online status, upload backlog, thermal state, and model version surface issues before individual events do."
+        title="Device Status"
+        description="Heartbeat, upload backlog, thermal state, and model version from registered Android devices."
         action={<PrimaryButton href="/setup">Add New Device</PrimaryButton>}
       />
 
@@ -83,7 +83,7 @@ export default function DeviceStatus() {
               <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="font-semibold text-on-surface">All Systems Operational</div>
-                  <div className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">Live devices are reporting within the active heartbeat window.</div>
+                  <div className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">Registered devices are reporting within the active heartbeat window.</div>
                 </div>
                 <PrimaryButton href="/events">View Events</PrimaryButton>
               </div>
@@ -154,7 +154,7 @@ export default function DeviceStatus() {
                     <div key={`${item}-${index}`} className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-background text-[10px] ${index === 0 ? 'bg-surface-bright' : index === 1 ? 'bg-primary-container text-on-primary-container' : 'bg-secondary-container text-on-secondary-container'}`}>{item}</div>
                   ))}
                 </div>
-                <p className="text-label-xs text-on-surface-variant">{operatorsOnDuty} operators on duty, {onlineCount} live feeds.</p>
+                <p className="text-label-xs text-on-surface-variant">{operatorsOnDuty} operators on duty, {onlineCount} devices online.</p>
               </div>
             </div>
           </div>
@@ -182,7 +182,7 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
         {device.is_online ? (
           <>
             <span className="status-dot-critical inline-block" />
-            <span className="text-[11px] font-bold tracking-widest text-error drop-shadow-[0_1px_2px_rgb(0,0,0)]">REC</span>
+            <span className="text-[11px] font-bold tracking-widest text-primary drop-shadow-[0_1px_2px_rgb(0,0,0)]">ONLINE</span>
           </>
         ) : (
           <>
@@ -200,8 +200,8 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
 
       <div className="absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
         <div className="rounded-lg bg-black/30 px-3 py-2 text-center">
-          <span className="material-symbols-outlined text-lg text-on-surface-variant">{device.is_online ? 'videocam' : 'wifi_off'}</span>
-          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Live Feed Active' : 'Signal Lost'}</div>
+          <span className="material-symbols-outlined text-lg text-on-surface-variant">{device.is_online ? 'sensors' : 'wifi_off'}</span>
+          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Heartbeat Active' : 'Signal Lost'}</div>
         </div>
       </div>
 

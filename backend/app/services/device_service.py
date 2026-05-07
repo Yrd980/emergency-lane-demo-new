@@ -16,19 +16,22 @@ def register(
     model_version: str,
 ):
     conn = get_db()
-    now = _now()
-    conn.execute(
-        """INSERT INTO devices (device_id, device_name, app_version, model_version, registered_at, last_seen_at)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(device_id) DO UPDATE SET
-               device_name=excluded.device_name,
-               app_version=excluded.app_version,
-               model_version=excluded.model_version,
-               last_seen_at=excluded.last_seen_at""",
-        (device_id, device_name, app_version, model_version, now, now),
-    )
-    conn.commit()
-    return {"device_id": device_id, "registered": True}
+    try:
+        now = _now()
+        conn.execute(
+            """INSERT INTO devices (device_id, device_name, app_version, model_version, registered_at, last_seen_at)
+               VALUES (?, ?, ?, ?, ?, ?)
+               ON CONFLICT(device_id) DO UPDATE SET
+                   device_name=excluded.device_name,
+                   app_version=excluded.app_version,
+                   model_version=excluded.model_version,
+                   last_seen_at=excluded.last_seen_at""",
+            (device_id, device_name, app_version, model_version, now, now),
+        )
+        conn.commit()
+        return {"device_id": device_id, "registered": True}
+    finally:
+        conn.close()
 
 
 def heartbeat(
@@ -39,30 +42,36 @@ def heartbeat(
     pending_upload_count: int,
 ):
     conn = get_db()
-    now = _now()
-    cur = conn.execute(
-        """UPDATE devices SET last_seen_at=?, battery_level=?, thermal_state=?, fps=?, pending_upload_count=?
-           WHERE device_id=?""",
-        (now, battery_level, thermal_state, fps, pending_upload_count, device_id),
-    )
-    if cur.rowcount > 0:
-        conn.execute(
-            """INSERT INTO device_metric_history (
-                   device_id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
-               ) VALUES (?, ?, ?, ?, ?, ?)""",
-            (device_id, now, battery_level, thermal_state, fps, pending_upload_count),
+    try:
+        now = _now()
+        cur = conn.execute(
+            """UPDATE devices SET last_seen_at=?, battery_level=?, thermal_state=?, fps=?, pending_upload_count=?
+               WHERE device_id=?""",
+            (now, battery_level, thermal_state, fps, pending_upload_count, device_id),
         )
-    conn.commit()
-    if cur.rowcount == 0:
-        return None
-    return {"device_id": device_id, "heartbeat_accepted": True}
+        if cur.rowcount > 0:
+            conn.execute(
+                """INSERT INTO device_metric_history (
+                       device_id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
+                   ) VALUES (?, ?, ?, ?, ?, ?)""",
+                (device_id, now, battery_level, thermal_state, fps, pending_upload_count),
+            )
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        return {"device_id": device_id, "heartbeat_accepted": True}
+    finally:
+        conn.close()
 
 
 def list_devices():
     conn = get_db()
-    rows = conn.execute(
-        "SELECT * FROM devices ORDER BY last_seen_at DESC"
-    ).fetchall()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM devices ORDER BY last_seen_at DESC"
+        ).fetchall()
+    finally:
+        conn.close()
     now_dt = datetime.now(timezone(timedelta(hours=8)))
     result = []
     for r in rows:
@@ -90,26 +99,29 @@ def list_devices():
 
 def get_device_detail(device_id: str):
     conn = get_db()
-    row = conn.execute("SELECT * FROM devices WHERE device_id=?", (device_id,)).fetchone()
-    if not row:
-        return None
+    try:
+        row = conn.execute("SELECT * FROM devices WHERE device_id=?", (device_id,)).fetchone()
+        if not row:
+            return None
 
-    now_dt = datetime.now(timezone(timedelta(hours=8)))
-    last = datetime.fromisoformat(row["last_seen_at"])
-    seconds_since_seen = int((now_dt - last).total_seconds())
-    is_online = seconds_since_seen < get_effective_online_threshold()
-    recent_events = conn.execute(
-        """SELECT event_id, start_time, duration_seconds, vehicle_class, confidence, review_status
-           FROM events WHERE device_id=?
-           ORDER BY created_at DESC LIMIT 8""",
-        (device_id,),
-    ).fetchall()
-    metric_history = conn.execute(
-        """SELECT id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
-           FROM device_metric_history WHERE device_id=?
-           ORDER BY recorded_at DESC, id DESC LIMIT 20""",
-        (device_id,),
-    ).fetchall()
+        now_dt = datetime.now(timezone(timedelta(hours=8)))
+        last = datetime.fromisoformat(row["last_seen_at"])
+        seconds_since_seen = int((now_dt - last).total_seconds())
+        is_online = seconds_since_seen < get_effective_online_threshold()
+        recent_events = conn.execute(
+            """SELECT event_id, start_time, duration_seconds, vehicle_class, confidence, review_status
+               FROM events WHERE device_id=?
+               ORDER BY created_at DESC LIMIT 8""",
+            (device_id,),
+        ).fetchall()
+        metric_history = conn.execute(
+            """SELECT id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
+               FROM device_metric_history WHERE device_id=?
+               ORDER BY recorded_at DESC, id DESC LIMIT 20""",
+            (device_id,),
+        ).fetchall()
+    finally:
+        conn.close()
 
     issues = []
     if not is_online:
@@ -189,8 +201,12 @@ def get_device_detail(device_id: str):
 
 def delete_device(device_id: str):
     conn = get_db()
-    cur = conn.execute("DELETE FROM devices WHERE device_id=?", (device_id,))
-    conn.commit()
-    if cur.rowcount == 0:
-        return None
-    return {"device_id": device_id, "deleted": True}
+    try:
+        conn.execute("DELETE FROM device_metric_history WHERE device_id=?", (device_id,))
+        cur = conn.execute("DELETE FROM devices WHERE device_id=?", (device_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            return None
+        return {"device_id": device_id, "deleted": True}
+    finally:
+        conn.close()

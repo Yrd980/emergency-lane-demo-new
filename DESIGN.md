@@ -1,261 +1,226 @@
 ---
-name: LaneOps
-description: Calm local operations workbench for emergency-lane detection review and system health.
+name: Aegis Traffic
+description: Local emergency-lane detection workbench for setup, device health, evidence review, dispatch tasks, and Android patrol flow.
 colors:
-  shell-ink: "#0f1720"
-  evidence-ink: "#0b1118"
-  text-primary: "#020617"
-  text-secondary: "#475569"
-  text-muted: "#64748b"
-  app-bg-high: "#f4f6f8"
-  app-bg-mid: "#eef2f4"
-  app-bg-low: "#e9eef1"
-  surface: "#ffffff"
-  surface-muted: "#f8fafc"
-  surface-subtle: "#f1f5f9"
-  border: "#e2e8f0"
-  border-strong: "#cbd5e1"
-  primary-accent: "#22d3ee"
-  primary-accent-deep: "#0e7490"
-  warning-bg: "#fffbeb"
-  warning-text: "#92400e"
-  success-bg: "#ecfdf5"
-  success-text: "#065f46"
-  danger-bg: "#fff1f2"
-  danger-text: "#9f1239"
+  background: "#13131b"
+  surface: "#13131b"
+  surface-dim: "#13131b"
+  surface-bright: "#393841"
+  surface-container-lowest: "#0e0d15"
+  surface-container-low: "#1b1b23"
+  surface-container: "#1f1f27"
+  surface-container-high: "#2a2932"
+  surface-container-highest: "#34343d"
+  on-surface: "#e4e1ed"
+  on-surface-variant: "#c7c4d7"
+  outline: "#918fa0"
+  outline-variant: "#464554"
+  primary: "#c2c1ff"
+  on-primary: "#1800a7"
+  primary-container: "#5e5ce6"
+  on-primary-container: "#f4f1ff"
+  secondary: "#ffb5a0"
+  on-secondary: "#5f1500"
+  secondary-container: "#d73b00"
+  on-secondary-container: "#fffbff"
+  tertiary: "#ffb786"
+  on-tertiary: "#502400"
+  tertiary-container: "#ae5600"
+  on-tertiary-container: "#ffefe7"
+  error: "#ffb4ab"
+  on-error: "#690005"
+  error-container: "#93000a"
+  on-error-container: "#ffdad6"
 typography:
-  display:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "2.7rem"
-    fontWeight: 600
-    lineHeight: 1.08
-    letterSpacing: "normal"
-  headline:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "2.1rem"
-    fontWeight: 600
-    lineHeight: 1.15
-    letterSpacing: "normal"
-  title:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
-    lineHeight: 1.5
-    letterSpacing: "normal"
-  body:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.5
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "0.6875rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.16em"
-  mono:
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace"
-    fontSize: "0.75rem"
-    fontWeight: 600
-    lineHeight: 1.4
+  display-lg:
+    fontFamily: "Inter"
+    fontSize: "32px"
+    fontWeight: "600"
+    lineHeight: "1.2"
+    letterSpacing: "-0.02em"
+  headline-md:
+    fontFamily: "Inter"
+    fontSize: "20px"
+    fontWeight: "600"
+    lineHeight: "1.3"
+    letterSpacing: "-0.01em"
+  body-sm:
+    fontFamily: "Inter"
+    fontSize: "14px"
+    fontWeight: "400"
+    lineHeight: "1.5"
+    letterSpacing: "0em"
+  label-xs:
+    fontFamily: "Inter"
+    fontSize: "12px"
+    fontWeight: "500"
+    lineHeight: "1"
+    letterSpacing: "0.02em"
+  mono-data:
+    fontFamily: "Space Grotesk"
+    fontSize: "14px"
+    fontWeight: "400"
+    lineHeight: "1"
+    letterSpacing: "0em"
 rounded:
-  sm: "4px"
-  md: "6px"
-  lg: "8px"
-  pill: "9999px"
+  sm: "0.25rem"
+  DEFAULT: "0.5rem"
+  md: "0.75rem"
+  lg: "1rem"
+  xl: "1.5rem"
+  full: "9999px"
 spacing:
+  unit: "4px"
   xs: "4px"
   sm: "8px"
   md: "16px"
   lg: "24px"
-  xl: "32px"
-components:
-  button-primary:
-    backgroundColor: "{colors.text-primary}"
-    textColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "40px"
-  button-light:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.text-secondary}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "40px"
-  button-danger:
-    backgroundColor: "{colors.danger-text}"
-    textColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "8px 16px"
-    height: "40px"
-  card-standard:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
-    padding: "16px"
-  input-standard:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "38px"
-  status-chip:
-    backgroundColor: "{colors.surface-muted}"
-    textColor: "{colors.text-secondary}"
-    rounded: "{rounded.pill}"
-    padding: "4px 10px"
+  xl: "48px"
+  gutter: "16px"
+  margin: "24px"
 ---
 
-# Design System: LaneOps
+# Design System: Aegis Traffic
 
 ## 1. Overview
 
-**Creative North Star: "The Local Control Room"**
+**Creative North Star: Precision Under Pressure**
 
-LaneOps should feel like a calm, reliable, professional control surface installed on a local machine. It is not a marketing object and not a visual spectacle. The interface earns trust by making state, evidence, and next actions easy to scan under real operating conditions.
+Aegis Traffic is a dark-mode-first local operations product for emergency-lane detection. The interface should feel precise, vigilant, and controlled: setup status, device health, evidence, review queues, and dispatch tasks dominate; visual treatment supports judgment without turning the product into a dramatic sci-fi dashboard.
 
-The visual system is intentionally quiet: slate-tinted backgrounds, white work surfaces, a dark shell for navigation, and a single cyan accent for orientation and focus. The result should feel stable under repeated use, not attention-seeking on first glance. Density is medium-high, because the product is a working tool, not a brochure.
+The physical scene is an operator running a local HP backend and web console during a demo or long shift, while Android devices capture detections and patrol users handle assigned tasks. That scene justifies the dark base, high-contrast text, compact controls, and sparse use of high-intensity color.
 
-This system explicitly rejects PRODUCT.md's anti-references: "一次性 demo 页面", "泛后台 CRUD 模板", "营销页式大 hero", and "花哨科技大屏". If a screen starts to feel like a sales page or a decorative command center, it has drifted away from the product.
-
-**Key Characteristics:**
-
-- Calm operational shell with clear hierarchy and stable headers.
-- Evidence and state take priority over decoration.
-- White panels sit on softly tinted app backgrounds.
-- Cyan is an orientation accent, not a theme.
-- Empty, error, loading, and success states always suggest a next action.
+The visual language is minimalist-futuristic but functional. Deep violet-tinted charcoal surfaces create a quiet control-room canvas. Neon indigo marks active systems, primary actions, selected navigation, focus, and healthy live states. Safety orange is reserved for warnings, high-risk events, backlog, and intervention.
 
 ## 2. Colors
 
-The palette is restrained and operational. Slate neutrals carry almost every surface, cyan guides attention, and semantic colors are reserved for system state.
+Use a restrained product palette: tinted dark neutrals carry the UI, indigo guides action and orientation, orange communicates urgency.
 
 ### Primary
 
-- **Signal Cyan** (#22d3ee): The only decorative accent. Use for focus rings, selected items, page eyebrows, and the shell logo mark.
-- **Control-Room Ink** (#0f1720): The desktop side rail and dark evidence canvas. It should read as steady and grounded.
+- **Neon Indigo** (`#c2c1ff`, `#5e5ce6`): Primary actions, selected navigation, live/healthy indicators, focus rings, AI confidence, and active controls.
+- **On Primary** (`#1800a7`, `#f4f1ff`): Text on primary buttons and strong primary containers.
 
-### Secondary
+### Alert And Severity
 
-- **Warning Amber** (#fffbeb / #92400e): Pending review, incomplete setup, and non-blocking issues.
-- **Operational Emerald** (#ecfdf5 / #065f46): Online, confirmed, ready, and success states.
-- **Incident Rose** (#fff1f2 / #9f1239): Rejected events, destructive actions, critical issues, and failed submission feedback.
+- **Safety Orange** (`#ffb5a0`, `#d73b00`): High-risk events, review warnings, offline/backlog banners, critical badges, and urgent evidence metadata.
+- **Tertiary Amber** (`#ffb786`, `#ae5600`): Secondary urgency such as urgent but non-critical patrol tasks.
+- **Error Red** (`#ffb4ab`, `#93000a`): False alarm, destructive actions, failed validation, and system errors.
 
-### Neutral
+### Neutrals
 
-- **Fogged Workbench** (#f4f6f8 -> #eef2f4 -> #e9eef1): The app background. It keeps the interface light without becoming sterile.
-- **Panel White** (#ffffff): Primary work surface for cards, tables, forms, and review panes.
-- **Soft Slate** (#f8fafc / #f1f5f9): Nested utility blocks, subtle panels, and helper zones.
-- **Slate Text Stack** (#020617 / #475569 / #64748b): Primary text, secondary text, and metadata.
-- **Fine Divider** (#e2e8f0 / #cbd5e1): Structural borders instead of decorative stripes.
+- **Base Canvas** (`#13131b`, `#0e0d15`): Page background, sidebars, and deepest evidence surfaces.
+- **Layered Panels** (`#1b1b23`, `#1f1f27`, `#2a2932`, `#34343d`): Cards, side panels, controls, mobile nav, and hover states.
+- **Text Stack** (`#e4e1ed`, `#c7c4d7`, `#918fa0`): Primary text, secondary metadata, and subdued labels.
+- **Fine Structure** (`#464554`): Borders, dividers, map outlines, and quiet panel separation.
 
-### Named Rules
+### Rules
 
-**The One Accent Rule.** Cyan is the only brand accent. Never introduce a second decorative color family.
+**The Alert Color Rule.** Orange is not decorative. Use it only when the user needs to notice risk, severity, violation, or dispatch urgency.
 
-**The Semantic Color Rule.** Amber, emerald, and rose are state colors only. They must not be used for ornament.
+**The Dark Surface Rule.** Never use pure black or pure white. Every neutral should remain softly tinted toward the product's violet-charcoal base.
+
+**The Redundancy Rule.** Pair severity color with text, icon, placement, and shape. Color alone is never enough.
 
 ## 3. Typography
 
-**Display Font:** Inter / system sans stack.
-**Body Font:** Inter / system sans stack.
-**Label/Mono Font:** ui-monospace stack for event IDs, device IDs, and technical identifiers.
+Use **Inter** for interface text and **Space Grotesk** for technical data. The current web theme loads these as Tailwind v4 tokens, while Android mirrors the same color system in Compose. The type should feel engineered and legible rather than editorial.
 
-**Character:** The typography is compact, technical, and direct. It should read like an operations product, not a publication and not a SaaS brochure.
+- **Display Large:** Dashboard metrics and mobile summary numbers only.
+- **Headline Medium:** Page titles, section headings, incident IDs, and major panel titles.
+- **Body Small:** Incident descriptions, card text, helper copy, and navigation labels.
+- **Label XS:** Uppercase metric labels, chips, camera tags, and compact metadata.
+- **Mono Data:** Plate numbers, camera IDs, timestamps, coordinates, percentages, durations, and case IDs.
 
-### Hierarchy
+Use the current token tracking: display `-0.02em`, headline `-0.01em`, body and mono `0em`, labels `0.02em`. Do not scale fonts with viewport width.
 
-- **Display** (600, 2.7rem, 1.08): Dashboard hero only.
-- **Headline** (600, 2.1rem, 1.15): Page titles in `PageHeader`.
-- **Title** (600, 1rem, 1.5): Section headings, panel headings, and important inline labels.
-- **Body** (400, 0.875rem, 1.5): Descriptions, helper copy, table cells, and longer prose. Keep paragraphs within 65 to 75 characters.
-- **Label** (600, 0.6875rem, 0.16em, uppercase): Eyebrows, metric labels, and compact operational labels.
-- **Mono** (600, 0.75rem, normal): IDs and exact values.
+## 4. Layout
 
-### Named Rules
+Desktop uses a persistent left sidebar, a top control bar, a dense main work area, and context-specific panels. Mobile uses a fixed top bar, task-summary cards, a compact map/status preview, incident cards, and a bottom navigation dock where available.
 
-**The No Brochure Type Rule.** Never scale type with viewport width and never use oversized marketing typography inside small panels.
+### Desktop Patterns
 
-**The Identifier Rule.** Exact IDs, timestamps, and other technical values should use mono styling so they remain visually distinct.
+- **Dashboard:** Local operations loop hero, system status pills, setup/review/health next action, report export, operational filters, metrics, trends, hotspots, time distribution, and operator performance.
+- **Review Queue:** Pending-event queue, bulk review controls, queue metrics, and a primary "Process Next" path.
+- **Incident Log:** Searchable/filterable event history with status, confidence, thumbnail, pagination, and review entry points.
+- **Incident Detail:** Evidence viewer and snapshots on the left, detection metadata, timeline, location, review history, and review/assignment actions on the right.
+- **Devices / Live Feed:** Device cards, online/offline state, upload backlog, thermal/fps/battery metrics, and assign-source/setup entry.
+- **Health:** Backend, database, evidence directory, devices, and event readiness with next actions.
+- **Settings:** Review policy, online detection window, evidence retention, and device access settings, including read-only role behavior.
+- **Setup:** Backend address copying, onboarding steps, and observable readiness checks for Android registration.
 
-## 4. Elevation
+### Mobile Patterns
 
-LaneOps uses tonal layering and fine borders first, then small shadows for separation. Surfaces should feel placed on a workbench, not floating in a showroom. Hover elevation is allowed for interactive cards; static panels should remain mostly flat.
+- **Android Detection:** Camera, ROI calibration, event queue, backend address settings, and upload behavior.
+- **Android Patrol Task Center:** Active task count, today's cases, nearest/task context, incident cards, accept/complete task actions, and field-friendly touch targets.
 
-### Shadow Vocabulary
+### Spacing
 
-- **Surface Low** (`0 1px 2px rgba(15, 23, 42, 0.05)`): Default cards, filters, metrics, and forms.
-- **Interactive Medium** (`0 4px 6px rgba(15, 23, 42, 0.10)`): Hover state for clickable cards.
-- **Mobile Dock** (`0 -8px 24px rgba(15, 23, 32, 0.08)`): Bottom mobile navigation only.
+Use the 4px baseline grid. Page margins are 24px on desktop and should compress to 16px or less on small mobile surfaces. Repeated content grids use 16px gutters. Major panels use 16px to 24px internal padding depending on density.
 
-### Named Rules
+## 5. Elevation
 
-**The Border-First Rule.** Use a 1px slate border before any shadow. If a panel needs a heavy shadow to read, the composition is too decorative.
+Depth comes from tonal layering, borders, and evidence imagery, not heavy shadows. Use 1px borders with low-opacity outline colors for most panels. Glass or blur treatment is allowed for overlays on top of video, camera feeds, maps, or current implementation menus where preserving context matters.
 
-## 5. Components
+Avoid decorative glass panels in ordinary cards. Avoid large ambient glows except small status dots or live indicators.
 
-### Buttons
-
-- **Shape:** Compact rounded rectangle with a 6px radius.
-- **Primary:** Near-black fill, white text, 40px minimum height, 16px horizontal padding. Use for the main action.
-- **Hover / Focus:** Slight darkening on hover. Cyan focus ring with visible offset on all variants.
-- **Secondary / Light:** White fill with slate border and slate text. Use for navigation, return, and non-primary actions.
-- **Danger:** Rose fill with white text. Use only for destructive or negative review actions.
-
-### Chips
-
-- **Style:** Rounded pill, 1px border, small filled dot, 11px semibold text, semantic background.
-- **State:** Status chips must combine text, shape, and color. Never rely on color alone.
-
-### Cards / Containers
-
-- **Corner Style:** 6px default, 8px only for large media or legacy toast surfaces.
-- **Background:** White for work panels, slate-50 for nested cells and empty hints, dark slate for shell and evidence canvas.
-- **Shadow Strategy:** Surface Low at rest, Interactive Medium on hoverable cards.
-- **Border:** 1px slate border is standard. Dashed borders are reserved for missing evidence or empty states.
-- **Internal Padding:** 16px for most panels, 24px to 32px for major dashboard bands.
-
-### Inputs / Fields
-
-- **Style:** White background, 1px slate border, 6px radius, compact padding.
-- **Focus:** Cyan border plus a soft cyan ring.
-- **Error / Disabled:** Error surfaces use rose tint and rose text. Disabled controls lower opacity but remain legible.
+## 6. Components
 
 ### Navigation
 
-- **Desktop:** Fixed 18rem dark side rail, white active item, slate inactive text, compact icon-plus-label rows.
-- **Mobile:** Sticky top header plus a five-item bottom navigation for the most common routes.
-- **Active State:** Active items use contrast, not color alone.
+Sidebar items use icon plus label. Active items currently combine indigo text, a darker filled row, stronger text weight, and a narrow right-edge indicator. Future navigation polish should preserve the full-row active contrast and avoid relying on the indicator alone.
 
-### Evidence Viewer
+### Buttons
 
-The evidence viewer is the most visually distinct component. It uses a dark canvas for media inspection and white side panels for completeness and media selection. The canvas must stay quiet, because evidence itself is the focus.
+Primary buttons use indigo or primary-container fills with high-contrast text and a minimum comfortable hit area. Core actions should be verb-led: "Start Device Setup", "Process Next", "Dispatch", "Validate Violation", "Assign to Patrol", "Accept Task", "Complete Task", "Copy Backend Address", "Retry". Secondary buttons use tonal fills or 1px borders. Destructive or dismissive actions must stay visually secondary unless they are the confirmed intent.
 
-### Tables And Event Cards
+### Status Chips
 
-Desktop events use a compact table with thumbnails, mono IDs, chips, and a right-aligned next action. Mobile events become full-width cards with the same metadata sequence. Both variants should preserve the same review intent.
+Use compact rounded chips for `Network Active`, `LIVE`, `pending`, `confirmed`, `rejected`, `validated`, `false_alarm`, `assigned`, `accepted`, `completed`, `online`, `offline`, `high`, and `normal`. Chips should include text and, where helpful, a small icon or dot.
 
-## 6. Do's and Don'ts
+### Evidence Cards
 
-### Do:
+Camera cards and incident evidence tiles are media-first when real media exists. Device feed placeholders may use scanline/grid patterns only to communicate unavailable or simulated feed state. Use overlays only for camera ID, live/offline state, detected state, location, metrics, and open controls. Preserve image clarity; do not bury evidence under decorative gradients beyond legibility overlays.
 
-- **Do** keep this as a product UI, not a brand page.
-- **Do** make the header, description, and primary action legible on every page.
-- **Do** show a next step for loading, empty, error, success, and partial data states.
-- **Do** keep cyan rare and meaningful.
-- **Do** use semantic colors only for state.
-- **Do** keep cards at 6px radius with 1px slate borders and low shadows.
-- **Do** use mono styling for event IDs and device IDs.
-- **Do** keep mobile event browsing card-based and preserve the bottom navigation.
+### AI Recognition Panel
 
-### Don't:
+Recognition data should be grouped in a compact grid: track or plate identifier, confidence, vehicle class, GPS/ROI, and timestamp. Technical values use Space Grotesk. Confidence can use indigo only when it is a positive system-confidence signal.
 
-- **Don't** make it look like a "一次性 demo 页面".
-- **Don't** make it look like a "泛后台 CRUD 模板".
-- **Don't** use a "营销页式大 hero" for ordinary app pages.
-- **Don't** make a "花哨科技大屏" with decorative glow, neon, fake telemetry, or theatrical gradients.
-- **Don't** use gradient text, glassmorphism, colored side-stripe borders, or repeated identical marketing card grids.
-- **Don't** use large decorative numbers without a clear operational next action.
-- **Don't** imply automatic punishment, law-enforcement integration, cloud multi-tenancy, or complex account permissions unless implemented.
-- **Don't** communicate critical state by color alone.
+### Incident Timeline
+
+Timeline entries use time first, action second. Detection, alert, review, assignment, acceptance, completion, and rejection steps should use consistent markers. Completed steps use indigo markers, warning steps use orange, rejected/failed steps use error, and pending steps use muted markers. Include exact times for auditability.
+
+### Analytics
+
+Charts should be subdued and readable. Use indigo for system trends and validated/confirmed data, orange/red only for violations, backlog, or risk. Heatmaps may use indigo intensity ramps, but legends must be visible and labels compact. Dashboard charts should remain linked to the real backend `OperationsStats` shape rather than decorative telemetry.
+
+## 7. Motion
+
+Motion is subtle and operational. Use quick ease-out transitions for hover, active, focus, and card selection. Status pulses are allowed for live recording and critical feeds, but should be small and non-distracting. Respect reduced motion preferences.
+
+Recommended easing: `cubic-bezier(0.22, 1, 0.36, 1)`.
+
+## 8. Do's And Don'ts
+
+### Do
+
+- Do make evidence, location, confidence, and next action visible together.
+- Do make local setup, health, device state, upload backlog, and evidence completeness visible when they affect trust.
+- Do reserve orange for real urgency.
+- Do use indigo for orientation, primary action, and healthy live states.
+- Do keep desktop dense but scannable.
+- Do keep mobile cards large enough for field use.
+- Do use exact timestamps, IDs, and technical values in Space Grotesk.
+- Do make false-alarm and validation paths clear.
+- Do preserve role-aware behavior for admin, reviewer, dispatcher, and patrol.
+
+### Don't
+
+- Don't create marketing heroes or explanatory landing-page sections.
+- Don't use decorative cyberpunk glow, fake telemetry, or ornamental maps.
+- Don't use gradient text.
+- Don't rely on color alone for severity.
+- Don't stack cards inside cards when a split panel or list would be clearer.
+- Don't blur or darken evidence so much that the incident cannot be inspected.
+- Don't imply automatic legal enforcement beyond validation, dispatch, and review workflow.
+- Don't imply cloud multi-tenancy, enforced device tokens, or external law-enforcement integration unless implemented.
