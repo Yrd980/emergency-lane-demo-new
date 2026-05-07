@@ -1,188 +1,47 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-05-07T00:00:00.000Z",
-  "title": "Design System: LaneOps",
+  "title": "Design System: Aegis Traffic",
   "extensions": {
     "colorMeta": {
-      "shell-ink": {
-        "role": "neutral",
-        "displayName": "Control-Room Ink",
-        "canonical": "#0f1720",
-        "tonalRamp": ["#04070c", "#0b1118", "#121b26", "#1d2935", "#314154", "#4a5c70", "#708095", "#a1aebe"]
-      },
-      "evidence-ink": {
-        "role": "neutral",
-        "displayName": "Evidence Ink",
-        "canonical": "#0b1118",
-        "tonalRamp": ["#02050a", "#070d14", "#0d1520", "#172231", "#243246", "#3c4a5e", "#67768a", "#9ea9b6"]
-      },
-      "text-primary": {
-        "role": "neutral",
-        "displayName": "Slate Text Stack",
-        "canonical": "#020617",
-        "tonalRamp": ["#01020a", "#050913", "#0d1525", "#172235", "#28364a", "#425369", "#64748b", "#94a3b8"]
-      },
-      "text-secondary": {
-        "role": "neutral",
-        "displayName": "Slate Text Stack",
-        "canonical": "#475569",
-        "tonalRamp": ["#111827", "#1f2a37", "#2f3d4f", "#415064", "#59697d", "#738397", "#93a2b3", "#c5ced7"]
-      },
-      "text-muted": {
-        "role": "neutral",
-        "displayName": "Slate Text Stack",
-        "canonical": "#64748b",
-        "tonalRamp": ["#182231", "#243142", "#324154", "#445468", "#5a6b80", "#748296", "#98a4b3", "#c6cdd5"]
-      },
-      "app-bg-high": {
-        "role": "neutral",
-        "displayName": "Fogged Workbench",
-        "canonical": "#f4f6f8",
-        "tonalRamp": ["#dfe5ea", "#e6ebef", "#edf1f4", "#f4f6f8", "#f7f9fa", "#fafbfc", "#fcfdfe", "#ffffff"]
-      },
-      "app-bg-mid": {
-        "role": "neutral",
-        "displayName": "Fogged Workbench",
-        "canonical": "#eef2f4",
-        "tonalRamp": ["#d9e1e6", "#e0e7eb", "#e7ecef", "#eef2f4", "#f3f5f7", "#f7f8f9", "#fbfcfc", "#ffffff"]
-      },
-      "app-bg-low": {
-        "role": "neutral",
-        "displayName": "Fogged Workbench",
-        "canonical": "#e9eef1",
-        "tonalRamp": ["#d3dce1", "#dae2e7", "#e1e8eb", "#e9eef1", "#eef2f4", "#f4f6f8", "#f9fafb", "#ffffff"]
-      },
-      "surface": {
-        "role": "neutral",
-        "displayName": "Panel White",
-        "canonical": "#ffffff",
-        "tonalRamp": ["#f1f5f9", "#f4f7f9", "#f7fafc", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff"]
-      },
-      "surface-muted": {
-        "role": "neutral",
-        "displayName": "Soft Slate",
-        "canonical": "#f8fafc",
-        "tonalRamp": ["#e7edf2", "#edf2f5", "#f2f6f8", "#f8fafc", "#fbfcfd", "#fdfefe", "#ffffff", "#ffffff"]
-      },
-      "surface-subtle": {
-        "role": "neutral",
-        "displayName": "Soft Slate",
-        "canonical": "#f1f5f9",
-        "tonalRamp": ["#dde5ec", "#e3eaf0", "#e9eff3", "#f1f5f9", "#f6f8fa", "#fbfcfd", "#fefefe", "#ffffff"]
-      },
-      "border": {
-        "role": "neutral",
-        "displayName": "Fine Divider",
-        "canonical": "#e2e8f0",
-        "tonalRamp": ["#c5d0dc", "#cdd7e1", "#d5dee6", "#e2e8f0", "#e9edf2", "#f0f3f6", "#f7f9fb", "#ffffff"]
-      },
-      "border-strong": {
-        "role": "neutral",
-        "displayName": "Fine Divider",
-        "canonical": "#cbd5e1",
-        "tonalRamp": ["#aeb9c7", "#b6c1cd", "#bec8d4", "#cbd5e1", "#d4dce6", "#dee5ec", "#e9edf2", "#f4f7f9"]
-      },
-      "primary-accent": {
-        "role": "primary",
-        "displayName": "Signal Cyan",
-        "canonical": "#22d3ee",
-        "tonalRamp": ["#0a3f49", "#0d5562", "#10717f", "#22d3ee", "#49def1", "#73e7f4", "#9ff0f7", "#cbf8fb"]
-      },
-      "primary-accent-deep": {
-        "role": "primary",
-        "displayName": "Signal Cyan",
-        "canonical": "#0e7490",
-        "tonalRamp": ["#062531", "#083646", "#0a4a5f", "#0e7490", "#2497b4", "#47b6d1", "#75d2e7", "#a9e7f4"]
-      },
-      "warning-bg": {
-        "role": "secondary",
-        "displayName": "Warning Amber",
-        "canonical": "#fffbeb",
-        "tonalRamp": ["#4a3210", "#68451b", "#8b5e21", "#fffbeb", "#fff4c8", "#ffed9f", "#ffe476", "#ffd948"]
-      },
-      "warning-text": {
-        "role": "secondary",
-        "displayName": "Warning Amber",
-        "canonical": "#92400e",
-        "tonalRamp": ["#402008", "#5d2c0a", "#7c3d0d", "#92400e", "#b45910", "#d67a1d", "#e99f43", "#f5c46c"]
-      },
-      "success-bg": {
-        "role": "secondary",
-        "displayName": "Operational Emerald",
-        "canonical": "#ecfdf5",
-        "tonalRamp": ["#0b3a28", "#0f563b", "#136e4c", "#ecfdf5", "#c7f6df", "#9ceabf", "#66d79b", "#36bd76"]
-      },
-      "success-text": {
-        "role": "secondary",
-        "displayName": "Operational Emerald",
-        "canonical": "#065f46",
-        "tonalRamp": ["#083526", "#0a4b36", "#0d6247", "#065f46", "#0d7b59", "#1c996e", "#37b788", "#60d0a2"]
-      },
-      "danger-bg": {
-        "role": "secondary",
-        "displayName": "Incident Rose",
-        "canonical": "#fff1f2",
-        "tonalRamp": ["#4a1222", "#68162a", "#871b34", "#fff1f2", "#ffd5dd", "#ffb1c0", "#ff8aa2", "#ff627e"]
-      },
-      "danger-text": {
-        "role": "secondary",
-        "displayName": "Incident Rose",
-        "canonical": "#9f1239",
-        "tonalRamp": ["#41101d", "#5d1425", "#7c1830", "#9f1239", "#c51c4b", "#e13d67", "#f06789", "#f69ab0"]
-      }
+      "background": { "role": "neutral", "displayName": "Canvas", "canonical": "#13131b" },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#13131b" },
+      "surface-dim": { "role": "neutral", "displayName": "Surface Dim", "canonical": "#13131b" },
+      "surface-bright": { "role": "neutral", "displayName": "Surface Bright", "canonical": "#393841" },
+      "surface-container-lowest": { "role": "neutral", "displayName": "Lowest Container", "canonical": "#0e0d15" },
+      "surface-container-low": { "role": "neutral", "displayName": "Low Container", "canonical": "#1b1b23" },
+      "surface-container": { "role": "neutral", "displayName": "Container", "canonical": "#1f1f27" },
+      "surface-container-high": { "role": "neutral", "displayName": "High Container", "canonical": "#2a2932" },
+      "surface-container-highest": { "role": "neutral", "displayName": "Highest Container", "canonical": "#34343d" },
+      "on-surface": { "role": "neutral", "displayName": "On Surface", "canonical": "#e4e1ed" },
+      "on-surface-variant": { "role": "neutral", "displayName": "On Surface Variant", "canonical": "#c7c4d7" },
+      "outline": { "role": "neutral", "displayName": "Outline", "canonical": "#918fa0" },
+      "outline-variant": { "role": "neutral", "displayName": "Outline Variant", "canonical": "#464554" },
+      "primary": { "role": "primary", "displayName": "Neon Indigo", "canonical": "#c2c1ff" },
+      "on-primary": { "role": "primary", "displayName": "On Primary", "canonical": "#1800a7" },
+      "primary-container": { "role": "primary", "displayName": "Primary Container", "canonical": "#5e5ce6" },
+      "on-primary-container": { "role": "primary", "displayName": "On Primary Container", "canonical": "#f4f1ff" },
+      "secondary": { "role": "secondary", "displayName": "Safety Orange", "canonical": "#ffb5a0" },
+      "on-secondary": { "role": "secondary", "displayName": "On Secondary", "canonical": "#5f1500" },
+      "secondary-container": { "role": "secondary", "displayName": "Secondary Container", "canonical": "#d73b00" },
+      "on-secondary-container": { "role": "secondary", "displayName": "On Secondary Container", "canonical": "#fffbff" },
+      "tertiary": { "role": "tertiary", "displayName": "Tertiary", "canonical": "#ffb786" },
+      "tertiary-container": { "role": "tertiary", "displayName": "Tertiary Container", "canonical": "#ae5600" },
+      "error": { "role": "error", "displayName": "Error", "canonical": "#ffb4ab" },
+      "error-container": { "role": "error", "displayName": "Error Container", "canonical": "#93000a" }
     },
     "typographyMeta": {
-      "display": {
-        "displayName": "Display",
-        "purpose": "Dashboard hero only."
-      },
-      "headline": {
-        "displayName": "Headline",
-        "purpose": "Page titles in PageHeader."
-      },
-      "title": {
-        "displayName": "Title",
-        "purpose": "Section and panel headings."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Prose, helper text, table cells."
-      },
-      "label": {
-        "displayName": "Label",
-        "purpose": "Eyebrows, metrics, compact labels."
-      },
-      "mono": {
-        "displayName": "Mono",
-        "purpose": "Exact IDs and technical values."
-      }
+      "display-lg": { "displayName": "Display Large", "purpose": "Dashboard hero numbers" },
+      "headline-md": { "displayName": "Headline Medium", "purpose": "Page and section titles" },
+      "body-sm": { "displayName": "Body Small", "purpose": "Prose and content" },
+      "label-xs": { "displayName": "Label XS", "purpose": "Eyebrows, metrics, compact labels" },
+      "mono-data": { "displayName": "Mono Data", "purpose": "Timestamps, IDs, technical values" }
     },
-    "shadows": [
-      {
-        "name": "surface-low",
-        "value": "0 1px 2px rgba(15, 23, 42, 0.05)",
-        "purpose": "Default panels and controls."
-      },
-      {
-        "name": "interactive-medium",
-        "value": "0 4px 6px rgba(15, 23, 42, 0.10)",
-        "purpose": "Clickable card hover state."
-      },
-      {
-        "name": "mobile-dock",
-        "value": "0 -8px 24px rgba(15, 23, 32, 0.08)",
-        "purpose": "Bottom navigation."
-      }
-    ],
+    "shadows": [],
     "motion": [
-      {
-        "name": "ease-standard",
-        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "Buttons, card hover, navigation state."
-      }
+      { "name": "ease-standard", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Buttons, card hover, navigation state" }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
       { "name": "md", "value": "768px" },
       { "name": "lg", "value": "1024px" },
       { "name": "xl", "value": "1280px" }
@@ -192,116 +51,101 @@
     {
       "name": "Primary Button",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Main action button for the page's next step.",
-      "html": "<button class=\"ds-btn-primary\">处理下一条事件</button>",
-      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border:0;border-radius:6px;background:#020617;color:#ffffff;font:600 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;transition:background-color .18s cubic-bezier(0.22,1,0.36,1),transform .18s cubic-bezier(0.22,1,0.36,1),box-shadow .18s cubic-bezier(0.22,1,0.36,1);box-shadow:0 1px 2px rgba(15,23,42,.05)}.ds-btn-primary:hover{background:#0f1720}.ds-btn-primary:focus-visible{outline:0;box-shadow:0 0 0 2px rgba(34,211,238,.18),0 0 0 4px rgba(34,211,238,.28),0 1px 2px rgba(15,23,42,.05)}"
+      "description": "High-contrast primary action using Neon Indigo",
+      "html": "<button class=\"bg-primary text-on-primary py-sm px-md rounded-lg font-label-xs font-bold\">Accept Task</button>"
     },
     {
-      "name": "Light Button",
+      "name": "Ghost Button",
       "kind": "button",
-      "refersTo": "button-light",
-      "description": "Secondary action for return, browse, and non-primary navigation.",
-      "html": "<button class=\"ds-btn-light\">返回工作台</button>",
-      "css": ".ds-btn-light{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border:1px solid #e2e8f0;border-radius:6px;background:#ffffff;color:#475569;font:600 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;transition:border-color .18s cubic-bezier(0.22,1,0.36,1),background-color .18s cubic-bezier(0.22,1,0.36,1),color .18s cubic-bezier(0.22,1,0.36,1)}.ds-btn-light:hover{background:#f8fafc;border-color:#cbd5e1}.ds-btn-light:focus-visible{outline:0;box-shadow:0 0 0 2px rgba(34,211,238,.18),0 0 0 4px rgba(34,211,238,.28)}"
-    },
-    {
-      "name": "Danger Button",
-      "kind": "button",
-      "refersTo": "button-danger",
-      "description": "Destructive and negative review actions.",
-      "html": "<button class=\"ds-btn-danger\">驳回事件</button>",
-      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border:0;border-radius:6px;background:#9f1239;color:#ffffff;font:600 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;transition:background-color .18s cubic-bezier(0.22,1,0.36,1),transform .18s cubic-bezier(0.22,1,0.36,1)}.ds-btn-danger:hover{background:#be123c}.ds-btn-danger:focus-visible{outline:0;box-shadow:0 0 0 2px rgba(244,63,94,.18),0 0 0 4px rgba(244,63,94,.28)}"
+      "description": "Secondary action with border, no fill",
+      "html": "<button class=\"border border-outline-variant/30 bg-surface-container-high text-on-surface py-sm px-md rounded-lg\">Cancel</button>"
     },
     {
       "name": "Status Chip",
       "kind": "chip",
-      "refersTo": "status-chip",
-      "description": "Semantic state chip with a small marker dot.",
-      "html": "<span class=\"ds-chip ds-chip-pending\"><span class=\"ds-chip-dot\"></span>待复核</span>",
-      "css": ".ds-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #e2e8f0;border-radius:9999px;background:#f8fafc;color:#475569;font:600 11px/1.2 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:.16em}.ds-chip-dot{width:8px;height:8px;border-radius:9999px;background:currentColor}.ds-chip-pending{background:#fffbeb;color:#92400e;border-color:#fed7aa}.ds-chip-success{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}.ds-chip-danger{background:#fff1f2;color:#9f1239;border-color:#fecdd3}"
+      "description": "Pill-shaped status indicator",
+      "html": "<span class=\"px-sm py-xs rounded-full text-label-xs font-label-xs bg-secondary-container text-on-secondary-container\">CRITICAL</span>"
     },
     {
-      "name": "Standard Card",
-      "kind": "card",
-      "refersTo": "card-standard",
-      "description": "General work panel for metrics, filters, setup, and health blocks.",
-      "html": "<section class=\"ds-card\"><h3>系统健康</h3><p>下一步：先处理阻断项。</p></section>",
-      "css": ".ds-card{background:#ffffff;color:#020617;border:1px solid #e2e8f0;border-radius:6px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.05)}.ds-card h3{margin:0 0 4px;font:600 16px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}.ds-card p{margin:0;color:#475569;font:400 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif}"
+      "name": "Glass Panel",
+      "kind": "panel",
+      "description": "Translucent overlay with backdrop blur",
+      "html": "<div class=\"glass-panel p-md rounded-xl border border-white/5\">Content</div>",
+      "css": ".glass-panel{background:rgba(46,46,46,.8);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.05)}"
     },
     {
-      "name": "Text Input",
+      "name": "Data Table",
+      "kind": "table",
+      "description": "Borderless with tonal row hover"
+    },
+    {
+      "name": "Input Field",
       "kind": "input",
-      "refersTo": "input-standard",
-      "description": "Compact field for filters and settings.",
-      "html": "<input class=\"ds-input\" placeholder=\"device_id\" />",
-      "css": ".ds-input{width:100%;height:38px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#ffffff;color:#020617;font:400 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;transition:border-color .18s cubic-bezier(0.22,1,0.36,1),box-shadow .18s cubic-bezier(0.22,1,0.36,1)}.ds-input::placeholder{color:#64748b}.ds-input:focus-visible{outline:0;border-color:#22d3ee;box-shadow:0 0 0 2px rgba(34,211,238,.16),0 0 0 4px rgba(34,211,238,.22)}"
+      "description": "Dark background, indigo focus glow",
+      "html": "<input class=\"bg-background border border-outline-variant text-on-surface rounded-lg px-md py-sm focus:border-primary focus:ring-1 focus:ring-primary\"/>"
     },
     {
-      "name": "Desktop Navigation",
+      "name": "Sidebar Navigation",
       "kind": "nav",
-      "refersTo": "button-light",
-      "description": "Fixed dark left rail with a clear active state.",
-      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\">工作台</a><a class=\"ds-nav-item\" href=\"#\">复核</a></nav>",
-      "css": ".ds-nav{width:18rem;background:#0f1720;color:#ffffff;padding:16px}.ds-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;color:#cbd5e1;font:600 14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;transition:background-color .18s cubic-bezier(0.22,1,0.36,1),color .18s cubic-bezier(0.22,1,0.36,1)}.ds-nav-item:hover{background:rgba(255,255,255,.06);color:#ffffff}.ds-nav-item.is-active{background:#ffffff;color:#020617}"
+      "description": "Fixed dark sidebar with indigo active state",
+      "html": "<aside class=\"bg-surface-container-lowest border-r border-outline-variant/10 w-64\"><nav>...</nav></aside>"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "description": "Fixed bottom bar for mobile, 4 tabs",
+      "html": "<nav class=\"fixed bottom-0 bg-surface-container-high rounded-t-xl\"><button>...</button></nav>"
     }
   ],
   "narrative": {
-    "northStar": "The Local Control Room",
-    "overview": "LaneOps should feel like a calm, reliable, professional control surface installed on a local machine. It is not a marketing object and not a visual spectacle. The interface earns trust by making state, evidence, and next actions easy to scan under real operating conditions.\n\nThe visual system is intentionally quiet: slate-tinted backgrounds, white work surfaces, a dark shell for navigation, and a single cyan accent for orientation and focus. The result should feel stable under repeated use, not attention-seeking on first glance. Density is medium-high, because the product is a working tool, not a brochure.\n\nThis system explicitly rejects PRODUCT.md's anti-references: \"一次性 demo 页面\", \"泛后台 CRUD 模板\", \"营销页式大 hero\", and \"花哨科技大屏\". If a screen starts to feel like a sales page or a decorative command center, it has drifted away from the product.",
+    "northStar": "High-Performance Monitoring System",
+    "overview": "This design system is engineered for power users who require absolute precision and clarity in high-density data environments. It adopts a Minimalist-Futuristic aesthetic, prioritizing speed of thought and action over decorative elements. The visual language balances Dark-Mode-First depth with high-contrast functional elements. By utilizing glassmorphism for utility layers and tight, purposeful typography, the interface recedes to let the data lead, only surfacing with high-intensity color when human intervention is required.",
     "keyCharacteristics": [
-      "Calm operational shell with clear hierarchy and stable headers.",
-      "Evidence and state take priority over decoration.",
-      "White panels sit on softly tinted app backgrounds.",
-      "Cyan is an orientation accent, not a theme.",
-      "Empty, error, loading, and success states always suggest a next action."
+      "Dark-mode-first with deep gray foundation to minimize eye strain",
+      "Neon Indigo primary for active states and system-healthy notifications",
+      "Safety Orange secondary reserved exclusively for alerts and warnings",
+      "Glassmorphism for modals and overlays (80% opacity, 20px blur)",
+      "Inter for UI, Space Grotesk for technical data",
+      "4px baseline grid, tonal layering for elevation"
     ],
     "rules": [
       {
-        "name": "The One Accent Rule",
-        "body": "Cyan is the only brand accent. Never introduce a second decorative color family.",
+        "name": "The Alert Color Rule",
+        "body": "Safety Orange is reserved exclusively for alerts, warnings, and critical data points. Its use must be sparse to maintain psychological impact.",
         "section": "colors"
       },
       {
-        "name": "The Semantic Color Rule",
-        "body": "Amber, emerald, and rose are state colors only. They must not be used for ornament.",
-        "section": "colors"
-      },
-      {
-        "name": "The No Brochure Type Rule",
-        "body": "Never scale type with viewport width and never use oversized marketing typography inside small panels.",
+        "name": "The Mono Data Rule",
+        "body": "Timestamps, IDs, IP addresses, and technical values must use Space Grotesk mono font.",
         "section": "typography"
       },
       {
-        "name": "The Identifier Rule",
-        "body": "Exact IDs, timestamps, and other technical values should use mono styling so they remain visually distinct.",
-        "section": "typography"
-      },
-      {
-        "name": "The Border-First Rule",
-        "body": "Use a 1px slate border before any shadow. If a panel needs a heavy shadow to read, the composition is too decorative.",
+        "name": "The Tonal Elevation Rule",
+        "body": "Depth is achieved through tonal layering and glassmorphism, not heavy shadows. Use 1px inner borders (white at 5% opacity) as catch-lights.",
         "section": "elevation"
+      },
+      {
+        "name": "The 4px Grid Rule",
+        "body": "All spacing must align to the 4px baseline grid.",
+        "section": "spacing"
       }
     ],
     "dos": [
-      "Do keep this as a product UI, not a brand page.",
-      "Do make the header, description, and primary action legible on every page.",
-      "Do show a next step for loading, empty, error, success, and partial data states.",
-      "Do keep cyan rare and meaningful.",
-      "Do use semantic colors only for state.",
-      "Do keep cards at 6px radius with 1px slate borders and low shadows.",
-      "Do use mono styling for event IDs and device IDs.",
-      "Do keep mobile event browsing card-based and preserve the bottom navigation."
+      "Do use deep gray backgrounds to minimize eye strain during long-duration monitoring",
+      "Do use Neon Indigo for primary actions and active states",
+      "Do use Safety Orange only for alerts and critical data",
+      "Do use Space Grotesk for numerical values to ensure digit alignment",
+      "Do use glassmorphism (80% opacity, 20px blur) for modals and overlays",
+      "Do keep icons monochromatic with 1.5px stroke weight",
+      "Do use tonal layering instead of shadows for elevation"
     ],
     "donts": [
-      "Don't make it look like a \"一次性 demo 页面\".",
-      "Don't make it look like a \"泛后台 CRUD 模板\".",
-      "Don't use a \"营销页式大 hero\" for ordinary app pages.",
-      "Don't make a \"花哨科技大屏\" with decorative glow, neon, fake telemetry, or theatrical gradients.",
-      "Don't use gradient text, glassmorphism, colored side-stripe borders, or repeated identical marketing card grids.",
-      "Don't use large decorative numbers without a clear operational next action.",
-      "Don't imply automatic punishment, law-enforcement integration, cloud multi-tenancy, or complex account permissions unless implemented.",
-      "Don't communicate critical state by color alone."
+      "Don't use Safety Orange for decorative purposes",
+      "Don't use heavy box shadows for elevation",
+      "Don't mix other font families beyond Inter and Space Grotesk",
+      "Don't use circle-framed icons — use rounded squares instead",
+      "Don't use gradient text or colored side-stripe borders as decoration",
+      "Don't communicate critical state by color alone"
     ]
   }
 }
