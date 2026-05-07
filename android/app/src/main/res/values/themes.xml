@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.EmergencyLane" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.EmergencyLane" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorBackground">#13131b</item>
+        <item name="android:textColorPrimary">#e4e1ed</item>
+        <item name="android:textColorSecondary">#c7c4d7</item>
+        <item name="android:colorPrimary">#c2c1ff</item>
+        <item name="android:colorPrimaryDark">#5e5ce6</item>
+        <item name="android:colorAccent">#ffb5a0</item>
+        <item name="android:navigationBarColor">#2a2932</item>
+        <item name="android:statusBarColor">#13131b</item>
+        <item name="android:windowBackground">#13131b</item>
+        <item name="android:colorControlNormal">#918fa0</item>
+        <item name="android:colorControlActivated">#c2c1ff</item>
+    </style>
 </resources>
