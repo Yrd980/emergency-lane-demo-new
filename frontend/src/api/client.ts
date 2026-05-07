@@ -1,4 +1,5 @@
 import type {
+  BulkReviewResponse,
   DeviceDetail,
   DeviceInfo,
   EventDetail,
@@ -46,6 +47,12 @@ export const api = {
     request(`/events/${id}/review`, {
       method: 'PATCH',
       body: JSON.stringify({ review_status, operator_note, operator_id }),
+    }),
+
+  bulkReviewEvents: (event_ids: string[], review_status: string, operator_note: string, operator_id: string) =>
+    request<BulkReviewResponse>('/events/review/bulk', {
+      method: 'PATCH',
+      body: JSON.stringify({ event_ids, review_status, operator_note, operator_id }),
     }),
 
   getDevices: () => request<DeviceInfo[]>('/devices'),

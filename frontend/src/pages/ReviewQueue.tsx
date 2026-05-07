@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck, RefreshCw } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { CheckCircle2, ClipboardCheck, RefreshCw, XCircle } from 'lucide-react';
+import { useRole } from '../access/useRole';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
@@ -9,9 +11,57 @@ import type { OverviewStats } from '../types';
 
 export default function ReviewQueue() {
   const navigate = useNavigate();
+  const { role } = useRole();
   const { data, loading, error, filters, setFilters, refetch } = useEvents({ status: 'pending', limit: '50', offset: '0' });
   const overview = usePolling<OverviewStats>(() => api.getStats(), 5000);
   const firstEvent = data?.items[0];
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<'confirmed' | 'rejected' | null>(null);
+  const [submittingBulk, setSubmittingBulk] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const pendingIds = useMemo(() => data?.items.filter((item) => item.review_status === 'pending').map((item) => item.event_id) ?? [], [data]);
+
+  const toggleSelect = (eventId: string) => {
+    setBulkMessage(null);
+    setSelectedIds((current) => current.includes(eventId) ? current.filter((id) => id !== eventId) : [...current, eventId]);
+  };
+
+  const toggleSelectAll = () => {
+    setBulkMessage(null);
+    const selected = new Set(selectedIds);
+    const allSelected = pendingIds.length > 0 && pendingIds.every((id) => selected.has(id));
+    setSelectedIds(allSelected ? selectedIds.filter((id) => !pendingIds.includes(id)) : Array.from(new Set([...selectedIds, ...pendingIds])));
+  };
+
+  const submitBulkReview = async (reviewStatus: 'confirmed' | 'rejected') => {
+    if (selectedIds.length === 0) {
+      setBulkMessage('先选择待复核事件，再执行批量审核。');
+      return;
+    }
+    if (bulkStatus !== reviewStatus) {
+      setBulkStatus(reviewStatus);
+      setBulkMessage(`将批量${reviewStatus === 'confirmed' ? '确认' : '驳回'} ${selectedIds.length} 条事件，再次点击执行。`);
+      return;
+    }
+    setSubmittingBulk(true);
+    try {
+      const result = await api.bulkReviewEvents(
+        selectedIds,
+        reviewStatus,
+        reviewStatus === 'confirmed' ? '批量确认占用' : '批量驳回事件',
+        role === 'reviewer' ? '本地复核员' : '本地复核管理',
+      );
+      setBulkMessage(`已处理 ${result.updated_count} 条事件。`);
+      setSelectedIds([]);
+      setBulkStatus(null);
+      await refetch();
+      await overview.refetch();
+    } catch (e: unknown) {
+      setBulkMessage((e as Error).message);
+    } finally {
+      setSubmittingBulk(false);
+    }
+  };
 
   return (
     <div>
@@ -31,7 +81,7 @@ export default function ReviewQueue() {
       <div className="mb-5">
         <ActionPanel
           title={firstEvent ? '下一步：打开队首事件' : '当前没有待复核事件'}
-          description={firstEvent ? `${firstEvent.review_priority_reason ?? '按时间顺序处理'}，完成后系统会引导到下一条。` : '可以等待新事件进入，或查看历史事件确认系统运行情况。'}
+          description={firstEvent ? `队列已按优先级排序：${firstEvent.review_priority_reason ?? '按时间顺序处理'}，详情页的下一条只会指向剩余待复核事件。` : '可以等待新事件进入，或查看历史事件确认系统运行情况。'}
           tone={firstEvent ? 'warning' : 'success'}
           action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}`}>开始复核</PrimaryButton> : <PrimaryButton href="/">返回工作台</PrimaryButton>}
         />
@@ -67,16 +117,46 @@ export default function ReviewQueue() {
         />
       )}
       {data && data.items.length > 0 && (
-        <EventTable
-          items={data.items}
-          total={data.total}
-          offset={parseInt(filters.offset || '0')}
-          limit={parseInt(filters.limit || '50')}
-          onPage={(newOffset) => {
-            setFilters({ ...filters, offset: String(newOffset) });
-            navigate('/review');
-          }}
-        />
+        <>
+          <div className="mb-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-950">批量审核</div>
+                <div className="mt-1 text-xs text-slate-500">已选择 {selectedIds.length} 条待复核事件，只处理当前队列中的未审核项。</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  disabled={submittingBulk}
+                  onClick={toggleSelectAll}
+                >
+                  选择当前页
+                </button>
+                <PrimaryButton icon={CheckCircle2} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('confirmed')}>
+                  {bulkStatus === 'confirmed' ? '再次点击确认' : '批量确认'}
+                </PrimaryButton>
+                <PrimaryButton tone="danger" icon={XCircle} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('rejected')}>
+                  {bulkStatus === 'rejected' ? '再次点击驳回' : '批量驳回'}
+                </PrimaryButton>
+              </div>
+            </div>
+            {bulkMessage && <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">{bulkMessage}</div>}
+          </div>
+          <EventTable
+            items={data.items}
+            total={data.total}
+            offset={parseInt(filters.offset || '0')}
+            limit={parseInt(filters.limit || '50')}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            onPage={(newOffset) => {
+              setSelectedIds([]);
+              setFilters({ ...filters, offset: String(newOffset) });
+              navigate('/review');
+            }}
+          />
+        </>
       )}
     </div>
   );

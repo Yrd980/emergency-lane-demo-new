@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Query, HTTPException
-from app.models.event import EventCreate, ReviewUpdate
+from app.models.event import BulkReviewUpdate, EventCreate, ReviewUpdate
 from app.services import event_service
 
 router = APIRouter(prefix="/api/events", tags=["events"])
@@ -48,3 +48,9 @@ def update_review(event_id: str, body: ReviewUpdate):
     if not result:
         raise HTTPException(status_code=404, detail="Event not found")
     return result
+
+@router.patch("/review/bulk")
+def bulk_update_review(body: BulkReviewUpdate):
+    if body.review_status not in ("confirmed", "rejected"):
+        raise HTTPException(status_code=422, detail="review_status must be 'confirmed' or 'rejected'")
+    return event_service.bulk_update_review(body.event_ids, body.review_status, body.operator_note, body.operator_id)

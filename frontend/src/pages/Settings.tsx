@@ -1,5 +1,6 @@
 import { RefreshCw, Save, Shield, Trash2, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useRole } from '../access/useRole';
 import { api } from '../api/client';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import { useToast } from '../hooks/useToast';
@@ -7,6 +8,7 @@ import type { RuntimeSettingsUpdate } from '../types';
 import { formatDateTime } from '../utils/format';
 
 export default function Settings() {
+  const { role } = useRole();
   const { showToast } = useToast();
   const [settings, setSettings] = useState<RuntimeSettingsUpdate | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
@@ -82,6 +84,7 @@ export default function Settings() {
     );
   }
   if (!settings) return null;
+  const editable = role === 'maintainer';
 
   return (
     <div className="space-y-5">
@@ -89,8 +92,25 @@ export default function Settings() {
         eyebrow="SETTINGS"
         title="运行设置"
         description="先把长期使用时最容易影响信任的配置显性化：复核方式、在线窗口、证据保留和设备访问。"
-        action={<PrimaryButton icon={Save} onClick={save} disabled={saving}>{saving ? '正在保存' : '保存设置'}</PrimaryButton>}
+        action={
+          editable ? (
+            <PrimaryButton icon={Save} onClick={save} disabled={saving}>
+              {saving ? '正在保存' : '保存设置'}
+            </PrimaryButton>
+          ) : (
+            <PrimaryButton href="/health">查看系统健康</PrimaryButton>
+          )
+        }
       />
+
+      {!editable && (
+        <ActionPanel
+          tone="warning"
+          title="当前身份只能查看设置"
+          description="只有管理员可以修改运行参数。当前身份适合先看健康和设备状态。"
+          action={<PrimaryButton href="/health">转到系统健康</PrimaryButton>}
+        />
+      )}
 
       <ActionPanel
         tone={error ? 'danger' : 'success'}
@@ -104,7 +124,8 @@ export default function Settings() {
           <select
             className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             value={settings.review_mode}
-            onChange={(e) => update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
+            onChange={(e) => editable && update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
+            disabled={!editable}
           >
             <option value="manual">人工复核优先</option>
             <option value="strict">证据完整才允许确认</option>
@@ -114,7 +135,8 @@ export default function Settings() {
               className="mt-1"
               type="checkbox"
               checked={settings.require_complete_evidence}
-              onChange={(e) => update('require_complete_evidence', e.target.checked)}
+              onChange={(e) => editable && update('require_complete_evidence', e.target.checked)}
+              disabled={!editable}
             />
             <span>确认事件前要求 before / peak / after 证据完整</span>
           </label>
@@ -124,7 +146,8 @@ export default function Settings() {
             value={settings.online_window_seconds}
             min={10}
             max={3600}
-            onChange={(value) => update('online_window_seconds', value)}
+            onChange={(value) => editable && update('online_window_seconds', value)}
+            disabled={!editable}
           />
         </SettingCard>
         <SettingCard icon={Trash2} title="证据保留" description="长期运行时需要控制证据目录增长。">
@@ -132,14 +155,16 @@ export default function Settings() {
             value={settings.evidence_retention_days}
             min={1}
             max={3650}
-            onChange={(value) => update('evidence_retention_days', value)}
+            onChange={(value) => editable && update('evidence_retention_days', value)}
+            disabled={!editable}
           />
         </SettingCard>
         <SettingCard icon={Shield} title="设备访问" description="当前局域网演示默认开放，产品化应接入设备 token。">
           <select
             className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             value={settings.device_access_mode}
-            onChange={(e) => update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
+            onChange={(e) => editable && update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
+            disabled={!editable}
           >
             <option value="open">局域网开放接入</option>
             <option value="token">要求设备 token（后续 Android 接入）</option>
@@ -161,7 +186,7 @@ function toEditableSettings(settings: { review_mode: RuntimeSettingsUpdate['revi
   };
 }
 
-function NumberInput({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (value: number) => void }) {
+function NumberInput({ value, min, max, onChange, disabled }: { value: number; min: number; max: number; onChange: (value: number) => void; disabled?: boolean }) {
   return (
     <input
       className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
@@ -169,6 +194,7 @@ function NumberInput({ value, min, max, onChange }: { value: number; min: number
       min={min}
       max={max}
       value={value}
+      disabled={disabled}
       onChange={(e) => onChange(Number(e.target.value))}
     />
   );

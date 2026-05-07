@@ -10,29 +10,50 @@ export default function EventTable({
   offset,
   limit,
   onPage,
+  selectedIds = [],
+  onToggleSelect,
+  onToggleSelectAll,
 }: {
   items: EventListItem[];
   total: number;
   offset: number;
   limit: number;
   onPage: (offset: number) => void;
+  selectedIds?: string[];
+  onToggleSelect?: (eventId: string) => void;
+  onToggleSelectAll?: () => void;
 }) {
   const navigate = useNavigate();
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
+  const selectableItems = items.filter((evt) => evt.review_status === 'pending');
+  const selectedSet = new Set(selectedIds);
+  const allSelected = selectableItems.length > 0 && selectableItems.every((evt) => selectedSet.has(evt.event_id));
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
         <span>共 {total} 条事件</span>
-        <span className="hidden sm:inline">下一步：打开事件详情完成证据复核</span>
+        <span className="hidden sm:inline">高优先级置顶，下一步：选择事件或打开详情复核</span>
       </div>
 
       <div className="hidden overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm lg:block">
         <table className="w-full">
           <thead>
             <tr className="border-b bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+              {onToggleSelect && (
+                <th className="w-10 p-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-400"
+                    checked={allSelected}
+                    onChange={onToggleSelectAll}
+                    aria-label="选择当前页待复核事件"
+                  />
+                </th>
+              )}
               <th className="p-3">证据</th>
+              <th className="p-3">优先级</th>
               <th className="p-3">事件</th>
               <th className="p-3">设备</th>
               <th className="p-3">停留</th>
@@ -44,6 +65,18 @@ export default function EventTable({
           <tbody>
             {items.map((evt) => (
               <tr key={evt.event_id} className="border-b text-sm last:border-b-0 hover:bg-cyan-50/30">
+                {onToggleSelect && (
+                  <td className="p-3 align-middle">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-400"
+                      checked={selectedSet.has(evt.event_id)}
+                      disabled={evt.review_status !== 'pending'}
+                      onChange={() => onToggleSelect(evt.event_id)}
+                      aria-label={`选择事件 ${evt.event_id}`}
+                    />
+                  </td>
+                )}
                 <td className="p-3">
                   {evt.thumbnail_url ? (
                     <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-14 w-24 rounded-md object-cover ring-1 ring-slate-200" />
@@ -54,10 +87,15 @@ export default function EventTable({
                   )}
                 </td>
                 <td className="p-3">
+                  <div className="space-y-1">
+                    <StatusBadge status={evt.risk_level ?? 'normal'} />
+                    <div className="max-w-28 text-xs leading-5 text-slate-500">{evt.review_priority_reason ?? '按时间顺序处理'}</div>
+                  </div>
+                </td>
+                <td className="p-3">
                   <button className="text-left" onClick={() => navigate(`/events/${evt.event_id}`)}>
                     <div className="font-mono text-xs font-semibold text-slate-950">{evt.event_id}</div>
                     <div className="mt-1 text-xs text-slate-500">{formatDateTime(evt.start_time)} · {evt.vehicle_class}</div>
-                    {evt.risk_level === 'high' && <div className="mt-2"><StatusBadge status="high" /></div>}
                   </button>
                 </td>
                 <td className="p-3 text-xs text-slate-600">{evt.device_id}</td>
@@ -80,11 +118,24 @@ export default function EventTable({
 
       <div className="space-y-3 lg:hidden">
         {items.map((evt) => (
-          <button
-            key={evt.event_id}
-            onClick={() => navigate(`/events/${evt.event_id}`)}
-            className="w-full rounded-md border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-cyan-200 hover:shadow-md"
-          >
+          <div key={evt.event_id} className="rounded-md border border-slate-200 bg-white p-3 shadow-sm transition hover:border-cyan-200 hover:shadow-md">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {onToggleSelect && (
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-cyan-700 focus:ring-cyan-400"
+                    checked={selectedSet.has(evt.event_id)}
+                    disabled={evt.review_status !== 'pending'}
+                    onChange={() => onToggleSelect(evt.event_id)}
+                    aria-label={`选择事件 ${evt.event_id}`}
+                  />
+                )}
+                <StatusBadge status={evt.risk_level ?? 'normal'} />
+              </div>
+              <StatusBadge status={evt.review_status} />
+            </div>
+            <button onClick={() => navigate(`/events/${evt.event_id}`)} className="w-full text-left">
             <div className="flex gap-3">
               {evt.thumbnail_url ? (
                 <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-md object-cover ring-1 ring-slate-200" />
@@ -95,10 +146,11 @@ export default function EventTable({
                 <div className="truncate font-mono text-xs font-semibold">{evt.event_id}</div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-slate-500"><Clock className="h-3.5 w-3.5" />{formatDateTime(evt.start_time)}</div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-slate-500"><Gauge className="h-3.5 w-3.5" />{formatPercent(evt.confidence)} · {evt.duration_seconds} 秒</div>
-                <div className="mt-2"><StatusBadge status={evt.review_status} /></div>
+                <div className="mt-2 text-xs leading-5 text-slate-500">{evt.review_priority_reason ?? '按时间顺序处理'}</div>
               </div>
             </div>
-          </button>
+            </button>
+          </div>
         ))}
       </div>
 

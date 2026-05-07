@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 class VehicleBox(BaseModel):
@@ -29,3 +29,6 @@ class ReviewUpdate(BaseModel):
     review_status: str
     operator_note: str = ""
     operator_id: str = "本地复核员"
+
+class BulkReviewUpdate(ReviewUpdate):
+    event_ids: list[str] = Field(default_factory=list, min_length=1)

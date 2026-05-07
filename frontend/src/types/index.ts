@@ -84,6 +84,12 @@ export interface EventListResponse {
   total: number;
 }
 
+export interface BulkReviewResponse {
+  requested_count: number;
+  updated_count: number;
+  missing_event_ids: string[];
+}
+
 export interface OverviewStats {
   total_events_today: number;
   pending_review_count: number;

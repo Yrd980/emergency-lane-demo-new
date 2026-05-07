@@ -1,4 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { RoleProvider } from './access/RoleProvider';
+import AccessGate from './components/AccessGate';
 import ProductShell from './components/ProductShell';
 import { ToastProvider } from './components/Toast';
 import Dashboard from './pages/Dashboard';
@@ -10,25 +12,28 @@ import Health from './pages/Health';
 import ReviewQueue from './pages/ReviewQueue';
 import Settings from './pages/Settings';
 import Setup from './pages/Setup';
+import { routeAccess } from './access/permissions';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <ProductShell>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/setup" element={<Setup />} />
-            <Route path="/review" element={<ReviewQueue />} />
-            <Route path="/events" element={<EventList />} />
-            <Route path="/events/:id" element={<EventDetail />} />
-            <Route path="/devices" element={<DeviceStatus />} />
-            <Route path="/devices/:id" element={<DeviceDetail />} />
-            <Route path="/health" element={<Health />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </ProductShell>
-      </ToastProvider>
+      <RoleProvider>
+        <ToastProvider>
+          <ProductShell>
+            <Routes>
+              <Route path="/" element={<AccessGate allowed={routeAccess.dashboard}><Dashboard /></AccessGate>} />
+              <Route path="/setup" element={<AccessGate allowed={routeAccess.setup}><Setup /></AccessGate>} />
+              <Route path="/review" element={<AccessGate allowed={routeAccess.review}><ReviewQueue /></AccessGate>} />
+              <Route path="/events" element={<AccessGate allowed={routeAccess.events}><EventList /></AccessGate>} />
+              <Route path="/events/:id" element={<AccessGate allowed={routeAccess.events}><EventDetail /></AccessGate>} />
+              <Route path="/devices" element={<AccessGate allowed={routeAccess.devices}><DeviceStatus /></AccessGate>} />
+              <Route path="/devices/:id" element={<AccessGate allowed={routeAccess.devices}><DeviceDetail /></AccessGate>} />
+              <Route path="/health" element={<AccessGate allowed={routeAccess.health}><Health /></AccessGate>} />
+              <Route path="/settings" element={<AccessGate allowed={routeAccess.settings}><Settings /></AccessGate>} />
+            </Routes>
+          </ProductShell>
+        </ToastProvider>
+      </RoleProvider>
     </BrowserRouter>
   );
 }

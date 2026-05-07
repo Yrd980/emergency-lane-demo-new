@@ -68,6 +68,35 @@ def test_list_events_filter_by_status(client):
     assert all(i["review_status"] == "pending" for i in items)
 
 
+def test_list_pending_events_prioritizes_high_risk(client):
+    normal = {
+        **EVENT_PAYLOAD,
+        "event_id": "evt_priority_normal",
+        "duration_seconds": 3,
+        "confidence": 0.6,
+        "start_time": "2026-05-05T10:00:00+08:00",
+        "end_time": "2026-05-05T10:00:03+08:00",
+    }
+    high = {
+        **EVENT_PAYLOAD,
+        "event_id": "evt_priority_high",
+        "duration_seconds": 12,
+        "confidence": 0.9,
+        "start_time": "2026-05-05T10:01:00+08:00",
+        "end_time": "2026-05-05T10:01:12+08:00",
+    }
+    client.post("/api/events", json=normal)
+    client.post("/api/events", json=high)
+
+    resp = client.get("/api/events?status=pending&limit=10")
+
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    ids = [item["event_id"] for item in items]
+    assert ids.index("evt_priority_high") < ids.index("evt_priority_normal")
+    assert next(item for item in items if item["event_id"] == "evt_priority_high")["risk_level"] == "high"
+
+
 def test_list_events_invalid_status_returns_422(client):
     resp = client.get("/api/events?status=maybe")
     assert resp.status_code == 422
@@ -105,6 +134,18 @@ def test_get_event_detail_without_gps_returns_null(client):
     resp = client.get("/api/events/evt_no_gps")
     assert resp.status_code == 200
     assert resp.json()["gps_location"] is None
+
+
+def test_event_detail_next_event_points_to_pending_queue(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_a"})
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_b", "track_id": "track_b"})
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_next_done", "track_id": "track_done"})
+    client.patch("/api/events/evt_next_done/review", json={"review_status": "confirmed"})
+
+    resp = client.get("/api/events/evt_next_a")
+
+    assert resp.status_code == 200
+    assert resp.json()["next_event_id"] == "evt_next_b"
 
 def test_event_not_found_returns_404(client):
     resp = client.get("/api/events/nonexistent")
@@ -151,6 +192,25 @@ def test_review_invalid_status_returns_422(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_inv"})
     resp = client.patch("/api/events/evt_inv/review", json={"review_status": "maybe"})
     assert resp.status_code == 422
+
+def test_bulk_review_updates_events_and_history(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_a"})
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_bulk_b", "track_id": "track_b"})
+
+    resp = client.patch("/api/events/review/bulk", json={
+        "event_ids": ["evt_bulk_a", "evt_bulk_b"],
+        "review_status": "rejected",
+        "operator_note": "批量排除测试事件",
+        "operator_id": "reviewer_bulk",
+    })
+
+    assert resp.status_code == 200
+    assert resp.json()["updated_count"] == 2
+    assert resp.json()["missing_event_ids"] == []
+    for event_id in ["evt_bulk_a", "evt_bulk_b"]:
+        detail = client.get(f"/api/events/{event_id}").json()
+        assert detail["review_status"] == "rejected"
+        assert detail["review_history"][0]["operator_id"] == "reviewer_bulk"
 
 def test_duplicate_upload_does_not_overwrite_review(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_keep"})

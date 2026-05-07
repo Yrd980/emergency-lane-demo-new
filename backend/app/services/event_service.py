@@ -9,6 +9,9 @@ def _now():
     tz = timezone(timedelta(hours=8))
     return datetime.now(tz).isoformat()
 
+def _priority_case(alias: str = "e"):
+    return f"CASE WHEN {alias}.review_status='pending' AND ({alias}.confidence >= 0.85 OR {alias}.duration_seconds >= 10) THEN 0 ELSE 1 END"
+
 def create_event(
     event_id: str, device_id: str, start_time: str, end_time: str,
     duration_seconds: float, roi_id: str, track_id: str, vehicle_class: str,
@@ -63,7 +66,7 @@ def list_events(
                     WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
                     LIMIT 1) AS thumbnail_file_path
             FROM events e {where}
-            ORDER BY e.created_at DESC LIMIT ? OFFSET ?""",
+            ORDER BY {_priority_case()}, e.created_at DESC LIMIT ? OFFSET ?""",
         params + [limit, offset],
     ).fetchall()
 
@@ -129,9 +132,11 @@ def get_event(event_id: str):
         "SELECT event_id FROM events WHERE created_at < ? ORDER BY created_at DESC LIMIT 1",
         (row["created_at"],),
     ).fetchone()
-    next_row = conn.execute(
-        "SELECT event_id FROM events WHERE created_at > ? ORDER BY created_at ASC LIMIT 1",
-        (row["created_at"],),
+    next_pending_row = conn.execute(
+        f"""SELECT event_id FROM events
+            WHERE review_status='pending' AND event_id != ?
+            ORDER BY {_priority_case('events')}, created_at DESC LIMIT 1""",
+        (event_id,),
     ).fetchone()
     risk_level = "high" if row["review_status"] == "pending" and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10) else "normal"
 
@@ -168,7 +173,7 @@ def get_event(event_id: str):
         "risk_level": risk_level,
         "review_priority_reason": "高置信度或长时间停留" if risk_level == "high" else "按时间顺序处理",
         "previous_event_id": prev_row["event_id"] if prev_row else None,
-        "next_event_id": next_row["event_id"] if next_row else None,
+        "next_event_id": next_pending_row["event_id"] if next_pending_row else None,
     }
 
 def update_review(event_id: str, review_status: str, operator_note: str, operator_id: str = "本地复核员"):
@@ -200,4 +205,26 @@ def update_review(event_id: str, review_status: str, operator_note: str, operato
         "operator_note": operator_note,
         "operator_id": operator_id,
         "reviewed_at": now,
+    }
+
+def bulk_update_review(event_ids: list[str], review_status: str, operator_note: str, operator_id: str = "本地复核员"):
+    seen = []
+    for event_id in event_ids:
+        if event_id and event_id not in seen:
+            seen.append(event_id)
+
+    results = []
+    missing_event_ids = []
+    for event_id in seen:
+        result = update_review(event_id, review_status, operator_note, operator_id)
+        if result:
+            results.append(result)
+        else:
+            missing_event_ids.append(event_id)
+
+    return {
+        "requested_count": len(seen),
+        "updated_count": len(results),
+        "missing_event_ids": missing_event_ids,
+        "items": results,
     }

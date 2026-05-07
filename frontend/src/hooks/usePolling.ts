@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export function usePolling<T>(
   fetcher: () => Promise<T>,
@@ -7,41 +7,41 @@ export function usePolling<T>(
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const fetcherRef = useRef(fetcher);
+
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
+
+  const tick = useCallback(async (cancelled?: () => boolean) => {
+    try {
+      const result = await fetcherRef.current();
+      if (!cancelled?.()) {
+        setData(result);
+        setError(null);
+      }
+    } catch (e: unknown) {
+      if (!cancelled?.()) setError((e as Error).message);
+    } finally {
+      if (!cancelled?.()) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const tick = async () => {
-      try {
-        const result = await fetcher();
-        if (!cancelled) {
-          setData(result);
-          setError(null);
-        }
-      } catch (e: unknown) {
-        if (!cancelled) setError((e as Error).message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    tick();
-    const id = setInterval(tick, intervalMs);
+    void tick(() => cancelled);
+    const id = setInterval(() => {
+      void tick(() => cancelled);
+    }, intervalMs);
     return () => {
       cancelled = true;
       clearInterval(id);
     };
-  }, [fetcher, intervalMs]);
+  }, [intervalMs, tick]);
 
   const refetch = async () => {
     setLoading(true);
-    try {
-      const result = await fetcher();
-      setData(result);
-      setError(null);
-    } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    await tick();
   };
 
   return { data, error, loading, refetch };
