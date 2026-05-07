@@ -24,20 +24,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`flex items-center gap-3 rounded-md border bg-white px-4 py-3 text-sm shadow-lg ${
-              item.tone === 'error' ? 'border-rose-200 text-rose-800' : 'border-slate-200 text-slate-800'
+            className={`flex items-center gap-3 rounded-xl border glass-panel px-4 py-3 text-sm ${
+              item.tone === 'error' ? 'border-[var(--danger-soft)]/40 text-[var(--danger)]' : 'border-[var(--line)]/20 text-[var(--text)]'
             }`}
           >
             {item.tone === 'success' ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />
             ) : (
-              <Info className="h-4 w-4 text-cyan-700" />
+              <Info className="h-4 w-4 text-[var(--brand)]" />
             )}
             <span className="flex-1">{item.message}</span>
             <button
               aria-label="关闭提示"
               onClick={() => setItems((prev) => prev.filter((entry) => entry.id !== item.id))}
-              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              className="rounded p-1 text-[var(--faint)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]"
             >
               <X className="h-3.5 w-3.5" />
             </button>

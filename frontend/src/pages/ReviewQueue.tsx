@@ -4,7 +4,7 @@ import { CheckCircle2, ClipboardCheck, RefreshCw, XCircle } from 'lucide-react';
 import { useRole } from '../access/useRole';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
-import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
+import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import { useEvents } from '../hooks/useEvents';
 import { usePolling } from '../hooks/usePolling';
 import type { OverviewStats } from '../types';
@@ -35,12 +35,12 @@ export default function ReviewQueue() {
 
   const submitBulkReview = async (reviewStatus: 'confirmed' | 'rejected') => {
     if (selectedIds.length === 0) {
-      setBulkMessage('先选择待复核事件，再执行批量审核。');
+      setBulkMessage('Select pending events first, then execute bulk review.');
       return;
     }
     if (bulkStatus !== reviewStatus) {
       setBulkStatus(reviewStatus);
-      setBulkMessage(`将批量${reviewStatus === 'confirmed' ? '确认' : '驳回'} ${selectedIds.length} 条事件，再次点击执行。`);
+      setBulkMessage(`Will bulk ${reviewStatus === 'confirmed' ? 'confirm' : 'reject'} ${selectedIds.length} events. Click again to execute.`);
       return;
     }
     setSubmittingBulk(true);
@@ -48,10 +48,10 @@ export default function ReviewQueue() {
       const result = await api.bulkReviewEvents(
         selectedIds,
         reviewStatus,
-        reviewStatus === 'confirmed' ? '批量确认占用' : '批量驳回事件',
-        role === 'reviewer' ? '本地复核员' : '本地复核管理',
+        reviewStatus === 'confirmed' ? 'Bulk confirm' : 'Bulk reject',
+        role === 'reviewer' ? 'Local Reviewer' : 'Review Manager',
       );
-      setBulkMessage(`已处理 ${result.updated_count} 条事件。`);
+      setBulkMessage(`Processed ${result.updated_count} events.`);
       setSelectedIds([]);
       setBulkStatus(null);
       await refetch();
@@ -67,81 +67,84 @@ export default function ReviewQueue() {
     <div>
       <PageHeader
         eyebrow="REVIEW"
-        title="复核工作台"
-        description="把待复核事件当成工作队列处理。先处理高优先级，再进入下一条，减少反复筛选。"
+        title="Review Workbench"
+        description="Process the pending review queue as a work queue. Handle high-priority first, then proceed to the next."
         action={
           firstEvent ? (
-            <PrimaryButton icon={ClipboardCheck} href={`/events/${firstEvent.event_id}`}>处理下一条</PrimaryButton>
+            <PrimaryButton icon={ClipboardCheck} href={`/events/${firstEvent.event_id}`}>Process Next</PrimaryButton>
           ) : (
-            <PrimaryButton href="/events">查看历史事件</PrimaryButton>
+            <PrimaryButton href="/events">View History</PrimaryButton>
           )
         }
       />
 
       <div className="mb-5">
         <ActionPanel
-          title={firstEvent ? '下一步：打开队首事件' : '当前没有待复核事件'}
-          description={firstEvent ? `队列已按优先级排序：${firstEvent.review_priority_reason ?? '按时间顺序处理'}，详情页的下一条只会指向剩余待复核事件。` : '可以等待新事件进入，或查看历史事件确认系统运行情况。'}
+          title={firstEvent ? 'Next: Open first queued event' : 'No pending review events'}
+          description={firstEvent ? `Queue sorted by priority: ${firstEvent.review_priority_reason ?? 'chronological'}, detail page only advances through pending items.` : 'Wait for new events or check history.'}
           tone={firstEvent ? 'warning' : 'success'}
-          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}`}>开始复核</PrimaryButton> : <PrimaryButton href="/">返回工作台</PrimaryButton>}
+          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}`}>Start Review</PrimaryButton> : <PrimaryButton href="/">Back to Workbench</PrimaryButton>}
         />
       </div>
 
       {overview.data && (
         <div className="mb-5 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-xs text-slate-500">待复核</div>
-            <div className="mt-1 text-2xl font-semibold text-amber-700">{overview.data.pending_review_count}</div>
-          </div>
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-xs text-slate-500">已确认</div>
-            <div className="mt-1 text-2xl font-semibold text-emerald-700">{overview.data.confirmed_count}</div>
-          </div>
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="text-xs text-slate-500">已驳回</div>
-            <div className="mt-1 text-2xl font-semibold text-red-700">{overview.data.rejected_count}</div>
-          </div>
+          <MetricTile label="Pending Review" value={overview.data.pending_review_count} tone="warning" />
+          <MetricTile label="Confirmed" value={overview.data.confirmed_count} tone="success" />
+          <MetricTile label="Rejected" value={overview.data.rejected_count} tone="danger" />
         </div>
       )}
 
       {error && (
-        <StateBlock tone="error" title="复核队列加载失败" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>重试</PrimaryButton>} />
+        <StateBlock tone="error" title="Review queue failed to load" description={error} action={<PrimaryButton icon={RefreshCw} onClick={refetch}>Retry</PrimaryButton>} />
       )}
-      {loading && !data && <StateBlock tone="loading" title="正在加载复核队列" description="按待复核状态拉取事件。" />}
+      {loading && !data && <StateBlock tone="loading" title="Loading review queue" description="Fetching pending events." />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock
           tone="success"
-          title="待复核队列已清空"
-          description="下一步：返回工作台查看设备健康，或等待 Android 端上传新事件。"
-          action={<PrimaryButton href="/">返回工作台</PrimaryButton>}
+          title="Review queue clear"
+          description="Return to workbench to check device health, or wait for new events from Android."
+          action={<PrimaryButton href="/">Back to Workbench</PrimaryButton>}
         />
       )}
       {data && data.items.length > 0 && (
         <>
-          <div className="mb-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
+          {/* Bulk Actions Bar */}
+          <SurfacePanel className="mb-3 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-sm font-semibold text-slate-950">批量审核</div>
-                <div className="mt-1 text-xs text-slate-500">已选择 {selectedIds.length} 条待复核事件，只处理当前队列中的未审核项。</div>
+                <div className="text-sm font-semibold text-[var(--text)]">Bulk Review</div>
+                <div className="mt-1 text-xs text-[var(--muted)]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)]/10 px-2 py-0.5 text-[var(--brand)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-soft)]" />
+                    {selectedIds.length} selected
+                  </span>
+                  {' '}pending items from current queue.
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] px-3 py-2 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-glow)] disabled:opacity-50 transition-all"
                   disabled={submittingBulk}
                   onClick={toggleSelectAll}
                 >
-                  选择当前页
+                  Select Page
                 </button>
                 <PrimaryButton icon={CheckCircle2} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('confirmed')}>
-                  {bulkStatus === 'confirmed' ? '再次点击确认' : '批量确认'}
+                  {bulkStatus === 'confirmed' ? 'Click to Confirm' : 'Bulk Confirm'}
                 </PrimaryButton>
                 <PrimaryButton tone="danger" icon={XCircle} disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('rejected')}>
-                  {bulkStatus === 'rejected' ? '再次点击驳回' : '批量驳回'}
+                  {bulkStatus === 'rejected' ? 'Click to Reject' : 'Bulk Reject'}
                 </PrimaryButton>
               </div>
             </div>
-            {bulkMessage && <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">{bulkMessage}</div>}
-          </div>
+            {bulkMessage && (
+              <div className="mt-3 rounded-lg bg-[var(--surface)] px-3 py-2 text-sm text-[var(--muted)] border border-[var(--line)]/10">
+                {bulkMessage}
+              </div>
+            )}
+          </SurfacePanel>
+
           <EventTable
             items={data.items}
             total={data.total}

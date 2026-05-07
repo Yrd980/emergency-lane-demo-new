@@ -1,6 +1,6 @@
 import { CheckCircle2, Copy, MonitorSmartphone, Router, Server, TestTube2 } from 'lucide-react';
 import { api } from '../api/client';
-import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
+import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import StatusBadge from '../components/StatusBadge';
 import { useToast } from '../hooks/useToast';
 import { usePolling } from '../hooks/usePolling';
@@ -34,16 +34,27 @@ export default function Setup() {
       />
 
       <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <ActionPanel
-          title="Android 后端地址"
-          description={backendUrl}
-          action={<PrimaryButton icon={Copy} onClick={copy}>复制地址</PrimaryButton>}
-        />
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+        <SurfacePanel className="p-4">
+          <div className="mb-2">
+            <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">Android 后端地址</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-[var(--line)]/20 bg-[var(--surface-base)] p-3 font-mono">
+            <span className="text-[var(--faint)] text-sm">$</span>
+            <code className="flex-1 text-sm text-[var(--brand)]">{backendUrl}</code>
+            <button
+              onClick={copy}
+              className="flex items-center gap-1.5 rounded-md bg-[var(--brand)]/10 px-2.5 py-1.5 text-xs font-semibold text-[var(--brand)] transition-all hover:bg-[var(--brand)]/20 active:scale-95"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              复制
+            </button>
+          </div>
+        </SurfacePanel>
+        <SurfacePanel className="p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-slate-950">接入进度</div>
-              <p className="mt-1 text-sm text-slate-500">先把连通性做实，再看设备注册和事件进入。</p>
+              <div className="text-sm font-semibold text-[var(--text)]">接入进度</div>
+              <p className="mt-1 text-sm text-[var(--muted)]">先把连通性做实，再看设备注册和事件进入。</p>
             </div>
             <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端可用' : '等待后端'} />
           </div>
@@ -53,7 +64,7 @@ export default function Setup() {
             <ProgressChip label="事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
             <ProgressChip label="可生成测试事件" ok={(data?.devices.total ?? 0) > 0} />
           </div>
-        </div>
+        </SurfacePanel>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-4">
@@ -61,16 +72,30 @@ export default function Setup() {
           const Icon = step.icon;
           const done = data ? (index === 0 || (index >= 2 && data.devices.total > 0)) : false;
           return (
-            <div key={step.title} className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+            <SurfacePanel
+              key={step.title}
+              className={`p-4 transition-all hover:border-[var(--brand)]/20 ${done ? 'border-[var(--brand)]/20' : ''}`}
+            >
               <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
-                  <Icon className="h-5 w-5 text-slate-700" />
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                    done ? 'bg-[var(--success)]/10' : 'border border-[var(--line)]/10 bg-[var(--surface)]'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${done ? 'text-[var(--success)]' : 'text-[var(--faint)]'}`} />
                 </div>
-                {done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <span className="text-xs font-semibold text-slate-400">STEP {index + 1}</span>}
+                {done ? (
+                  <span className="flex items-center gap-1 rounded-full bg-[var(--success)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--success)]">
+                    <CheckCircle2 className="h-3 w-3" />
+                    DONE
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-semibold text-[var(--faint)]">STEP {index + 1}</span>
+                )}
               </div>
-              <h2 className="mt-4 font-semibold text-slate-950">{step.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{step.body}</p>
-            </div>
+              <h2 className={`mt-4 font-semibold ${done ? 'text-[var(--success)]' : 'text-[var(--text)]'}`}>{step.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{step.body}</p>
+            </SurfacePanel>
           );
         })}
       </section>
@@ -101,9 +126,15 @@ export default function Setup() {
 
 function ProgressChip({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-      <div className="mt-1 font-semibold text-slate-950">{ok ? '已就绪' : '未就绪'}</div>
+    <div
+      className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+        ok ? 'border-[var(--success)]/20 bg-[var(--success)]/5' : 'border-[var(--line)]/10 bg-[var(--surface)]'
+      }`}
+    >
+      <div className="text-[11px] uppercase tracking-wider text-[var(--muted)]">{label}</div>
+      <div className={`mt-1 font-semibold ${ok ? 'text-[var(--success)]' : 'text-[var(--text)]'}`}>
+        {ok ? '已就绪' : '未就绪'}
+      </div>
     </div>
   );
 }

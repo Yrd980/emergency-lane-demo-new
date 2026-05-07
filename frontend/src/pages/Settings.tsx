@@ -2,7 +2,8 @@ import { RefreshCw, Save, Shield, Trash2, Wifi } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRole } from '../access/useRole';
 import { api } from '../api/client';
-import { ActionPanel, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
+import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
+import { inputClassName } from '../components/styles';
 import { useToast } from '../hooks/useToast';
 import type { RuntimeSettingsUpdate } from '../types';
 import { formatDateTime } from '../utils/format';
@@ -122,7 +123,7 @@ export default function Settings() {
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <SettingCard icon={Shield} title="复核策略" description="所有疑似事件必须人工复核后才进入已确认。">
           <select
-            className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+            className={inputClassName('mt-3 w-full')}
             value={settings.review_mode}
             onChange={(e) => editable && update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
             disabled={!editable}
@@ -130,13 +131,13 @@ export default function Settings() {
             <option value="manual">人工复核优先</option>
             <option value="strict">证据完整才允许确认</option>
           </select>
-          <label className="mt-3 flex items-start gap-2 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+          <label className="mt-3 flex items-start gap-3 rounded-lg border border-[var(--line)]/10 bg-[var(--surface)] p-3 text-sm text-[var(--muted)] transition-all hover:border-[var(--brand)]/20">
             <input
-              className="mt-1"
               type="checkbox"
               checked={settings.require_complete_evidence}
               onChange={(e) => editable && update('require_complete_evidence', e.target.checked)}
               disabled={!editable}
+              className="mt-0.5 h-4 w-4 rounded border-[var(--line)] bg-[var(--canvas)] text-[var(--brand)] focus:ring-[var(--brand-soft)] focus:ring-offset-0"
             />
             <span>确认事件前要求 before / peak / after 证据完整</span>
           </label>
@@ -161,7 +162,7 @@ export default function Settings() {
         </SettingCard>
         <SettingCard icon={Shield} title="设备访问" description="当前局域网演示默认开放，产品化应接入设备 token。">
           <select
-            className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+            className={inputClassName('mt-3 w-full')}
             value={settings.device_access_mode}
             onChange={(e) => editable && update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
             disabled={!editable}
@@ -169,7 +170,7 @@ export default function Settings() {
             <option value="open">局域网开放接入</option>
             <option value="token">要求设备 token（后续 Android 接入）</option>
           </select>
-          <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">下一步：Android 上传携带 token 后再切换到强制校验。</div>
+          <div className="mt-3 rounded-lg border border-[var(--line)]/10 bg-[var(--surface)] p-3 text-sm text-[var(--faint)]">下一步：Android 上传携带 token 后再切换到强制校验。</div>
         </SettingCard>
       </div>
     </div>
@@ -189,7 +190,7 @@ function toEditableSettings(settings: { review_mode: RuntimeSettingsUpdate['revi
 function NumberInput({ value, min, max, onChange, disabled }: { value: number; min: number; max: number; onChange: (value: number) => void; disabled?: boolean }) {
   return (
     <input
-      className="mt-3 w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+      className={inputClassName('mt-3 w-full')}
       type="number"
       min={min}
       max={max}
@@ -202,17 +203,17 @@ function NumberInput({ value, min, max, onChange, disabled }: { value: number; m
 
 function SettingCard({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+    <SurfacePanel className="p-4 transition-all hover:border-[var(--brand)]/20 group">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
-          <Icon className="h-5 w-5 text-slate-700" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--line)]/10 bg-[var(--surface)]">
+          <Icon className="h-5 w-5 text-[var(--brand)]" />
         </div>
-        <div>
-          <div className="font-semibold text-slate-950">{title}</div>
-          <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+        <div className="flex-1">
+          <div className="font-semibold text-[var(--text)]">{title}</div>
+          <p className="mt-1 text-sm leading-6 text-[var(--muted)]">{description}</p>
         </div>
       </div>
       {children}
-    </div>
+    </SurfacePanel>
   );
 }

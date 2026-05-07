@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, CheckCircle2, MonitorSmartphone, RefreshCw, ShieldAlert } from 'lucide-react';
 import { api } from '../api/client';
 import EventTable from '../components/EventTable';
-import { ActionPanel, MetricTile, PageHeader, PrimaryButton, SkeletonGrid, StateBlock } from '../components/ProductPrimitives';
+import { ActionPanel, MetricTile, PageHeader, PrimaryButton, SkeletonGrid, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import StatusBadge from '../components/StatusBadge';
 import { usePolling } from '../hooks/usePolling';
 import { formatDateTime } from '../utils/format';
@@ -16,7 +16,7 @@ export default function Dashboard() {
   if (overview.loading || system.loading) {
     return (
       <>
-        <PageHeader eyebrow="OPERATIONS" title="正在同步本地系统状态" description="加载后会给出当前最重要的下一步行动。" />
+        <PageHeader eyebrow="OPERATIONS" title="Syncing system status" description="Loading the most critical next-step actions." />
         <SkeletonGrid count={4} />
       </>
     );
@@ -26,8 +26,8 @@ export default function Dashboard() {
     return (
       <StateBlock
         tone="error"
-        title="工作台暂时不可用"
-        description={overview.error || system.error || '请检查 FastAPI 后端是否已启动。'}
+        title="Workbench unavailable"
+        description={overview.error || system.error || 'Check that FastAPI backend is running.'}
         action={
           <PrimaryButton
             icon={RefreshCw}
@@ -36,7 +36,7 @@ export default function Dashboard() {
               system.refetch();
             }}
           >
-            重试检查
+            Retry
           </PrimaryButton>
         }
       />
@@ -51,91 +51,96 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-md border border-slate-200 bg-slate-950 text-white shadow-sm">
+      {/* Hero Section */}
+      <section className="overflow-hidden rounded-2xl border border-[var(--line)]/10 bg-[var(--surface-soft)]">
         <div className="grid gap-6 p-6 lg:grid-cols-[1.25fr_0.75fr] lg:p-8">
           <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-semibold text-slate-200">
-              <span className="h-2 w-2 rounded-full bg-cyan-400" />
-              本地工作闭环
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-soft)]/30 bg-[var(--brand-soft)]/10 px-3 py-1 text-xs font-medium text-[var(--brand)]">
+              <span className="status-dot-healthy" />
+              Local Operations Loop
             </div>
             <div className="max-w-2xl">
-              <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2.7rem]">应急车道检测工作台</h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                把接入、事件、复核和系统健康放在一个面板里，让现场人员先看到最重要的下一步。
+              <h1 className="text-3xl font-semibold text-[var(--text)] tracking-tight sm:text-4xl">
+                Emergency Lane Sentinel
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--muted)] sm:text-base">
+                Unified ingestion, events, review, and system health — surface the most important next action first.
               </p>
             </div>
-
             <div className="flex flex-wrap gap-2">
               {needsSetup ? (
-                <PrimaryButton href="/setup">开始接入设备</PrimaryButton>
+                <PrimaryButton href="/setup">Start Device Setup</PrimaryButton>
               ) : hasPending ? (
-                <PrimaryButton href="/review">处理下一条事件</PrimaryButton>
+                <PrimaryButton href="/review">Process Next Event</PrimaryButton>
               ) : (
-                <PrimaryButton href="/health">查看系统健康</PrimaryButton>
+                <PrimaryButton href="/health">View System Health</PrimaryButton>
               )}
               <PrimaryButton tone="light" href="/events">
-                查看事件
+                View Events
               </PrimaryButton>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <StatusPill label="系统状态" value={system.data.status === 'ready' ? '可运行' : '需处理'} />
-            <StatusPill label="待复核" value={String(overview.data.pending_review_count)} />
-            <StatusPill label="在线设备" value={`${system.data.devices.online}/${system.data.devices.total}`} />
-            <StatusPill label="最后事件" value={formatDateTime(system.data.events.latest_event_at)} />
+            <StatusPill label="System Status" value={system.data.status === 'ready' ? 'Ready' : 'Needs Attention'} />
+            <StatusPill label="Pending Review" value={String(overview.data.pending_review_count)} />
+            <StatusPill label="Online Devices" value={`${system.data.devices.online}/${system.data.devices.total}`} />
+            <StatusPill label="Last Event" value={formatDateTime(system.data.events.latest_event_at)} />
           </div>
         </div>
       </section>
 
+      {/* Priority Action */}
       {needsSetup ? (
         <ActionPanel
           tone="warning"
-          title="当前还没有设备接入"
-          description="先完成 Android 端后端地址配置和设备注册，系统才会进入长期运行状态。"
-          action={<PrimaryButton href="/setup">打开接入向导</PrimaryButton>}
+          title="No devices connected"
+          description="Configure the Android app with the backend address and register a device before the system can enter long-running mode."
+          action={<PrimaryButton href="/setup">Open Setup Guide</PrimaryButton>}
         />
       ) : topIssue ? (
         <ActionPanel
           tone={topIssue.severity === 'critical' ? 'danger' : 'warning'}
           title={topIssue.message}
           description={topIssue.next_action}
-          action={<PrimaryButton href={topIssue.code === 'pending_reviews' ? '/review' : '/health'}>处理</PrimaryButton>}
+          action={<PrimaryButton href={topIssue.code === 'pending_reviews' ? '/review' : '/health'}>Resolve</PrimaryButton>}
         />
       ) : (
         <ActionPanel
           tone="success"
-          title="系统已准备好"
-          description="设备在线、后端可用。下一步是等待事件进入，或查看历史事件。"
-          action={<PrimaryButton href="/events">查看事件</PrimaryButton>}
+          title="System ready"
+          description="Devices online, backend available. Waiting for events — or review existing ones."
+          action={<PrimaryButton href="/events">View Events</PrimaryButton>}
         />
       )}
 
+      {/* Stats Grid */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <MetricTile label="今日事件" value={overview.data.total_events_today} helper="按事件开始时间统计" />
-        <MetricTile label="待复核" value={overview.data.pending_review_count} tone={hasPending ? 'warning' : 'neutral'} helper="主工作队列" />
-        <MetricTile label="已确认" value={overview.data.confirmed_count} tone="success" helper="完成闭环" />
-        <MetricTile label="已驳回" value={overview.data.rejected_count} tone="danger" helper="人工排除" />
-        <MetricTile label="在线设备" value={`${system.data.devices.online}/${system.data.devices.total}`} helper="最近心跳窗口" />
+        <MetricTile label="Today's Events" value={overview.data.total_events_today} helper="By event start time" />
+        <MetricTile label="Pending Review" value={overview.data.pending_review_count} tone={hasPending ? 'warning' : 'neutral'} helper="Primary work queue" />
+        <MetricTile label="Confirmed" value={overview.data.confirmed_count} tone="success" helper="Closed loop" />
+        <MetricTile label="Rejected" value={overview.data.rejected_count} tone="danger" helper="Manual exclusion" />
+        <MetricTile label="Online Devices" value={`${system.data.devices.online}/${system.data.devices.total}`} helper="Recent heartbeat window" />
       </section>
 
+      {/* Events + Health */}
       <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+        <SurfacePanel className="p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold text-slate-950">最近事件</h2>
-              <p className="mt-1 text-sm text-slate-500">下一步：打开高优先级事件并完成复核。</p>
+              <h2 className="font-semibold text-[var(--text)]">Recent Events</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">Open high-priority events and complete review.</p>
             </div>
-            <Link className="text-sm font-semibold text-slate-700 hover:text-slate-950" to="/events">
-              全部事件
+            <Link className="text-sm font-semibold text-[var(--brand)] hover:text-[var(--brand-strong)] transition-colors" to="/events">
+              All Events
             </Link>
           </div>
 
           {overview.data.recent_events.length === 0 ? (
             <StateBlock
-              title="还没有事件进入"
-              description="完成接入后，可在 Android 端手动生成测试事件，验证上传和复核链路。"
-              action={<PrimaryButton href="/setup">查看接入步骤</PrimaryButton>}
+              title="No events yet"
+              description="After setup, generate test events from the Android device to verify the ingestion and review pipeline."
+              action={<PrimaryButton href="/setup">View Setup Steps</PrimaryButton>}
             />
           ) : (
             <EventTable
@@ -146,50 +151,51 @@ export default function Dashboard() {
               onPage={() => navigate('/events')}
             />
           )}
-        </div>
+        </SurfacePanel>
 
         <section className="space-y-4">
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+          <SurfacePanel className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-semibold text-slate-950">系统健康</h2>
-                <p className="mt-1 text-sm text-slate-500">下一步：先处理阻断项，再处理待办项。</p>
+                <h2 className="font-semibold text-[var(--text)]">System Health</h2>
+                <p className="mt-1 text-sm text-[var(--muted)]">Resolve blockers first, then work the queue.</p>
               </div>
-              <StatusBadge status={system.data.status === 'ready' ? 'online' : 'high'} label={system.data.status === 'ready' ? '可运行' : '需处理'} />
+              <StatusBadge status={system.data.status === 'ready' ? 'online' : 'high'} label={system.data.status === 'ready' ? 'Operational' : 'Needs Fix'} />
             </div>
             <div className="mt-4 space-y-3">
               {system.data.issues.length === 0 ? (
-                <div className="flex items-start gap-3 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
+                <div className="flex items-start gap-3 rounded-lg bg-[var(--brand-soft)]/10 p-3 text-sm text-[var(--brand)]">
                   <CheckCircle2 className="mt-0.5 h-4 w-4" />
-                  没有阻断项，继续等待事件或查看历史。
+                  No blockers. Continue monitoring or review history.
                 </div>
               ) : (
                 system.data.issues.map((issue) => (
-                  <div key={issue.code} className="flex gap-3 rounded-md bg-slate-50 p-3 text-sm">
-                    {issue.severity === 'critical' ? <ShieldAlert className="mt-0.5 h-4 w-4 text-rose-600" /> : <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />}
+                  <div key={issue.code} className="flex gap-3 rounded-lg bg-[var(--surface)] p-3 text-sm">
+                    {issue.severity === 'critical' ? <ShieldAlert className="mt-0.5 h-4 w-4 text-[var(--danger)]" /> : <AlertTriangle className="mt-0.5 h-4 w-4 text-[var(--warning)]" />}
                     <div>
-                      <div className="font-semibold text-slate-900">{issue.message}</div>
-                      <div className="mt-1 text-slate-600">{issue.next_action}</div>
+                      <div className="font-semibold text-[var(--text)]">{issue.message}</div>
+                      <div className="mt-1 text-[var(--muted)]">{issue.next_action}</div>
                     </div>
                   </div>
                 ))
               )}
             </div>
-          </div>
+          </SurfacePanel>
 
-          <div className="rounded-md border border-slate-200 bg-slate-950 p-4 text-white shadow-sm">
+          {/* Long-running Check Card */}
+          <div className="rounded-xl border border-[var(--line)]/10 bg-[var(--surface-base)] p-5">
             <div className="flex items-center gap-3">
-              <MonitorSmartphone className="h-5 w-5 text-cyan-300" />
+              <MonitorSmartphone className="h-5 w-5 text-[var(--brand)]" />
               <div>
-                <div className="font-semibold">长期运行检查</div>
-                <div className="mt-1 text-sm text-slate-300">最后事件：{formatDateTime(system.data.events.latest_event_at)}</div>
+                <div className="font-semibold text-[var(--text)]">Long-Running Status</div>
+                <div className="mt-1 text-sm text-[var(--muted)]">Latest event: {formatDateTime(system.data.events.latest_event_at)}</div>
               </div>
             </div>
             <button
-              className="mt-4 inline-flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--on-brand)] transition hover:bg-[var(--brand-strong)] active:scale-95"
               onClick={() => navigate('/health')}
             >
-              查看健康细节 <ArrowRight className="h-4 w-4" />
+              View Health Details <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </section>
@@ -200,9 +206,9 @@ export default function Dashboard() {
 
 function StatusPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{label}</div>
-      <div className="mt-2 text-lg font-semibold text-white">{value}</div>
+    <div className="rounded-xl border border-[var(--line)]/10 bg-[var(--surface)] p-4">
+      <div className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-wider">{label}</div>
+      <div className="mt-2 font-mono text-lg font-semibold text-[var(--text)]">{value}</div>
     </div>
   );
 }

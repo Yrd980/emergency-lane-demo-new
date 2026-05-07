@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, Send, XCircle } from 'lucide-react';
 import { PrimaryButton } from './ProductPrimitives';
+import { inputClassName } from './styles';
 import StatusBadge from './StatusBadge';
 
 const noteTemplates = [
@@ -38,28 +39,28 @@ export default function ReviewPanel({
   }
 
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-slate-950">人工复核</h3>
-          <p className="mt-1 text-xs text-slate-500">下一步：给出确认或驳回，并留下可追溯备注。</p>
+          <h3 className="font-semibold text-[var(--text)]">人工复核</h3>
+          <p className="mt-1 text-xs text-[var(--muted)]">下一步：给出确认或驳回，并留下可追溯备注。</p>
         </div>
         <StatusBadge status={reviewStatus} />
       </div>
 
       {isReviewed ? (
-        <div className="mt-4 rounded-md bg-slate-50 p-4 text-sm text-slate-700">
+        <div className="mt-4 rounded-lg bg-[var(--surface-soft)] p-4 text-sm text-[var(--muted)]">
           <div className="font-semibold">已完成复核</div>
           <div className="mt-2">{operatorNote || '未填写备注'}</div>
         </div>
       ) : (
         <div className="mt-4 space-y-4">
-          {submitError && <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{submitError}</div>}
+          {submitError && <div className="rounded-lg border border-[#f0b8b2] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">{submitError}</div>}
           <div className="flex flex-wrap gap-2">
             {noteTemplates.map((template) => (
               <button
                 key={template}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-xs text-[var(--muted)] hover:bg-[var(--brand-soft)]/20 hover:text-[var(--brand)] hover:border-[var(--brand-soft)]/30 transition-all"
                 onClick={() => setNote(template)}
               >
                 {template}
@@ -67,15 +68,15 @@ export default function ReviewPanel({
             ))}
           </div>
           <textarea
-            className="min-h-28 w-full rounded-md border border-slate-200 p-3 text-sm outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+            className={inputClassName('min-h-28 w-full p-3')}
             placeholder="填写复核备注，方便后续追溯"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
-          <label className="block text-xs font-medium text-slate-600">
+          <label className="block text-xs font-medium text-[var(--muted)]">
             操作者
             <input
-              className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              className={inputClassName('mt-2 w-full font-normal')}
               value={operatorId}
               onChange={(e) => setOperatorId(e.target.value)}
               placeholder="例如：reviewer_a"

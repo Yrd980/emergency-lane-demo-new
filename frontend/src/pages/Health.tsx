@@ -1,7 +1,6 @@
 import { Database, FolderArchive, RefreshCw, Server, Smartphone } from 'lucide-react';
 import { api } from '../api/client';
-import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
-import StatusBadge from '../components/StatusBadge';
+import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import { usePolling } from '../hooks/usePolling';
 import type { SystemStatus } from '../types';
 import { formatBytes, formatDateTime } from '../utils/format';
@@ -51,20 +50,36 @@ export default function Health() {
 function HealthCard({ icon: Icon, title, status, body, next }: { icon: React.ElementType; title: string; status: string; body: string; next: string }) {
   const ok = status === 'ok';
   return (
-    <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+    <SurfacePanel className="p-4 transition-all hover:border-[var(--brand)]/20 group">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
-            <Icon className="h-5 w-5 text-slate-700" />
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--line)]/10 bg-[var(--surface)]">
+            <Icon className="h-5 w-5 text-[var(--brand)]" />
           </div>
           <div>
-            <div className="font-semibold text-slate-950">{title}</div>
-            <div className="mt-1 text-sm text-slate-500">{body}</div>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[var(--text)]">{title}</span>
+              {ok ? (
+                <span className="inline-block h-2 w-2 rounded-full bg-[var(--success)] shadow-[0_0_6px_rgba(194,193,255,0.5)] status-dot-healthy" />
+              ) : (
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--danger)] shadow-[0_0_6px_rgba(255,180,171,0.5)] status-dot-critical" />
+              )}
+            </div>
+            <div className="mt-1 text-sm text-[var(--muted)]">{body}</div>
           </div>
         </div>
-        <StatusBadge status={ok ? 'online' : 'pending'} label={status} />
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
+            ok ? 'bg-[var(--success)]/10 text-[var(--success)]' : 'bg-[var(--danger)]/10 text-[var(--danger)]'
+          }`}
+        >
+          {status}
+        </span>
       </div>
-      <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600">下一步：{next}</div>
-    </div>
+      <div className="mt-4 rounded-lg border border-[var(--line)]/10 bg-[var(--surface)] p-3 text-sm text-[var(--faint)]">
+        <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">下一步：</span>
+        {next}
+      </div>
+    </SurfacePanel>
   );
 }

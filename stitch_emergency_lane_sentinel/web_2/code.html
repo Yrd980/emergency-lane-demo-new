@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aegis Traffic | Incident Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(46, 46, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .inner-glow {
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-container": "#fffbff",
+                      "background": "#13131b",
+                      "tertiary-fixed": "#ffdcc6",
+                      "secondary-fixed-dim": "#ffb5a0",
+                      "on-tertiary-container": "#ffefe7",
+                      "surface-container-high": "#2a2932",
+                      "on-tertiary-fixed-variant": "#723600",
+                      "on-primary-fixed-variant": "#332dbc",
+                      "surface-container": "#1f1f27",
+                      "outline-variant": "#464554",
+                      "error": "#ffb4ab",
+                      "tertiary-container": "#ae5600",
+                      "on-tertiary": "#502400",
+                      "tertiary-fixed-dim": "#ffb786",
+                      "on-secondary-fixed-variant": "#862200",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container-low": "#1b1b23",
+                      "on-tertiary-fixed": "#311300",
+                      "on-background": "#e4e1ed",
+                      "primary-container": "#5e5ce6",
+                      "on-primary": "#1800a7",
+                      "surface": "#13131b",
+                      "surface-tint": "#c2c1ff",
+                      "on-surface-variant": "#c7c4d7",
+                      "on-secondary": "#5f1500",
+                      "on-error-container": "#ffdad6",
+                      "surface-dim": "#13131b",
+                      "surface-container-highest": "#34343d",
+                      "secondary": "#ffb5a0",
+                      "surface-container-lowest": "#0e0d15",
+                      "on-surface": "#e4e1ed",
+                      "secondary-fixed": "#ffdbd1",
+                      "error-container": "#93000a",
+                      "primary-fixed-dim": "#c2c1ff",
+                      "outline": "#918fa0",
+                      "surface-bright": "#393841",
+                      "inverse-on-surface": "#302f38",
+                      "tertiary": "#ffb786",
+                      "primary": "#c2c1ff",
+                      "on-error": "#690005",
+                      "secondary-container": "#d73b00",
+                      "inverse-surface": "#e4e1ed",
+                      "on-primary-fixed": "#0c006b",
+                      "on-primary-container": "#f4f1ff",
+                      "inverse-primary": "#4d4ad5",
+                      "surface-variant": "#34343d",
+                      "on-secondary-fixed": "#3b0900"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "margin": "24px",
+                      "xl": "48px",
+                      "xs": "4px",
+                      "lg": "24px",
+                      "gutter": "16px",
+                      "sm": "8px",
+                      "md": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "mono-data": ["Space Grotesk"],
+                      "body-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "label-xs": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "mono-data": ["14px", {"lineHeight": "1", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400"}],
+                      "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-xs": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen flex overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="hidden md:flex flex-col h-full py-lg px-md gap-md bg-surface-container-lowest dark:bg-surface-container-lowest docked h-screen left-0 w-64 shrink-0">
+<div class="flex flex-col gap-xs px-sm">
+<span class="text-headline-md font-headline-md text-primary">Aegis Monitoring</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant opacity-60">Network Active</span>
+</div>
+<nav class="flex flex-col gap-xs mt-lg">
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-sm text-body-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-primary font-bold border-r-2 border-primary bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">videocam</span>
+<span class="font-body-sm text-body-sm">Live Feed</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">emergency</span>
+<span class="font-body-sm text-body-sm">Incident Log</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-sm text-body-sm">Analytics</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">minor_crash</span>
+<span class="font-body-sm text-body-sm">Fleet Management</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-xs">
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-sm text-body-sm">Support</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm transition-all duration-200 text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface dark:hover:text-on-surface hover:bg-surface-container-low rounded-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-body-sm text-body-sm">Sign Out</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopAppBar Component -->
+<header class="flex justify-between items-center w-full px-margin py-sm z-50 bg-background dark:bg-background bg-surface-container-low dark:bg-surface-container-low flat no shadows">
+<div class="flex items-center gap-lg">
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-primary">INCIDENT ID: 884-XJ</span>
+<div class="bg-secondary-container px-sm py-xs rounded text-on-secondary-container text-label-xs font-label-xs uppercase tracking-wider">Emergency Lane Violation</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined p-sm rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">notifications</button>
+<button class="material-symbols-outlined p-sm rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img alt="Administrator profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_EbtfTTpXCxMbfM1VMr0tywjJExemLGui_tDQkamZxuC_rGx_V7GqOyxoBThPz2zbh_p8DQ12hjofUT6CzZ23WaciXg8WZQEb_umbIUTgDU4lB95FGrN5-Eg6oOgsP7PZtiSMB1RkjczJvbe0rzml-b7bV9F06Fsvr0uz8KADLiFF-uhQxaHuxOAQiNhfVujnTE_2kKAwHCmxlSHvoLmFeYg0S20jRpN-COCWXbjQxiYsB_IwPHLoexQMe1NPk14z38tnnaXUYzc"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area: Split View -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Left Side: Evidence Gallery & Video -->
+<section class="flex-1 overflow-y-auto p-lg flex flex-col gap-lg border-r border-outline-variant/30">
+<!-- Video Player Container -->
+<div class="relative w-full aspect-video bg-surface-container-lowest rounded-xl overflow-hidden inner-glow group">
+<img class="w-full h-full object-cover opacity-80" data-alt="A high-resolution wide-angle view of a highway at night under intense mercury-vapor streetlights. A silver executive sedan is captured in crisp motion, driving illegally on the far-right emergency shoulder, flanked by yellow lane markers. The surrounding traffic is blurred, emphasizing the violation speed and the dark, moody futuristic atmosphere with deep indigo and obsidian tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxuBqAmxhkCes1EEHHEEzRyA5DhRCQA880OApgaOAytm1aQIDi3Din2l4CC2v_otftzq9mZMSfr0X4jgP2Av4iMdWbjNLmfcvJ1vr9_l37Id3ZdRdqdhWjSBWfB-KYclCcsI7eEKw1QJTad3m61iEew0yuhIBZu86Aw2H6fQR0YhDmas73_AJM56MUSncBY-XkCLQCJct4d0fDuX_ScI1CNiOm2_8QJcz_hqRHcQhe5Zbq22lbfAITTWPQN5gvwNSnMzCBH9i0N30"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="w-16 h-16 bg-primary/20 backdrop-blur-md border border-primary/50 rounded-full flex items-center justify-center hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-primary text-4xl" data-weight="fill">play_arrow</span>
+</button>
+</div>
+<div class="absolute bottom-md left-md flex gap-sm">
+<div class="bg-black/60 backdrop-blur-sm px-sm py-xs rounded-lg text-label-xs font-mono-data border border-white/10">REC: CAM-402-SOUTH</div>
+<div class="bg-black/60 backdrop-blur-sm px-sm py-xs rounded-lg text-label-xs font-mono-data border border-white/10 text-error">● LIVE OVERLAY</div>
+</div>
+</div>
+<!-- Snapshot Grid -->
+<div class="grid grid-cols-3 gap-md">
+<div class="aspect-square bg-surface-container rounded-lg overflow-hidden border border-outline-variant/50 hover:border-primary transition-colors cursor-zoom-in">
+<img class="w-full h-full object-cover" data-alt="A detailed, tight-frame macro shot of a vehicle's license plate under heavy artificial night lighting. The plate is clearly legible with sharp, high-contrast alphanumeric characters against a reflective background. The surrounding car bumper is a deep charcoal metallic, catching subtle indigo highlights from the high-tech surveillance sensors. Minimalist and cold aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIzmoEAb-HZAm-mf4FrNnR4iiMysU0BC6twxQjor4Phpa29YjqJVwCPgzQJmnlQgwW6tKeOZ_rpSPaxXYsOPoRTFYfF_HO-oIWnpBt7s6v9GnE867q45Vg6vDlrufiOBWaf2uFmi25J5XUznhQUbbNclyn3WIJAduCbmkcKY0nOcQRSdi-gY5E7EJJO6zDXJWlLrP5kCQy21z2FkqUTleB6ZZJxvrEuL5m6EF0fiWAX2FFem8gQjIy2b7O6OLgFVGH4h7bhqPkk_w"/>
+</div>
+<div class="aspect-square bg-surface-container rounded-lg overflow-hidden border border-outline-variant/50 hover:border-primary transition-colors cursor-zoom-in">
+<img class="w-full h-full object-cover" data-alt="A side-profile medium shot of a luxury black SUV illegally occupying the emergency lane. The lighting is dramatic, coming from elevated highway lamps, casting long shadows. The road's textured asphalt and the bright yellow shoulder line are in sharp focus. The overall atmosphere is professional, cinematic, and data-driven with a cool-toned color grade." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCytMBhw4fehhIcKmiKuZHCUMHnd4v9tBZ8s_2o-5-PfOor7x_hPuyoVypwunc6GcRnQuGCMWzMNX3nx9MKIAQnuuMRBTOC8In_I2K9cXtLnm9K1dLHGPs1kRpX1Yb24glFCNFj_3rMQKvCexjS2fm2wR9XEmn_gYpqUcG1lQ3NoVadP10gl2Pge6XnQRBJGFr2KfJiyk7KFQZ0bjGumgR5yMteP5meb86BA5cD3nLZ23WPIkW2d3adCq3EqOkX1Pvl0XGXh7bYJmY"/>
+</div>
+<div class="aspect-square bg-surface-container rounded-lg overflow-hidden border border-outline-variant/50 hover:border-primary transition-colors cursor-zoom-in relative">
+<img class="w-full h-full object-cover" data-alt="A wide perspective shot from a high-angle gantry camera showing the vehicle's position relative to the main highway traffic. The dark midnight sky contrasts with the bright, glowing white and red tail lights of other cars. The target vehicle is highlighted by its isolation in the emergency lane. The image is crisp, with a technical, surveillance-style precision and minimal color noise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDksaXmc2otMb_5aKWFscnB_L_3dw5YeOSPrLuYBCv-2Gdy5lwP7AortUhLD2q6xShZ7MJeuarepmi8dx8OpamAK1A-ILTXyeMozo8lXOtChSs2AtAd0LZP8SkAhUG5svSIOFSRgUGvfZoE5XWHnNRQc-tAzX2tt2lGJco_pLV_2jc74PUB8BjNopshwYyxik4UP8ApbNVcH9rLv3v1AEz3GJw2dxKYQgpXhBrsr5hF7mO5a2I-AhGfqzdtR0D8yOwPVB6a5k5itQ"/>
+<div class="absolute inset-0 bg-primary/10 flex items-center justify-center">
+<span class="text-label-xs font-bold text-primary">+4 MORE</span>
+</div>
+</div>
+</div>
+<!-- Similar Incidents Section -->
+<div class="flex flex-col gap-md mt-sm">
+<h3 class="font-headline-md text-headline-md text-on-surface">Similar Incidents (Sector 4)</h3>
+<div class="flex gap-md overflow-x-auto pb-sm">
+<!-- Card 1 -->
+<div class="min-w-[240px] bg-surface-container-low p-md rounded-xl border border-outline-variant/20 hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-mono-data text-on-surface text-sm">BJ-4421-L</span>
+<span class="text-label-xs text-on-surface-variant">22m ago</span>
+</div>
+<div class="h-24 w-full bg-surface-container-highest rounded mb-sm overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" data-alt="A low-light surveillance image of a silver car speeding through a toll booth at night. The image is grainy but professional, with neon purple and blue ambient lighting. The composition is focused on the vehicle's rapid movement against the static infrastructure of the highway." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiZrl3ddbwry2erqXqYpmy-vRF3Qb2tn__gGjVY_Swp8MUPlz7_olLdG4prMfUUODlKBY6mwjmQKYDSJtN2BETtrk0APbHL1sU9uQ0PZJ1RZu7sD14K5cXKUmNA4ipqo2nWCEjsdnQhTe06Qiaezdy63U2ThuNWoa3vkf3NbM7HrPtJiZohyQHn_zT6rJqteV4-2B2KJFfQfNTyqUg9jhb4OQ-Jsd1j9ue1E9Wf4cSpFOCp-bDgjm-jjse8kY0UYCn02Ym06f_Qys"/>
+</div>
+<span class="text-label-xs text-error font-bold">RECURRING OFFENDER</span>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[240px] bg-surface-container-low p-md rounded-xl border border-outline-variant/20 hover:bg-surface-container transition-colors cursor-pointer group">
+<div class="flex justify-between items-start mb-sm">
+<span class="font-mono-data text-on-surface text-sm">TX-009-KK</span>
+<span class="text-label-xs text-on-surface-variant">45m ago</span>
+</div>
+<div class="h-24 w-full bg-surface-container-highest rounded mb-sm overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" data-alt="A night-time highway view featuring a white utility truck merging dangerously without signaling. The lighting is cold and clinical, provided by overhead LED arrays. The scene conveys a sense of high-speed urban transit with a focus on safety and violation detection." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLlzm1J2F6NrVYb16PgHnqAfS03MC-3bi0LQFK7721LSnTxEEadwsNPZeG9rmyrgZicWxyPW8oCqgwIWPAhcP4jkxO2FFCcgm3AahHYlbcyQ8z2NaYzKaL8KM1VdHBsAGQ7Fhdr7WoGJDdrb1GG2qBidUc_xW9APKso5cGy6hi1Hj45MecHfSRkOhKqPfKiv70F8EXWADf7OCIPe-SqA9Tps-SX3vNwhml0xDgYotRRZm0jKECrF-cdNDyJDP_DD_DN8oiOdAvYUE"/>
+</div>
+<span class="text-label-xs text-on-surface-variant">FIRST VIOLATION</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Side: Data & Controls Sidebar -->
+<aside class="w-96 overflow-y-auto bg-surface-container-lowest flex flex-col p-lg gap-lg">
+<!-- Vehicle AI Recognition -->
+<div class="flex flex-col gap-md p-md bg-surface-container-low rounded-xl border border-outline-variant/30 inner-glow">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-weight="fill">precision_manufacturing</span>
+<h4 class="font-headline-md text-headline-md text-primary">AI Recognition</h4>
+</div>
+<div class="grid grid-cols-2 gap-y-md gap-x-sm">
+<div class="flex flex-col">
+<span class="text-label-xs text-on-surface-variant uppercase">Plate Number</span>
+<span class="font-mono-data text-headline-md text-on-surface">GH-778-XJ</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-xs text-on-surface-variant uppercase">Confidence</span>
+<span class="font-mono-data text-headline-md text-primary">99.4%</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-xs text-on-surface-variant uppercase">Brand / Model</span>
+<span class="font-body-sm text-on-surface">Mercedes-Benz S-Class</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-xs text-on-surface-variant uppercase">Color</span>
+<span class="font-body-sm text-on-surface">Obsidian Black</span>
+</div>
+</div>
+</div>
+<!-- Timeline -->
+<div class="flex flex-col gap-md">
+<h4 class="text-label-xs font-bold text-on-surface-variant uppercase tracking-widest">Incident Timeline</h4>
+<div class="flex flex-col gap-lg border-l-2 border-outline-variant ml-sm pl-md">
+<div class="relative">
+<div class="absolute -left-[22px] top-0 w-3 h-3 rounded-full bg-primary ring-4 ring-background"></div>
+<div class="flex flex-col">
+<span class="text-label-xs text-primary font-bold">21:44:02.12</span>
+<span class="text-body-sm text-on-surface">System Detection: Lane Intrusion</span>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[22px] top-0 w-3 h-3 rounded-full bg-primary ring-4 ring-background"></div>
+<div class="flex flex-col">
+<span class="text-label-xs text-primary font-bold">21:44:05.45</span>
+<span class="text-body-sm text-on-surface">Automated Alert Dispatched</span>
+</div>
+</div>
+<div class="relative opacity-50">
+<div class="absolute -left-[22px] top-0 w-3 h-3 rounded-full bg-outline-variant ring-4 ring-background"></div>
+<div class="flex flex-col">
+<span class="text-label-xs text-on-surface-variant">PENDING</span>
+<span class="text-body-sm text-on-surface-variant">Dispatcher Action Required</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Map Context -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<span class="text-label-xs font-bold text-on-surface-variant uppercase tracking-widest">Location Context</span>
+<span class="font-mono-data text-xs text-primary">KM 142.8 - Northbound</span>
+</div>
+<div class="h-40 bg-surface-container rounded-xl overflow-hidden border border-outline-variant/30 grayscale hover:grayscale-0 transition-all">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist vector-style digital map interface showing a highway junction with high-contrast lines. The target location is marked by a pulsing neon indigo beacon. The aesthetic is dark-mode first, using deep charcoal backgrounds and vibrant data overlays to represent traffic flow and sensor coverage. No labels, just geometric clarity." data-location="Singapore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGcjxXaMEhVxvkFXU3qQth68ePqR6GIFzJxHg6QRW3BT7Js339qCLWZ9sMiL8xjZrBiUYdEkR99jC_xcPAdsD6_asznr7LDeihUXnlvJ-axIRzgpAC72IZiuIwRQjqw8QaSdp0jjQadMOkiJdwjRZhRQXYVuJDOd63hL7IhTVtfyakakjVH8jUIGbP6WKp-kY4VxvmpteEvbRLFyepOK8ErQk2FW4oyX039Vzf6rG1oZFBQZjgfQCKxhsg6cpRz0K9-31LzBSRb6c"/>
+</div>
+</div>
+<!-- Action Controls -->
+<div class="mt-auto flex flex-col gap-sm pt-lg border-t border-outline-variant/30">
+<button class="w-full bg-primary-container text-on-primary-container py-md px-lg rounded-lg font-bold font-body-sm transition-all hover:brightness-110 active:scale-95 flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">gavel</span>
+                        Validate Violation
+                    </button>
+<button class="w-full border border-primary/30 text-primary py-md px-lg rounded-lg font-body-sm hover:bg-primary/5 transition-all active:scale-95 flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">local_police</span>
+                        Assign to Patrol
+                    </button>
+<button class="w-full text-on-surface-variant py-sm px-lg rounded-lg font-body-sm hover:text-error transition-all active:opacity-60 flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined text-sm">block</span>
+                        Invalid / False Alarm
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only suppression handled via CSS visibility) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container-high dark:bg-surface-container-high shadow-lg rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 duration-100">
+<span class="material-symbols-outlined">sensors</span>
+<span class="font-label-xs text-label-xs">Feed</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-95 duration-100">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-xs text-label-xs">Alerts</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 duration-100">
+<span class="material-symbols-outlined">distance</span>
+<span class="font-label-xs text-label-xs">Map</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 scale-95 duration-100">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-xs text-label-xs">Account</span>
+</div>
+</nav>
+</body></html>

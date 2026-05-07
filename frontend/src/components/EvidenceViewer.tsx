@@ -23,17 +23,17 @@ export default function EvidenceViewer({
 
   if (media.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center">
-        <ImageOff className="mx-auto h-8 w-8 text-slate-400" />
-        <div className="mt-3 font-semibold text-slate-950">证据还没有上传完成</div>
-        <p className="mt-2 text-sm text-slate-600">下一步：检查 Android 队列和设备网络，等待补传后刷新事件。</p>
+      <div className="rounded-xl border border-dashed border-[var(--line-strong)] bg-[var(--surface-raised)] p-8 text-center">
+        <ImageOff className="mx-auto h-8 w-8 text-[var(--faint)]" />
+        <div className="mt-3 font-semibold text-[var(--text)]">证据还没有上传完成</div>
+        <p className="mt-2 text-sm text-[var(--muted)]">下一步：检查 Android 队列和设备网络，等待补传后刷新事件。</p>
       </div>
     );
   }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-      <div className="overflow-hidden rounded-md border border-slate-200 bg-[#0b1118] shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[#2c2c35] bg-[#13131b] shadow-[0_18px_46px_rgba(32,32,29,0.12)]">
         <div className="flex min-h-[300px] items-center justify-center sm:min-h-[480px]">
           {active?.mime_type.startsWith('image/') ? (
             <img src={active.url} alt={labels[active.evidence_type] ?? active.evidence_type} className="max-h-[68vh] max-w-full object-contain" />
@@ -43,18 +43,18 @@ export default function EvidenceViewer({
         </div>
       </div>
       <div className="space-y-3">
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-sm font-semibold text-slate-950">证据链完整度</div>
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
+          <div className="text-sm font-semibold text-[var(--text)]">证据链完整度</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
             <EvidenceMark label="进入前" ok={summary?.has_before ?? false} />
             <EvidenceMark label="峰值帧" ok={summary?.has_peak ?? media.some((item) => item.evidence_type === 'frame_peak')} />
             <EvidenceMark label="离开后" ok={summary?.has_after ?? false} />
           </div>
-          <p className="mt-3 text-xs leading-5 text-slate-500">
+          <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
             下一步：优先查看峰值帧，再用进入前/离开后判断是否短暂经过。
           </p>
         </div>
-        <div className="rounded-md border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
           {media.map((item, index) => {
             const isActive = index === activeIdx;
             const isVideo = item.mime_type.startsWith('video/');
@@ -62,8 +62,8 @@ export default function EvidenceViewer({
               <button
                 key={item.id}
                 className={cn(
-                  'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition',
-                  isActive ? 'bg-slate-950 text-white' : 'text-slate-700 hover:bg-slate-100',
+                  'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition',
+                  isActive ? 'bg-[var(--text)] text-[var(--surface)]' : 'text-[var(--muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text)]',
                 )}
                 onClick={() => setActiveIdx(index)}
               >
@@ -80,7 +80,7 @@ export default function EvidenceViewer({
 
 function EvidenceMark({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className={cn('rounded-md border px-2 py-2 text-center', ok ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-50 text-slate-400')}>
+    <div className={cn('rounded-lg border px-2 py-2 text-center text-xs', ok ? 'border-[var(--brand-soft)]/40 bg-[var(--brand-soft)]/10 text-[var(--brand)]' : 'border-[var(--line)] bg-[var(--surface)] text-[var(--faint)]')}>
       {label}
     </div>
   );

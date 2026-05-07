@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aegis Traffic - Road Patrol Task Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#fffbff",
+                    "background": "#13131b",
+                    "tertiary-fixed": "#ffdcc6",
+                    "secondary-fixed-dim": "#ffb5a0",
+                    "on-tertiary-container": "#ffefe7",
+                    "surface-container-high": "#2a2932",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "on-primary-fixed-variant": "#332dbc",
+                    "surface-container": "#1f1f27",
+                    "outline-variant": "#464554",
+                    "error": "#ffb4ab",
+                    "tertiary-container": "#ae5600",
+                    "on-tertiary": "#502400",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "on-secondary-fixed-variant": "#862200",
+                    "primary-fixed": "#e2dfff",
+                    "surface-container-low": "#1b1b23",
+                    "on-tertiary-fixed": "#311300",
+                    "on-background": "#e4e1ed",
+                    "primary-container": "#5e5ce6",
+                    "on-primary": "#1800a7",
+                    "surface": "#13131b",
+                    "surface-tint": "#c2c1ff",
+                    "on-surface-variant": "#c7c4d7",
+                    "on-secondary": "#5f1500",
+                    "on-error-container": "#ffdad6",
+                    "surface-dim": "#13131b",
+                    "surface-container-highest": "#34343d",
+                    "secondary": "#ffb5a0",
+                    "surface-container-lowest": "#0e0d15",
+                    "on-surface": "#e4e1ed",
+                    "secondary-fixed": "#ffdbd1",
+                    "error-container": "#93000a",
+                    "primary-fixed-dim": "#c2c1ff",
+                    "outline": "#918fa0",
+                    "surface-bright": "#393841",
+                    "inverse-on-surface": "#302f38",
+                    "tertiary": "#ffb786",
+                    "primary": "#c2c1ff",
+                    "on-error": "#690005",
+                    "secondary-container": "#d73b00",
+                    "inverse-surface": "#e4e1ed",
+                    "on-primary-fixed": "#0c006b",
+                    "on-primary-container": "#f4f1ff",
+                    "inverse-primary": "#4d4ad5",
+                    "surface-variant": "#34343d",
+                    "on-secondary-fixed": "#3b0900"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin": "24px",
+                    "xl": "48px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "mono-data": ["Space Grotesk"],
+                    "body-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-xs": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["20px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "mono-data": ["14px", {"lineHeight": "1", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "body-sm": ["14px", {"lineHeight": "1.5", "letterSpacing": "0em", "fontWeight": "400"}],
+                    "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "label-xs": ["12px", {"lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(46, 46, 46, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .status-dot-healthy {
+            width: 8px;
+            height: 8px;
+            background-color: #5e5ce6;
+            border-radius: 50%;
+        }
+        .inner-glow-focus:focus-within {
+            box-shadow: 0px 0px 8px rgba(94, 92, 230, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-sm selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container-low flex justify-between items-center px-margin py-sm">
+<div class="flex items-center gap-sm">
+<span class="text-headline-md font-headline-md font-bold text-primary">Aegis Traffic</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="hover:bg-surface-container-high transition-colors p-2 rounded-full flex items-center justify-center scale-98 active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+<button class="hover:bg-surface-container-high transition-colors p-2 rounded-full flex items-center justify-center scale-98 active:opacity-80 transition-all">
+<span class="material-symbols-outlined text-primary">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img alt="Administrator profile" class="w-full h-full object-cover" data-alt="A professional close-up portrait of a highway patrol administrator wearing a tactical headset. The lighting is dramatic and high-contrast, with cool blue tones reflecting the dark-mode aesthetic of the interface. The background is a blurred command center with glowing data screens. The overall mood is focused and authoritative, fitting a high-tech traffic monitoring environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPeo-HkuZZn0UQRtTp7uRXj8VIzNKWkvnGDxR9TIlWQCyWL7sMcBzZYCUuVAXANhcACQCIBp0AOyrkL_k4KCcUUwoVN4oB195lWfifcM_Ct24r-airmaEW_nvLLQOfhzlxBxt8NIJj1jUDjS0SYq8UbLquXJYCqbzASvzVEidruyu4NRvV8TiqtRsh9OK0SU08ISp25JTbsIosQeXhgsIbOtPUwOI1r-e8ZshCIWPrEoIgqtTX5MEx-atbmVdRxqdbG64M7-p3l8g"/>
+</div>
+</div>
+</header>
+<main class="pt-[64px] pb-[80px] px-margin space-y-lg">
+<!-- Status Summary Header -->
+<section class="grid grid-cols-2 gap-gutter mt-lg">
+<div class="bg-surface-container-low p-md rounded-xl border-t border-white/5">
+<p class="text-on-surface-variant text-label-xs font-label-xs uppercase tracking-wider">Active Tasks</p>
+<div class="flex items-baseline gap-xs mt-xs">
+<span class="text-display-lg font-display-lg text-primary font-mono-data">03</span>
+<span class="status-dot-healthy mb-2 ml-1"></span>
+</div>
+</div>
+<div class="bg-surface-container-low p-md rounded-xl border-t border-white/5">
+<p class="text-on-surface-variant text-label-xs font-label-xs uppercase tracking-wider">Today's Cases</p>
+<div class="flex items-baseline gap-xs mt-xs">
+<span class="text-display-lg font-display-lg text-on-surface font-mono-data">42</span>
+<span class="text-label-xs text-secondary-container font-medium">+12%</span>
+</div>
+</div>
+</section>
+<!-- Map Integration -->
+<section class="bg-surface-container p-sm rounded-xl overflow-hidden relative border border-outline-variant/30">
+<div class="absolute top-md left-md z-10 glass-panel px-sm py-xs rounded-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">near_me</span>
+<span class="text-label-xs text-on-surface font-mono-data">Nearest: M4 J12 - 1.2km</span>
+</div>
+<div class="w-full h-32 rounded-lg overflow-hidden bg-surface-container-highest">
+<img class="w-full h-full object-cover" data-alt="A stylized digital map of a city highway network in deep monochromatic dark mode. Roads are represented by sharp, glowing gray lines on a near-black background. A single pulsating neon indigo dot indicates the patrol unit's location, with a sharp red triangular icon marking a nearby incident. The visual style is minimalist and high-precision, echoing a futuristic tactical interface." data-location="London" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0VAvPc0O8qMx7_fmH3ln7kM7igOsxDEPCey4nzhSVuWvnNPypo68BajAAt2_v2I06UwB8uoqKIfp6vv-lr0dFnSLGmbA3rrgUPTEqTuos0u28QB__ZSWIlzO-7CsGtVEUXQkooyMqweCFirTlsSpzmyhDvYkdtWPu2V4aSGRT_IQn3Vti7XUNSHHZ4yODqgWF4tNHkjhTGeW01rHPUwW2EL8fnQaGTzJtHjdrGX9U58Zp0HSzCXkiUDU-XRojUYjTo9syQQGf2_0"/>
+</div>
+</section>
+<!-- Real-time Incident Feed -->
+<section class="space-y-md">
+<div class="flex justify-between items-center">
+<h2 class="text-headline-md font-headline-md text-on-surface">Incident Alerts</h2>
+<span class="text-label-xs text-primary bg-primary/10 px-sm py-xs rounded-full">Live Feed</span>
+</div>
+<!-- Incident Card 1 (Critical) -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/20 transition-all active:scale-[0.98]">
+<div class="relative h-40">
+<img class="w-full h-full object-cover grayscale-[0.2]" data-alt="A high-contrast nighttime snapshot from a highway surveillance camera showing a black sedan illegally parked in the emergency lane. The scene is illuminated by harsh sodium-vapor lamps and the blue glow of overhead traffic signs. The image has a slight digital grain and a timestamp overlay in a tech-inspired font, capturing a moment of traffic violation with industrial precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRblbYITlbx5gLRF814QUaYpsOYa9JSIgyk4b5CB6dT5S3LBjY54ifHDjn2OZO0dOI0RRmDQ4BJZTC8KuI1m27888Kl9TuhP3n0_JIlINok_PHaS_cqylVrEN8nniXgsH9ZXajOstHRWD1ZbHauzjIwsqFN2QKP1bfuzl9lvcEpqGulQi4WU4tYozaDw3SJBPgD-RO5xNWDkmenGWrbEroLFy8TaMC-DvIs6tkUcV2ZO0llZBwoHAoq-rh_SN1Io3RvVBWeYQx9_0"/>
+<div class="absolute top-sm right-sm bg-secondary-container text-on-secondary-container px-sm py-xs rounded-full font-label-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-weight="fill">warning</span>
+                        CRITICAL
+                    </div>
+<div class="absolute bottom-0 left-0 w-full p-sm bg-gradient-to-t from-background to-transparent">
+<p class="text-label-xs font-mono-data text-on-surface">M25 Northbound / P11-04</p>
+</div>
+</div>
+<div class="p-md space-y-md">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-sm font-semibold text-on-surface">Lane Violation: Stopped Vehicle</p>
+<p class="text-label-xs text-on-surface-variant font-mono-data mt-xs">Detected 2m ago • 14:32:05</p>
+</div>
+<button class="text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary py-sm rounded-lg font-label-xs font-bold transition-all active:opacity-80">Accept Task</button>
+<button class="px-md bg-surface-container-high text-on-surface py-sm rounded-lg border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+</button>
+<button class="px-md bg-surface-container-high text-on-surface py-sm rounded-lg border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">navigation</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Incident Card 2 (Urgent) -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/20 transition-all active:scale-[0.98]">
+<div class="relative h-40">
+<img class="w-full h-full object-cover grayscale-[0.2]" data-alt="A sharp, clear daytime photograph of an empty motorway emergency lane where a small delivery van is partially obstructing traffic. The sunlight is bright and creates deep, geometric shadows. The highway environment is clean and modern, with crisp white lane markings. The mood is alert and observational, emphasizing technical clarity in road monitoring." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiIcZ5KNE3wre_-QfyNq_VXiieo_ep5OapvVgBTAR12y6ehyYXvjZhfxTcICgCik4n8--KC3KlwuDq6e4o7XWE2EuXWqTd6xjvAxpXtzDDudhJ0lEZpSgQIXdCyAcXe6k4J9PntWtROVjyvPwYuiq3M-1KEvYGJNN8_uQhheLbAdefTdl_dwKqN6Zok9ShpcVBF_sTUZNk0ReJAeh-5kMgHGFnv9hn3jXqJMnYRCRT9gbOeVDzt7VamneDuH3Y5qi2ezOkw-zizCU"/>
+<div class="absolute top-sm right-sm bg-tertiary-container text-on-tertiary-container px-sm py-xs rounded-full font-label-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-weight="fill">emergency</span>
+                        URGENT
+                    </div>
+<div class="absolute bottom-0 left-0 w-full p-sm bg-gradient-to-t from-background to-transparent">
+<p class="text-label-xs font-mono-data text-on-surface">A1(M) South / KM 12.4</p>
+</div>
+</div>
+<div class="p-md space-y-md">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-sm font-semibold text-on-surface">Foreign Object on Carriageway</p>
+<p class="text-label-xs text-on-surface-variant font-mono-data mt-xs">Detected 8m ago • 14:26:12</p>
+</div>
+<button class="text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary py-sm rounded-lg font-label-xs font-bold transition-all active:opacity-80">Accept Task</button>
+<button class="px-md bg-surface-container-high text-on-surface py-sm rounded-lg border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">videocam</span>
+</button>
+<button class="px-md bg-surface-container-high text-on-surface py-sm rounded-lg border border-outline-variant/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">navigation</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface-container-high flex justify-around items-center px-4 py-2 pb-safe rounded-t-xl shadow-lg">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 transition-all scale-95 duration-100">
+<span class="material-symbols-outlined" data-weight="fill">sensors</span>
+<span class="font-label-xs text-label-xs mt-1">Feed</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 transition-all active:bg-surface-container-highest scale-95 duration-100">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-label-xs text-label-xs mt-1">Alerts</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 transition-all active:bg-surface-container-highest scale-95 duration-100">
+<span class="material-symbols-outlined">distance</span>
+<span class="font-label-xs text-label-xs mt-1">Map</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 transition-all active:bg-surface-container-highest scale-95 duration-100">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-xs text-label-xs mt-1">Account</span>
+</button>
+</nav>
+</body></html>
