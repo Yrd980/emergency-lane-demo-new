@@ -1,27 +1,34 @@
-import { Circle } from 'lucide-react';
 import { cn } from '../utils/format';
 
-const statusConfig: Record<string, { label: string; cls: string }> = {
-  pending: { label: '待复核', cls: 'border-[var(--warning-soft)]/40 bg-[var(--warning-soft)]/15 text-[var(--warning)]' },
-  confirmed: { label: '已确认', cls: 'border-[var(--brand-soft)]/40 bg-[var(--brand-soft)]/15 text-[var(--brand)]' },
-  rejected: { label: '已驳回', cls: 'border-[var(--danger-soft)]/40 bg-[var(--danger-soft)]/15 text-[var(--danger)]' },
-  online: { label: '在线', cls: 'border-[var(--brand-soft)]/40 bg-[var(--brand-soft)]/15 text-[var(--brand)]' },
-  offline: { label: '离线', cls: 'border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]' },
-  high: { label: '高优先级', cls: 'border-[var(--danger-soft)]/40 bg-[var(--danger-soft)]/15 text-[var(--danger)]' },
-  normal: { label: '常规', cls: 'border-[var(--line)] bg-[var(--surface)] text-[var(--muted)]' },
+type BadgeStatus = 'online' | 'offline' | 'pending' | 'confirmed' | 'rejected' | 'high' | 'normal' | 'critical' | 'active';
+
+const statusConfig: Record<BadgeStatus, { label: string; cls: string; dot?: boolean }> = {
+  online: { label: 'Online', cls: 'bg-primary-container/20 text-primary border-primary/30', dot: true },
+  offline: { label: 'Offline', cls: 'bg-surface-container-high text-on-surface-variant border-outline-variant/30' },
+  pending: { label: 'Pending', cls: 'bg-secondary-container/10 text-secondary border-secondary/30', dot: true },
+  confirmed: { label: 'Confirmed', cls: 'bg-primary-container/20 text-primary border-primary/30', dot: true },
+  rejected: { label: 'Rejected', cls: 'bg-error-container/20 text-error border-error/30' },
+  high: { label: 'High', cls: 'bg-secondary-container text-on-secondary-container border-secondary-container', dot: true },
+  normal: { label: 'Normal', cls: 'bg-surface-container-high text-on-surface-variant border-outline-variant/30' },
+  critical: { label: 'CRITICAL', cls: 'bg-secondary-container text-on-secondary-container border-secondary-container', dot: true },
+  active: { label: 'Active', cls: 'bg-primary-container text-on-primary-container border-primary-container' },
 };
 
 export default function StatusBadge({ status, label }: { status: string; label?: string }) {
-  const cfg = statusConfig[status] ?? { label: label ?? status, cls: 'border-[var(--line)] bg-[var(--surface-soft)] text-[var(--muted)]' };
+  const config = statusConfig[status as BadgeStatus] ?? statusConfig.normal;
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
-        cfg.cls,
+    <span className={cn(
+      'inline-flex items-center gap-xs px-sm py-xs rounded-full text-label-xs font-label-xs border',
+      config.cls,
+    )}>
+      {config.dot && (
+        <span className={cn(
+          'w-2 h-2 rounded-full',
+          status === 'critical' || status === 'high' ? 'bg-secondary animate-pulse' :
+          status === 'pending' ? 'bg-secondary' : 'bg-primary',
+        )} />
       )}
-    >
-      <Circle className="h-2 w-2 fill-current" />
-      {label ?? cfg.label}
+      {label ?? config.label}
     </span>
   );
 }
