@@ -30,13 +30,18 @@ class EventQueueRepository(context: Context) {
     )
 
     suspend fun markUploaded(eventId: String) {
-        eventDao.updateState(eventId, UploadState.UPLOADED.name)
+        eventDao.setState(eventId, UploadState.UPLOADED.name)
         evidenceDao.deleteByEvent(eventId)
         refreshPendingCount()
     }
 
+    suspend fun markUploading(eventId: String) {
+        eventDao.setState(eventId, UploadState.UPLOADING.name)
+        refreshPendingCount()
+    }
+
     suspend fun markFailed(eventId: String, error: String) {
-        eventDao.updateState(eventId, UploadState.FAILED.name, error)
+        eventDao.setState(eventId, UploadState.FAILED.name, error)
         refreshPendingCount()
     }
 
@@ -52,6 +57,10 @@ class EventQueueRepository(context: Context) {
     }
 
     suspend fun getAll(): List<LocalEventEntity> = eventDao.getAll()
+
+    fun observeAll(): Flow<List<LocalEventEntity>> = eventDao.observeAll()
+
+    fun observeEvidence(): Flow<List<EvidenceFileEntity>> = evidenceDao.observeAll()
 
     suspend fun getEvidenceForEvent(eventId: String): List<EvidenceFileEntity> =
         evidenceDao.getByEvent(eventId)

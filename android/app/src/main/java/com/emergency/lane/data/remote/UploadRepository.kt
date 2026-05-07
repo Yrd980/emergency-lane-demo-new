@@ -33,6 +33,7 @@ class UploadRepository(private val context: Context) {
 
         for (event in events) {
             try {
+                queue.markUploading(event.eventId)
                 val payload = EventUploadPayload(
                     event_id = event.eventId,
                     device_id = event.deviceId,
@@ -72,11 +73,15 @@ class UploadRepository(private val context: Context) {
                         uploaded++
                     } else if (resp.code() == 422) {
                         queue.markFailed(event.eventId, "422 Invalid data — will not retry")
+                    } else {
+                        queue.markFailed(event.eventId, "Upload response was incomplete")
                     }
                 } else if (resp.code() in 500..599) {
                     queue.markFailed(event.eventId, "HTTP ${resp.code()}")
                 } else if (resp.code() == 404) {
                     queue.markFailed(event.eventId, "Event 404 on evidence upload — retry event upload")
+                } else {
+                    queue.markFailed(event.eventId, "HTTP ${resp.code()}")
                 }
             } catch (e: Exception) {
                 queue.markFailed(event.eventId, e.message ?: "Unknown error")
