@@ -1,16 +1,5 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  AlertTriangle,
-  ArrowRight,
-  Camera,
-  CheckCircle2,
-  Clock,
-  History,
-  MapPin,
-  Play,
-  X,
-} from 'lucide-react';
 import { useEventDetail } from '../hooks/useEventDetail';
 import { useReview } from '../hooks/useReview';
 import StatusBadge from '../components/StatusBadge';
@@ -22,9 +11,9 @@ import type { EventDetail as EventDetailType, ReviewHistoryItem } from '../types
 import { cn, formatFullDateTime, formatPercent } from '../utils/format';
 
 function formatGpsLocation(gps: unknown): string {
-  if (!gps || typeof gps !== 'object') return '无';
+  if (!gps || typeof gps !== 'object') return '--';
   const location = gps as { lat?: unknown; lng?: unknown };
-  if (typeof location.lat !== 'number' || typeof location.lng !== 'number') return '无';
+  if (typeof location.lat !== 'number' || typeof location.lng !== 'number') return '--';
   return `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`;
 }
 
@@ -33,7 +22,6 @@ interface TimelineEntry {
   id: string;
   label: string;
   time: string;
-  icon: React.ReactNode;
   tone: 'brand' | 'warning' | 'danger' | 'muted';
 }
 
@@ -41,16 +29,14 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   const entries: TimelineEntry[] = [
     {
       id: 'detection',
-      label: '系统检测',
+      label: 'System Detection: Lane Intrusion',
       time: formatFullDateTime(data.start_time),
-      icon: <Camera className="h-3.5 w-3.5" />,
       tone: 'brand',
     },
     {
       id: 'alert',
-      label: '告警生成',
+      label: 'Automated Alert Dispatched',
       time: formatFullDateTime(data.created_at),
-      icon: <AlertTriangle className="h-3.5 w-3.5" />,
       tone: 'warning',
     },
   ];
@@ -58,25 +44,22 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   if (data.review_status === 'confirmed') {
     entries.push({
       id: 'confirmed',
-      label: '复核确认',
+      label: 'Review Confirmed',
       time: formatFullDateTime(data.reviewed_at),
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
       tone: 'brand',
     });
   } else if (data.review_status === 'rejected') {
     entries.push({
       id: 'rejected',
-      label: '复核驳回',
+      label: 'Review Rejected',
       time: formatFullDateTime(data.reviewed_at),
-      icon: <X className="h-3.5 w-3.5" />,
       tone: 'danger',
     });
   } else {
     entries.push({
       id: 'pending',
-      label: '等待复核',
-      time: '—',
-      icon: <Clock className="h-3.5 w-3.5" />,
+      label: 'Dispatcher Action Required',
+      time: '--',
       tone: 'muted',
     });
   }
@@ -124,14 +107,15 @@ export default function EventDetail() {
   };
 
   const gpsText = formatGpsLocation(data.gps_location);
-  const trafficIconClass = 'text-[var(--muted)] text-lg material-symbols-outlined';
+  const images = data.evidence_files.filter((f) => f.mime_type.startsWith('image/'));
+  const hasImages = images.length > 0;
 
   return (
     <div className="space-y-6">
       {/* ─── Page header ─── */}
       <PageHeader
         eyebrow="INCIDENT REVIEW"
-        title="事件复核"
+        title="Incident Detail"
         description="先看证据链，再核对结构化字段，最后完成复核。"
         action={
           <>
@@ -148,25 +132,25 @@ export default function EventDetail() {
       />
 
       {/* ─── Incident badge bar ─── */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)] p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/10 bg-surface-container-low p-4">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">事件 ID</span>
-          <span className="rounded-md bg-[var(--surface-base)] px-2.5 py-1 font-mono text-xs font-medium text-[var(--brand)]">
+          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Event ID</span>
+          <span className="rounded-md bg-surface-container px-2.5 py-1 font-mono-data text-xs font-medium text-primary">
             {data.event_id}
           </span>
         </div>
-        <div className="h-4 w-px bg-[var(--line)]/30" />
+        <div className="h-4 w-px bg-outline-variant/30" />
         <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">设备</span>
-          <span className="font-mono text-xs text-[var(--text)]">{data.device_id}</span>
+          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Device</span>
+          <span className="font-mono-data text-xs text-on-surface">{data.device_id}</span>
         </div>
-        <div className="h-4 w-px bg-[var(--line)]/30" />
+        <div className="h-4 w-px bg-outline-variant/30" />
         <div className="flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">优先级</span>
+          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Priority</span>
           <StatusBadge status={data.risk_level ?? 'normal'} />
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">复核状态</span>
+          <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Status</span>
           <StatusBadge status={data.review_status} />
         </div>
       </div>
@@ -194,19 +178,19 @@ export default function EventDetail() {
         {/* ════════════ LEFT: EVIDENCE ════════════ */}
         <section className="space-y-5">
           {/* Video player / evidence viewer */}
-          <div className="overflow-hidden rounded-xl border border-[var(--line)]/10 bg-[var(--surface-soft)]">
+          <div className="overflow-hidden rounded-xl border border-outline-variant/10 bg-surface-container-low">
             {/* Camera label bar */}
-            <div className="flex items-center justify-between border-b border-[var(--line)]/10 bg-[var(--surface-base)] px-4 py-2.5">
+            <div className="flex items-center justify-between border-b border-outline-variant/10 bg-surface-container px-4 py-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-base text-[var(--muted)]">videocam</span>
-                <span className="text-xs font-medium text-[var(--text)]">{data.device_id}</span>
+                <span className="material-symbols-outlined text-base text-on-surface-variant">videocam</span>
+                <span className="text-xs font-medium text-on-surface">{data.device_id}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1.5 rounded-full bg-[var(--danger-soft)]/30 px-2.5 py-0.5 text-[11px] font-semibold text-[var(--danger)]">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--danger)] shadow-[0_0_6px_var(--danger)]" />
+                <span className="flex items-center gap-1.5 rounded-full bg-error-container/30 px-2.5 py-0.5 text-[11px] font-semibold text-error">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-error shadow-[0_0_6px_#ffb4ab]" />
                   LIVE
                 </span>
-                <span className="rounded-md bg-[var(--brand-soft)]/10 px-2 py-0.5 font-mono text-[11px] text-[var(--brand)]">
+                <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono-data text-[11px] text-primary">
                   {data.roi_id}
                 </span>
               </div>
@@ -217,60 +201,47 @@ export default function EventDetail() {
           </div>
 
           {/* Evidence snapshot thumbnails grid */}
-          {data.evidence_files.filter((f) => f.mime_type.startsWith('image/')).length > 0 && (
+          {hasImages && (
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <Camera className="h-4 w-4 text-[var(--brand)]" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-                  证据快照
+                <span className="material-symbols-outlined text-base text-primary">photo_library</span>
+                <span className="text-label-xs font-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
+                  Evidence Snapshots
                 </span>
-                <span className="rounded-full bg-[var(--surface-raised)] px-2 py-0.5 font-mono text-[10px] text-[var(--muted)]">
-                  {data.evidence_files.filter((f) => f.mime_type.startsWith('image/')).length} 张
+                <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
+                  {images.length}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                {data.evidence_files
-                  .filter((f) => f.mime_type.startsWith('image/'))
-                  .map((file) => (
-                    <a
-                      key={file.id}
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative aspect-video overflow-hidden rounded-lg border border-[var(--line)]/10 bg-[var(--surface-base)]"
-                    >
-                      <img
-                        src={file.url}
-                        alt={file.evidence_type}
-                        className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition duration-200 group-hover:bg-black/40">
-                        <span className="material-symbols-outlined text-2xl text-white opacity-0 transition duration-200 group-hover:opacity-100">
-                          zoom_in
-                        </span>
-                      </div>
-                      <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted)]">
-                        {file.evidence_type === 'frame_peak'
-                          ? '峰值帧'
-                          : file.evidence_type === 'frame_before'
-                            ? '进入前'
-                            : file.evidence_type === 'frame_after'
-                              ? '离开后'
-                              : file.evidence_type}
+                {images.map((file) => (
+                  <a
+                    key={file.id}
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-outline-variant/50 bg-surface-container cursor-zoom-in hover:border-primary transition-colors"
+                  >
+                    <img
+                      src={file.url}
+                      alt={file.evidence_type}
+                      className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition duration-200 group-hover:bg-black/40">
+                      <span className="material-symbols-outlined text-2xl text-white opacity-0 transition duration-200 group-hover:opacity-100">
+                        zoom_in
                       </span>
-                    </a>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* Video clip indicator */}
-          {data.evidence_files.some((f) => f.mime_type.startsWith('video/')) && (
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--line)]/10 bg-[var(--surface-soft)] px-4 py-3">
-              <Play className="h-5 w-5 text-[var(--brand)]" />
-              <div>
-                <div className="text-sm font-medium text-[var(--text)]">包含视频片段</div>
-                <div className="text-xs text-[var(--muted)]">可在上方播放器中查看完整视频证据</div>
+                    </div>
+                    <span className="absolute bottom-1.5 left-1.5 rounded bg-black/60 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
+                      {file.evidence_type === 'frame_peak'
+                        ? 'PEAK'
+                        : file.evidence_type === 'frame_before'
+                          ? 'BEFORE'
+                          : file.evidence_type === 'frame_after'
+                            ? 'AFTER'
+                            : file.evidence_type}
+                    </span>
+                  </a>
+                ))}
               </div>
             </div>
           )}
@@ -280,152 +251,136 @@ export default function EventDetail() {
         <aside className="space-y-5">
           {/* ─── AI Recognition panel ─── */}
           <SurfacePanel className="overflow-hidden">
-            <div className="border-b border-[var(--line)]/10 bg-[var(--surface-base)] px-4 py-3">
+            <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-base text-[var(--brand)]">manufacturing</span>
-                <span className="text-sm font-semibold text-[var(--text)]">AI 识别</span>
+                <span className="material-symbols-outlined text-base text-primary">precision_manufacturing</span>
+                <span className="text-sm font-semibold text-on-surface">AI Recognition</span>
               </div>
             </div>
             <div className="p-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                 <AiField
-                  label="车牌号"
+                  label="Plate Number"
                   value={data.track_id}
                   mono
-                  icon={<span className={trafficIconClass}>confirmation_number</span>}
                 />
                 <AiField
-                  label="置信度"
+                  label="Confidence"
                   value={formatPercent(data.confidence)}
                   mono
                   tone={data.confidence >= 0.85 ? 'brand' : data.confidence >= 0.6 ? 'warning' : 'danger'}
-                  icon={<span className={trafficIconClass}>signal_cellular_alt</span>}
                 />
                 <AiField
-                  label="车辆类型"
-                  value={data.vehicle_class === 'car' ? '轿车' : data.vehicle_class === 'truck' ? '卡车' : data.vehicle_class === 'bus' ? '客车' : data.vehicle_class === 'motorcycle' ? '摩托车' : data.vehicle_class}
-                  icon={<span className={trafficIconClass}>directions_car</span>}
+                  label="Brand / Model"
+                  value={data.vehicle_class === 'car' ? 'Sedan' : data.vehicle_class === 'truck' ? 'Truck' : data.vehicle_class === 'bus' ? 'Bus' : data.vehicle_class === 'motorcycle' ? 'Motorcycle' : data.vehicle_class}
                 />
                 <AiField
-                  label="轨迹 ID"
-                  value={data.track_id}
-                  mono
-                  icon={<span className={trafficIconClass}>pin</span>}
-                />
-                <AiField
-                  label="持续时长"
-                  value={`${data.duration_seconds} 秒`}
-                  mono
-                  icon={<span className={trafficIconClass}>timer</span>}
-                />
-                <AiField
-                  label="GPS 坐标"
-                  value={gpsText}
-                  mono
-                  icon={<span className={trafficIconClass}>location_on</span>}
+                  label="Color"
+                  value="--"
                 />
               </div>
             </div>
           </SurfacePanel>
 
-          {/* ─── Timeline ─── */}
+          {/* ─── Incident Timeline ─── */}
           <SurfacePanel className="overflow-hidden">
-            <div className="border-b border-[var(--line)]/10 bg-[var(--surface-base)] px-4 py-3">
+            <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-base text-[var(--brand)]">timeline</span>
-                <span className="text-sm font-semibold text-[var(--text)]">事件时间线</span>
+                <span className="material-symbols-outlined text-base text-primary">timeline</span>
+                <span className="text-sm font-semibold text-on-surface">Incident Timeline</span>
               </div>
             </div>
             <div className="p-4">
-              <div className="relative space-y-0">
-                {timeline.map((entry, idx) => {
-                  const isLast = idx === timeline.length - 1;
-                  return (
-                    <div key={entry.id} className="relative flex gap-3 pb-6 last:pb-0">
-                      {/* Vertical line */}
-                      {!isLast && (
-                        <div className="absolute left-[11px] top-5 h-full w-px bg-[var(--line)]/20" />
+              <div className="flex flex-col gap-4 border-l-2 border-outline-variant ml-1 pl-4">
+                {timeline.map((entry) => (
+                  <div key={entry.id} className="relative">
+                    <div
+                      className={cn(
+                        'absolute -left-[22px] top-0.5 w-3 h-3 rounded-full ring-4 ring-surface-container-low',
+                        entry.tone === 'brand' && 'bg-primary',
+                        entry.tone === 'warning' && 'bg-secondary',
+                        entry.tone === 'danger' && 'bg-error',
+                        entry.tone === 'muted' && 'bg-outline-variant',
                       )}
-                      {/* Dot */}
-                      <div
+                    />
+                    <div className="flex flex-col">
+                      <span
                         className={cn(
-                          'relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
-                          entry.tone === 'brand' && 'bg-[var(--brand-soft)]/20 text-[var(--brand)]',
-                          entry.tone === 'warning' && 'bg-[var(--warning-soft)]/20 text-[var(--warning)]',
-                          entry.tone === 'danger' && 'bg-[var(--danger-soft)]/20 text-[var(--danger)]',
-                          entry.tone === 'muted' && 'bg-[var(--surface-raised)] text-[var(--muted)]',
+                          'text-label-xs font-bold',
+                          entry.tone === 'brand' && 'text-primary',
+                          entry.tone === 'warning' && 'text-secondary',
+                          entry.tone === 'danger' && 'text-error',
+                          entry.tone === 'muted' && 'text-on-surface-variant',
                         )}
                       >
-                        {entry.icon}
-                      </div>
-                      {/* Content */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-medium text-[var(--text)]">{entry.label}</span>
-                          <span className="shrink-0 font-mono text-[11px] text-[var(--muted)]">{entry.time}</span>
-                        </div>
-                      </div>
+                        {entry.time}
+                      </span>
+                      <span
+                        className={cn(
+                          'text-body-sm',
+                          entry.tone === 'muted' ? 'text-on-surface-variant opacity-50' : 'text-on-surface',
+                        )}
+                      >
+                        {entry.label}
+                      </span>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           </SurfacePanel>
 
-          {/* ─── Location map placeholder ─── */}
+          {/* ─── Location Context ─── */}
           {data.gps_location && typeof data.gps_location.lat === 'number' && (
             <SurfacePanel className="overflow-hidden">
-              <div className="border-b border-[var(--line)]/10 bg-[var(--surface-base)] px-4 py-3">
+              <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-[var(--brand)]" />
-                  <span className="text-sm font-semibold text-[var(--text)]">位置</span>
+                  <span className="material-symbols-outlined text-base text-primary">location_on</span>
+                  <span className="text-sm font-semibold text-on-surface">Location Context</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-[var(--line)]/10 bg-[var(--surface-base)]">
-                  <MapPin className="h-6 w-6 text-[var(--brand)]" />
+              <div className="p-4">
+                <div className="mb-3 flex items-end justify-between">
+                  <span className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    GPS Coordinates
+                  </span>
+                  <span className="font-mono-data text-xs text-primary">{gpsText}</span>
                 </div>
-                <div>
-                  <div className="font-mono text-xs text-[var(--text)]">{gpsText}</div>
-                  <div className="mt-1 text-[11px] text-[var(--muted)]">设备上报位置</div>
+                <div className="flex h-40 items-center justify-center overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container">
+                  <div className="text-center">
+                    <span className="material-symbols-outlined text-3xl text-on-surface-variant/50">map</span>
+                    <p className="mt-2 text-label-xs text-on-surface-variant">{gpsText}</p>
+                  </div>
                 </div>
               </div>
             </SurfacePanel>
           )}
 
-          {/* ─── Review actions ─── */}
+          {/* ─── Action buttons ─── */}
           {data.review_status === 'pending' && (
-            <SurfacePanel className="overflow-hidden">
-              <div className="border-b border-[var(--line)]/10 bg-[var(--surface-base)] px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base text-[var(--brand)]">gavel</span>
-                  <span className="text-sm font-semibold text-[var(--text)]">快速操作</span>
-                </div>
-              </div>
-              <div className="space-y-2 p-4">
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--brand-soft)]/30 bg-[var(--brand-soft)]/10 px-4 py-2.5 text-sm font-semibold text-[var(--brand)] transition-all hover:bg-[var(--brand-soft)]/20 active:scale-[0.98]"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  确认占用
-                </button>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] px-4 py-2.5 text-sm font-semibold text-[var(--text)] transition-all hover:border-[var(--line-strong)] hover:bg-[var(--surface-glow)] active:scale-[0.98]"
-                >
-                  <span className="material-symbols-outlined text-base">assignment_ind</span>
-                  指派巡逻
-                </button>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-medium text-[var(--muted)] transition-all hover:text-[var(--danger)] active:scale-[0.98]"
-                >
-                  <X className="h-4 w-4" />
-                  无效 / 误报
-                </button>
-              </div>
-            </SurfacePanel>
+            <div className="flex flex-col gap-2 pt-4">
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-3 px-4 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
+              >
+                <span className="material-symbols-outlined">gavel</span>
+                Validate Violation
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 py-3 px-4 text-body-sm text-primary transition-all hover:bg-primary/5 active:scale-95"
+              >
+                <span className="material-symbols-outlined">local_police</span>
+                Assign to Patrol
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-2 rounded-lg py-2 px-4 text-body-sm text-on-surface-variant transition-all hover:text-error active:opacity-60"
+              >
+                <span className="material-symbols-outlined text-sm">block</span>
+                Invalid / False Alarm
+              </button>
+            </div>
           )}
 
           {/* ─── Review Panel (existing) ─── */}
@@ -435,29 +390,6 @@ export default function EventDetail() {
             onSubmit={handleReview}
             submitting={submitting}
           />
-
-          {/* ─── Event Fields (existing) ─── */}
-          <SurfacePanel className="p-4">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
-              <span className="material-symbols-outlined text-base text-[var(--brand)]">database</span>
-              事件字段
-            </h2>
-            <div className="mt-3 space-y-2 text-sm">
-              <Field label="事件 ID" value={data.event_id} mono />
-              <Field label="设备" value={data.device_id} />
-              <Field label="开始时间" value={formatFullDateTime(data.start_time)} />
-              <Field label="结束时间" value={formatFullDateTime(data.end_time)} />
-              <Field label="持续时长" value={`${data.duration_seconds} 秒`} />
-              <Field label="轨迹 ID" value={data.track_id} />
-              <Field label="车辆类别" value={data.vehicle_class} />
-              <Field label="置信度" value={formatPercent(data.confidence)} />
-              <Field label="GPS" value={gpsText} />
-              <div className="flex items-center justify-between border-t border-[var(--line)]/20 pt-2">
-                <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">状态</span>
-                <StatusBadge status={data.review_status} />
-              </div>
-            </div>
-          </SurfacePanel>
 
           {/* ─── Review History ─── */}
           <ReviewHistory history={data.review_history} />
@@ -469,37 +401,47 @@ export default function EventDetail() {
 
 /* ─── Sub-components ─── */
 
+function FieldChip({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">{label}</span>
+      <span
+        className={cn(
+          'rounded-md bg-surface-container px-2.5 py-1 text-xs font-medium',
+          mono ? 'font-mono-data text-primary' : 'text-on-surface',
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function AiField({
   label,
   value,
   mono,
   tone,
-  icon,
 }: {
   label: string;
   value: string;
   mono?: boolean;
   tone?: 'brand' | 'warning' | 'danger';
-  icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-[var(--line)]/10 bg-[var(--surface-base)] p-3">
-      <div className="flex items-center gap-1.5">
-        {icon}
-        <span className="text-[11px] uppercase tracking-wider text-[var(--muted)]">{label}</span>
-      </div>
-      <div
+    <div className="flex flex-col">
+      <span className="text-label-xs text-on-surface-variant uppercase">{label}</span>
+      <span
         className={cn(
-          'mt-1 font-medium',
-          mono && 'font-mono text-xs',
-          tone === 'brand' && 'text-[var(--brand)]',
-          tone === 'warning' && 'text-[var(--warning)]',
-          tone === 'danger' && 'text-[var(--danger)]',
-          !tone && 'text-[var(--text)]',
+          mono ? 'font-mono-data text-headline-md' : 'text-body-sm',
+          tone === 'brand' && 'text-primary',
+          tone === 'warning' && 'text-secondary',
+          tone === 'danger' && 'text-error',
+          !tone && 'text-on-surface',
         )}
       >
         {value}
-      </div>
+      </span>
     </div>
   );
 }
@@ -508,14 +450,14 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
   if (history.length === 0) {
     return (
       <SurfacePanel className="p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
-          <History className="h-4 w-4 text-[var(--brand)]" />
-          复核历史
+        <div className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+          <span className="material-symbols-outlined text-base text-primary">history</span>
+          Review History
         </div>
-        <div className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-[var(--line)]/20 bg-[var(--surface-base)] p-4">
-          <History className="h-5 w-5 shrink-0 text-[var(--muted)]" />
-          <p className="text-sm leading-6 text-[var(--muted)]">
-            尚无复核记录。下一步：完成确认或驳回后，这里会记录操作者和改判轨迹。
+        <div className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-outline-variant/20 bg-surface-container p-4">
+          <span className="material-symbols-outlined text-lg text-on-surface-variant">history</span>
+          <p className="text-sm leading-6 text-on-surface-variant">
+            No review records yet. Complete the review to log operator decisions.
           </p>
         </div>
       </SurfacePanel>
@@ -524,10 +466,10 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
 
   return (
     <SurfacePanel className="p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
-        <History className="h-4 w-4 text-[var(--brand)]" />
-        复核历史
-        <span className="rounded-full bg-[var(--surface-raised)] px-2 py-0.5 font-mono text-[10px] text-[var(--muted)]">
+      <div className="flex items-center gap-2 text-sm font-semibold text-on-surface">
+        <span className="material-symbols-outlined text-base text-primary">history</span>
+        Review History
+        <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
           {history.length}
         </span>
       </div>
@@ -535,39 +477,34 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
         {history.map((item) => (
           <div
             key={item.id}
-            className="rounded-lg border border-[var(--line)]/10 bg-[var(--surface-base)] p-3.5 transition-all hover:border-[var(--brand)]/20"
+            className="rounded-lg border border-outline-variant/10 bg-surface-container p-3.5 transition-all hover:border-primary/20"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--brand-soft)]/10">
-                  <span className="font-mono text-[10px] font-semibold text-[var(--brand)]">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                  <span className="font-mono-data text-[10px] font-semibold text-primary">
                     {item.operator_id.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <span className="text-sm font-medium text-[var(--text)]">{item.operator_id}</span>
+                <span className="text-sm font-medium text-on-surface">{item.operator_id}</span>
               </div>
-              <span className="font-mono text-[11px] text-[var(--muted)]">{formatFullDateTime(item.reviewed_at)}</span>
+              <span className="font-mono-data text-[11px] text-on-surface-variant">
+                {formatFullDateTime(item.reviewed_at)}
+              </span>
             </div>
             <div className="mt-3 flex items-center gap-2">
               <StatusBadge status={item.from_status} />
-              <ArrowRight className="h-3.5 w-3.5 text-[var(--muted)]" />
+              <span className="material-symbols-outlined text-sm text-on-surface-variant">arrow_forward</span>
               <StatusBadge status={item.to_status} />
             </div>
-            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              {item.operator_note || <span className="italic text-[var(--faint)]">未填写备注</span>}
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+              {item.operator_note || (
+                <span className="italic text-on-surface-variant opacity-50">No notes provided</span>
+              )}
             </p>
           </div>
         ))}
       </div>
     </SurfacePanel>
-  );
-}
-
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex items-start justify-between gap-3 border-b border-[var(--line)]/15 pb-2 last:border-b-0">
-      <span className="shrink-0 text-[11px] uppercase tracking-wider text-[var(--muted)]">{label}</span>
-      <span className={`text-right text-[var(--text)] ${mono ? 'font-mono text-xs' : 'text-sm'}`}>{value}</span>
-    </div>
   );
 }
