@@ -92,7 +92,7 @@ fun CalibrationScreen(
                     contentColor = AegisOnPrimary
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Save (${uiState.points.size} pts)", fontSize = 12.sp) }
+            ) { Text("保存（${uiState.points.size} 点）", fontSize = 12.sp) }
             Button(
                 onClick = { viewModel.undoLastPoint() },
                 colors = ButtonDefaults.buttonColors(
@@ -100,7 +100,7 @@ fun CalibrationScreen(
                     contentColor = AegisOnSurface
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Undo", fontSize = 12.sp) }
+            ) { Text("撤销", fontSize = 12.sp) }
             Button(
                 onClick = { viewModel.clearAll() },
                 colors = ButtonDefaults.buttonColors(
@@ -108,7 +108,7 @@ fun CalibrationScreen(
                     contentColor = AegisOnSurface
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Clear", fontSize = 12.sp) }
+            ) { Text("清空", fontSize = 12.sp) }
             Button(
                 onClick = { viewModel.resetRoi() },
                 colors = ButtonDefaults.buttonColors(
@@ -116,7 +116,7 @@ fun CalibrationScreen(
                     contentColor = AegisOnSurface
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Reset", fontSize = 12.sp) }
+            ) { Text("重置", fontSize = 12.sp) }
             Button(
                 onClick = { navController.popBackStack() },
                 colors = ButtonDefaults.buttonColors(
@@ -124,7 +124,7 @@ fun CalibrationScreen(
                     contentColor = AegisOnSurface
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Back", fontSize = 12.sp) }
+            ) { Text("返回", fontSize = 12.sp) }
         }
 
         uiState.message?.let {

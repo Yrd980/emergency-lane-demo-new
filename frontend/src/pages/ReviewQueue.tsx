@@ -34,15 +34,15 @@ export default function ReviewQueue() {
 
   const submitBulkReview = async (reviewStatus: 'validated' | 'false_alarm') => {
     if (selectedIds.length === 0) {
-      setBulkMessage('Select pending events first, then choose a review outcome.');
+      setBulkMessage('请先选择待审核事件，再选择审核结果。');
       return;
     }
     if (bulkStatus !== reviewStatus) {
       setBulkStatus(reviewStatus);
       setBulkMessage(
         reviewStatus === 'validated'
-          ? `Confirm ${selectedIds.length} selected incidents as validated. Bulk confirmation requires complete before, peak, and after evidence. Click again to apply.`
-          : `Mark ${selectedIds.length} selected incidents as false alarms. Click again to apply.`,
+          ? `确认将 ${selectedIds.length} 条事件标记为已确认。批量确认要求证据包含前段、峰值、后段。再次点击以执行。`
+          : `将 ${selectedIds.length} 条事件标记为误报。再次点击以执行。`,
       );
       return;
     }
@@ -51,15 +51,15 @@ export default function ReviewQueue() {
       const result = await api.bulkReviewEvents(
         selectedIds,
         reviewStatus,
-        reviewStatus === 'validated' ? 'Bulk validate' : 'Bulk false alarm',
-        user?.display_name ?? 'Aegis Reviewer',
+        reviewStatus === 'validated' ? '批量确认' : '批量标记误报',
+        user?.display_name ?? 'Aegis 审核员',
       );
       const failedCount = result.failed_event_ids?.length ?? 0;
       const missingCount = result.missing_event_ids.length;
       setBulkMessage(
         failedCount || missingCount
-          ? `Processed ${result.updated_count} events. ${failedCount} blocked by evidence or status policy, ${missingCount} missing.`
-          : `Processed ${result.updated_count} events.`,
+          ? `已处理 ${result.updated_count} 条事件。${failedCount} 条因证据或状态策略被阻止，${missingCount} 条不存在。`
+          : `已处理 ${result.updated_count} 条事件。`,
       );
       setSelectedIds([]);
       setBulkStatus(null);
@@ -75,45 +75,45 @@ export default function ReviewQueue() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="REVIEW"
-        title="Review Workbench"
-        description="Process the pending review queue as a work queue. Handle high-priority first, then proceed to the next."
+        eyebrow="审核"
+        title="审核工作台"
+        description="将待审核队列作为工单处理：优先处理高优先级，再依次推进。"
         action={
           firstEvent ? (
-            <PrimaryButton icon="fact_check" href={`/events/${firstEvent.event_id}?from=review`}>Process Next</PrimaryButton>
+            <PrimaryButton icon="fact_check" href={`/events/${firstEvent.event_id}?from=review`}>处理下一个</PrimaryButton>
           ) : (
-            <PrimaryButton href="/events">View History</PrimaryButton>
+            <PrimaryButton href="/events">查看历史</PrimaryButton>
           )
         }
       />
 
       <div>
         <ActionPanel
-          title={firstEvent ? 'Next: Open first queued event' : 'No pending review events'}
-          description={firstEvent ? `Queue sorted by priority: ${firstEvent.review_priority_reason ?? 'chronological'}, detail page only advances through pending items.` : 'Wait for new events or check history.'}
+          title={firstEvent ? '下一步：打开队列首个事件' : '当前无待审核事件'}
+          description={firstEvent ? `队列按优先级排序：${firstEvent.review_priority_reason ?? '按时间顺序'}，详情页仅推进待审核事件。` : '请等待新事件，或查看历史记录。'}
           tone={firstEvent ? 'warning' : 'success'}
-          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}?from=review`}>Start Review</PrimaryButton> : <PrimaryButton href="/">Back to Workbench</PrimaryButton>}
+          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}?from=review`}>开始审核</PrimaryButton> : <PrimaryButton href="/">返回工作台</PrimaryButton>}
         />
       </div>
 
       {overview.data && (
         <div className="mb-lg grid gap-4 sm:grid-cols-3">
-          <MetricTile label="Pending Review" value={overview.data.pending_review_count} tone="warning" />
-          <MetricTile label="Validated" value={overview.data.confirmed_count} tone="success" />
-          <MetricTile label="False Alarm" value={overview.data.rejected_count} tone="danger" />
+          <MetricTile label="待审核" value={overview.data.pending_review_count} tone="warning" />
+          <MetricTile label="已确认" value={overview.data.confirmed_count} tone="success" />
+          <MetricTile label="误报" value={overview.data.rejected_count} tone="danger" />
         </div>
       )}
 
       {error && (
-        <StateBlock tone="error" title="Review queue failed to load" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>Retry</PrimaryButton>} />
+        <StateBlock tone="error" title="审核队列加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />
       )}
-      {loading && !data && <StateBlock tone="loading" title="Loading review queue" description="Fetching pending events." />}
+      {loading && !data && <StateBlock tone="loading" title="正在加载审核队列" description="正在获取待审核事件。" />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock
           tone="success"
-          title="Review queue clear"
-          description="Return to workbench to check device health, or wait for new events from Android."
-          action={<PrimaryButton href="/">Back to Workbench</PrimaryButton>}
+          title="审核队列已清空"
+          description="可返回工作台查看设备健康状态，或等待 Android 端新事件。"
+          action={<PrimaryButton href="/">返回工作台</PrimaryButton>}
         />
       )}
       {data && data.items.length > 0 && (
@@ -122,13 +122,13 @@ export default function ReviewQueue() {
           <SurfacePanel className="p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-body-sm font-semibold text-on-surface">Selected Review Outcome</div>
+                <div className="text-body-sm font-semibold text-on-surface">已选择审核操作</div>
                 <div className="mt-1 text-label-xs text-on-surface-variant">
                   <span className="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-primary">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    {selectedIds.length} selected
+                    {selectedIds.length} 个已选
                   </span>
-                  {' '}pending items from current queue.
+                  {' '}来自当前队列的待审核项。
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -137,13 +137,13 @@ export default function ReviewQueue() {
                   disabled={submittingBulk}
                   onClick={toggleSelectAll}
                 >
-                  Select Page
+                  全选本页
                 </button>
                 <PrimaryButton tone="light" icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('validated')}>
-                  {bulkStatus === 'validated' ? 'Apply Confirmation' : 'Confirm Selected'}
+                  {bulkStatus === 'validated' ? '确认执行' : '确认所选'}
                 </PrimaryButton>
                 <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('false_alarm')}>
-                  {bulkStatus === 'false_alarm' ? 'Apply False Alarm' : 'Mark False Alarm'}
+                  {bulkStatus === 'false_alarm' ? '执行误报标记' : '标记为误报'}
                 </PrimaryButton>
               </div>
             </div>

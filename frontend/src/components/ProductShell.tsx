@@ -15,9 +15,9 @@ export default function ProductShell({ children }: { children: React.ReactNode }
       {/* Sidebar — Desktop */}
       <aside className="hidden md:flex flex-col h-full w-64 shrink-0 gap-md bg-surface-container-lowest px-sm py-lg border-r border-outline-variant/10">
         <div className="px-md pb-md">
-          <h1 className="text-[22px] font-semibold leading-tight text-primary">Aegis Monitoring</h1>
+          <h1 className="text-[22px] font-semibold leading-tight text-primary">Aegis 监控平台</h1>
           <p className="mt-sm flex items-center gap-sm text-[13px] font-medium leading-none text-on-surface-variant opacity-80">
-            <span className="status-dot-healthy" /> Network Active
+            <span className="status-dot-healthy" /> 网络已连接
           </p>
         </div>
 
@@ -47,14 +47,14 @@ export default function ProductShell({ children }: { children: React.ReactNode }
         <div className="mt-auto flex flex-col gap-sm border-t border-outline-variant/10 pt-md">
           <a className={`${navItemClass} text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface`} href="#">
             <span className={navIconClass}>help</span>
-            Support
+            帮助支持
           </a>
           <button
             className={`${navItemClass} text-left text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface`}
             onClick={() => void logout()}
           >
             <span className={navIconClass}>logout</span>
-            Sign Out
+            退出登录
           </button>
         </div>
       </aside>

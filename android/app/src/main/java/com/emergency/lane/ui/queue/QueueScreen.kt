@@ -69,7 +69,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
         ) {
 
             Text(
-                text = "Upload Queue",
+                text = "上传队列",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AegisOnSurface,
@@ -84,7 +84,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Refresh", fontSize = 12.sp)
+                Text("刷新", fontSize = 12.sp)
             }
         }
 
@@ -184,7 +184,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    if (uiState.uploading) "Uploading..." else "Upload Pending",
+                    if (uiState.uploading) "上传中..." else "Upload Pending",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -198,7 +198,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Open Camera", fontSize = 12.sp)
+                Text("打开相机", fontSize = 12.sp)
             }
         }
 
@@ -216,7 +216,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                     .padding(16.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("No queued uploads", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text("暂无待上传项", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     Text("New detections will appear here after capture.", color = AegisOnSurfaceVariant, fontSize = 12.sp)
                     Button(
                         onClick = { navController.navigate("camera") },
@@ -226,7 +226,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Open Camera", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("打开相机", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -268,7 +268,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                             EvidenceStrip(item.evidence)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { navController.navigate("camera") }) {
-                                    Text("Camera", color = AegisPrimary)
+                                    Text("相机", color = AegisPrimary)
                                 }
                                 TextButton(
                                     onClick = { viewModel.retryEvent(event.eventId) },
@@ -277,8 +277,8 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                                     Text(
                                         when {
                                             uiState.uploading -> "Uploading"
-                                            event.uploadState == "UPLOADED" -> "Uploaded"
-                                            else -> "Upload"
+                                            event.uploadState == "UPLOADED" -> "已上传"
+                                            else -> "上传"
                                         },
                                         color = if (!canUpload || uiState.uploading) AegisOnSurfaceVariant else AegisPrimary
                                     )
@@ -287,7 +287,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                                     onClick = { viewModel.deleteEvent(event.eventId) },
                                     enabled = !uiState.uploading
                                 ) {
-                                    Text("Delete", color = AegisError)
+                                    Text("删除", color = AegisError)
                                 }
                             }
                         }
@@ -312,7 +312,7 @@ private fun EvidenceStrip(evidence: List<EvidenceFileEntity>) {
                 .background(AegisSurfaceContainer)
                 .padding(10.dp)
         ) {
-            Text("No local photo captured", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+            Text("暂无本地照片", color = AegisOnSurfaceVariant, fontSize = 12.sp)
         }
         return
     }

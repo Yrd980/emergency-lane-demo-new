@@ -15,28 +15,28 @@ export default function EventList() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="EVENTS"
-        title="Event Query"
-        description="Use historical filters for evidence tracing. Use the review workbench for daily pending decisions."
+        eyebrow="事件"
+        title="事件查询"
+        description="使用历史筛选进行证据追溯；日常待处理请前往审核工作台。"
         action={
           <>
             <span className="inline-flex min-h-11 items-center gap-xs rounded-lg border border-primary/15 bg-primary/10 px-md text-body-sm font-semibold text-primary">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              Live Feed
+              实时流
             </span>
-            <PrimaryButton href="/review">Go to Review Workbench</PrimaryButton>
+            <PrimaryButton href="/review">前往审核工作台</PrimaryButton>
           </>
         }
       />
 
       <FilterBar filters={filters} onChange={setFilters} />
-      {error && <StateBlock tone="error" title="Event load failed" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>Retry</PrimaryButton>} />}
-      {loading && !data && <StateBlock tone="loading" title="Loading events" description="Syncing event list and evidence thumbnails." />}
+      {error && <StateBlock tone="error" title="事件加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />}
+      {loading && !data && <StateBlock tone="loading" title="正在加载事件" description="正在同步事件列表与证据缩略图。" />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock
-          title="No matching events"
-          description={filters.status ? 'Next: clear filters, or go back to setup to generate test events.' : 'Next: complete device onboarding first, then generate test events from Android.'}
-          action={<PrimaryButton href={filters.status ? '/events' : '/setup'}>{filters.status ? 'Clear Filters' : 'Open Setup Guide'}</PrimaryButton>}
+          title="未找到匹配事件"
+          description={filters.status ? '建议：清空筛选，或返回配置向导生成测试事件。' : '建议：先完成设备接入，再从 Android 端生成测试事件。'}
+          action={<PrimaryButton href={filters.status ? '/events' : '/setup'}>{filters.status ? '清空筛选' : '打开配置向导'}</PrimaryButton>}
         />
       )}
       {data && data.items.length > 0 && (

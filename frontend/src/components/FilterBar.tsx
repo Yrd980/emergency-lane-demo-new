@@ -17,28 +17,28 @@ export default function FilterBar({
     <div className="mb-4 rounded-lg border border-outline-variant/10 bg-surface-container-low p-4">
       <div className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-on-surface">
         <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
-        Narrow scope
+        缩小筛选范围
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
-          Status
+          状态
           <select
             className={inputClassName('mt-1')}
             value={filters.status || ''}
             onChange={(e) => update('status', e.target.value)}
           >
-            <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="validated">Validated</option>
-            <option value="false_alarm">False Alarm</option>
-            <option value="assigned">Assigned</option>
-            <option value="accepted">Accepted</option>
-            <option value="completed">Completed</option>
-            <option value="closed">Closed</option>
+            <option value="">全部</option>
+            <option value="pending">待审核</option>
+            <option value="validated">已确认</option>
+            <option value="false_alarm">误报</option>
+            <option value="assigned">已派发</option>
+            <option value="accepted">已接单</option>
+            <option value="completed">已完成</option>
+            <option value="closed">已关闭</option>
           </select>
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
-          Device
+          设备
           <input
             className={inputClassName('mt-1')}
             value={filters.device_id || ''}
@@ -47,7 +47,7 @@ export default function FilterBar({
           />
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
-          Sector
+         路段
           <input
             className={inputClassName('mt-1')}
             value={filters.roi_id || ''}
@@ -56,7 +56,7 @@ export default function FilterBar({
           />
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
-          Start From
+          开始时间（起）
           <input
             type="datetime-local"
             className={inputClassName('mt-1')}
@@ -65,7 +65,7 @@ export default function FilterBar({
           />
         </label>
         <label className="flex flex-col text-label-xs font-medium text-on-surface-variant">
-          Start To
+          开始时间（止）
           <input
             type="datetime-local"
             className={inputClassName('mt-1')}
@@ -78,7 +78,7 @@ export default function FilterBar({
           onClick={() => onChange({ limit: '50', offset: '0' })}
         >
           <span className="material-symbols-outlined text-base">refresh</span>
-          Reset Filters
+          重置筛选
         </button>
       </div>
     </div>

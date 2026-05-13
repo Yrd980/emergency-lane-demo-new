@@ -77,10 +77,10 @@ data class BottomNavItem(
 )
 
 private val bottomNavItems = listOf(
-    BottomNavItem("feed", "Feed", Icons.Default.Sensors),
-    BottomNavItem("alerts", "Alerts", Icons.Default.Warning),
-    BottomNavItem("camera", "Camera", Icons.Default.PhotoCamera),
-    BottomNavItem("account", "Device", Icons.Default.PhoneAndroid)
+    BottomNavItem("feed", "巡检", Icons.Default.Sensors),
+    BottomNavItem("alerts", "告警", Icons.Default.Warning),
+    BottomNavItem("camera", "相机", Icons.Default.PhotoCamera),
+    BottomNavItem("account", "设备", Icons.Default.PhoneAndroid)
 )
 
 @Composable
@@ -145,7 +145,7 @@ private fun AegisTopBar(navController: NavController) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Aegis Traffic",
+            text = "Aegis 交通",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = AegisPrimary,
@@ -158,7 +158,7 @@ private fun AegisTopBar(navController: NavController) {
         ) {
             Icon(
                 imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
+                contentDescription = "通知",
                 tint = AegisPrimary,
                 modifier = Modifier
                     .size(24.dp)
@@ -170,7 +170,7 @@ private fun AegisTopBar(navController: NavController) {
             )
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
+                contentDescription = "设置",
                 tint = AegisPrimary,
                 modifier = Modifier
                     .size(24.dp)
@@ -190,7 +190,7 @@ private fun AegisTopBar(navController: NavController) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
+                    contentDescription = "个人",
                     tint = AegisOnSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )

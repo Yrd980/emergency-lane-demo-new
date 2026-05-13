@@ -102,7 +102,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
     ) {
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Aegis Traffic",
+            text = "Aegis 交通",
             fontSize = 26.sp,
             fontWeight = FontWeight.SemiBold,
             color = AegisPrimary,
@@ -120,14 +120,14 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(Icons.Default.Cloud, contentDescription = null, tint = AegisOnSurfaceVariant)
-                Text("Developer connection", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("开发者连接", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
 
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = baseUrl,
                 onValueChange = { baseUrl = it; formError = null },
-                label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
+                label = { Text("后端地址", color = AegisOnSurfaceVariant) },
                 placeholder = { Text(SettingsStore.DEFAULT_BACKEND_URL) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
@@ -139,7 +139,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 value = username,
                 onValueChange = { username = it; formError = null },
-                label = { Text("Backend account", color = AegisOnSurfaceVariant) },
+                label = { Text("后端账号", color = AegisOnSurfaceVariant) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = fieldColors(),
@@ -150,7 +150,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 value = password,
                 onValueChange = { password = it; formError = null },
-                label = { Text("Password", color = AegisOnSurfaceVariant) },
+                label = { Text("密码", color = AegisOnSurfaceVariant) },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
@@ -177,7 +177,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
 
         when (val status = uiState.connectionStatus) {
             is SettingsUiState.ConnectionStatus.Testing ->
-                Text("Connecting...", color = AegisOnSurfaceVariant, fontSize = 13.sp)
+                Text("连接中...", color = AegisOnSurfaceVariant, fontSize = 13.sp)
             is SettingsUiState.ConnectionStatus.Success ->
                 Text(status.msg, color = AegisPrimary, fontSize = 13.sp)
             is SettingsUiState.ConnectionStatus.Error ->
@@ -205,7 +205,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Enter Patrol", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("进入巡检", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
 
         Text(
@@ -220,7 +220,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
             }
         )
         if (developerMode) {
-            Text("Developer mode enabled", color = AegisPrimary, fontSize = 12.sp)
+            Text("开发者模式已启用", color = AegisPrimary, fontSize = 12.sp)
         }
     }
 }

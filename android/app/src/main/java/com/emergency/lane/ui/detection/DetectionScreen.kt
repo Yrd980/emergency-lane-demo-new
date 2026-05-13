@@ -162,20 +162,20 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Camera Permission Required", fontSize = 20.sp, color = AegisOnSurface)
+                    Text("需要相机权限", fontSize = 20.sp, color = AegisOnSurface)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(uiState.cameraError!!, color = AegisOnSurfaceVariant, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) }) {
-                            Text("Grant")
+                            Text("授权")
                         }
                         Button(onClick = {
                             context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                 data = Uri.parse("package:${context.packageName}")
                             })
                         }) {
-                            Text("Open Settings")
+                            Text("打开设置")
                         }
                     }
                 }
@@ -196,7 +196,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     Text("⚠", fontSize = 20.sp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("ROI Not Configured", fontWeight = FontWeight.SemiBold, color = AegisOnSurface)
+                        Text("未配置 ROI", fontWeight = FontWeight.SemiBold, color = AegisOnSurface)
                         Text("Auto detection requires ROI calibration", fontSize = 14.sp, color = AegisOnSurfaceVariant)
                     }
                 }
@@ -212,7 +212,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         when (val status = uiState.modelStatus) {
             is ModelLoadStatus.NotLoaded -> {}
             is ModelLoadStatus.Loading ->
-                Text("Loading model...", modifier = Modifier.padding(horizontal = 8.dp), color = AegisOnSurfaceVariant)
+                Text("模型加载中...", modifier = Modifier.padding(horizontal = 8.dp), color = AegisOnSurfaceVariant)
             is ModelLoadStatus.Ready -> {
                 val fpsText = if (uiState.fps > 0) " | FPS: ${"%.1f".format(uiState.fps)}" else ""
                 val infText = if (uiState.inferenceMs > 0) " | Inference: ${uiState.inferenceMs}ms" else ""
@@ -232,7 +232,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         .padding(12.dp)
                 ) {
                     Column {
-                        Text("Model Load Failed", fontWeight = FontWeight.SemiBold, color = AegisError)
+                        Text("模型加载失败", fontWeight = FontWeight.SemiBold, color = AegisError)
                         Text(status.error, fontSize = 14.sp, color = AegisOnSurfaceVariant)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Manual event reporting remains available.", fontSize = 14.sp, color = AegisOnSurfaceVariant)
@@ -273,7 +273,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                 modifier = Modifier.weight(1.2f)
             ) {
                 Text(
-                    if (uiState.isPreviewActive || uiState.isDetecting) "Stop Camera" else "Start Detection",
+                    if (uiState.isPreviewActive || uiState.isDetecting) "停止相机" else "开始检测",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -284,7 +284,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                 colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.weight(1f)
-            ) { Text("Manual Upload", fontSize = 12.sp) }
+            ) { Text("手动上传", fontSize = 12.sp) }
         }
 
         if (!uiState.roiConfigured || !uiState.hpConfigured) {
@@ -297,7 +297,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
-                ) { Text("Open Account", fontSize = 12.sp) }
+                ) { Text("打开账号", fontSize = 12.sp) }
             }
         }
 
@@ -328,7 +328,7 @@ private fun DetectionGuide(uiState: DetectionUiState) {
             .padding(12.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Detection", color = AegisOnSurface, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text("检测", color = AegisOnSurface, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 text = when {
                     !uiState.hpConfigured -> "Set backend URL first, then return here."

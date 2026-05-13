@@ -20,7 +20,7 @@ function AuthenticatedApp() {
   const { loading, user } = useAuth();
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-background text-on-surface">Loading Aegis session...</div>;
+    return <div className="flex min-h-screen items-center justify-center bg-background text-on-surface">正在加载 Aegis 会话...</div>;
   }
 
   if (!user) return <Login />;

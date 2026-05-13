@@ -13,20 +13,20 @@ export type Permission =
   | 'stats:read';
 
 export const roleLabels: Record<Role, string> = {
-  admin: 'Administrator',
-  reviewer: 'Reviewer',
-  dispatcher: 'Dispatcher',
-  patrol: 'Patrol',
+  admin: '管理员',
+  reviewer: '审核员',
+  dispatcher: '调度员',
+  patrol: '巡逻员',
 };
 
 export const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'dashboard', permissions: ['stats:read'] as Permission[] },
-  { to: '/review', label: 'Review', icon: 'fact_check', permissions: ['events:review'] as Permission[] },
-  { to: '/events', label: 'Incident Log', icon: 'emergency', permissions: ['events:read'] as Permission[] },
-  { to: '/devices', label: 'Devices', icon: 'sensors', permissions: ['devices:read'] as Permission[] },
-  { to: '/health', label: 'Health', icon: 'monitoring', permissions: ['devices:read'] as Permission[] },
-  { to: '/settings', label: 'Settings', icon: 'settings', permissions: ['settings:read'] as Permission[] },
-  { to: '/setup', label: 'Setup', icon: 'add_circle', permissions: ['devices:read'] as Permission[] },
+  { to: '/', label: '总览', icon: 'dashboard', permissions: ['stats:read'] as Permission[] },
+  { to: '/review', label: '审核队列', icon: 'fact_check', permissions: ['events:review'] as Permission[] },
+  { to: '/events', label: '事件日志', icon: 'emergency', permissions: ['events:read'] as Permission[] },
+  { to: '/devices', label: '设备', icon: 'sensors', permissions: ['devices:read'] as Permission[] },
+  { to: '/health', label: '健康状态', icon: 'monitoring', permissions: ['devices:read'] as Permission[] },
+  { to: '/settings', label: '设置', icon: 'settings', permissions: ['settings:read'] as Permission[] },
+  { to: '/setup', label: '配置向导', icon: 'add_circle', permissions: ['devices:read'] as Permission[] },
 ] as const;
 
 export const routeAccess = {

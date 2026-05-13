@@ -15,7 +15,7 @@ const PERIODS: Array<{ key: PeriodKey; label: string; short: string }> = [
   { key: 'custom', label: 'Custom Range', short: 'Custom' },
 ];
 
-const fallbackSectors = ['roi_default', 'Sector A-12', 'Sector B-04', 'Tunnel Corridor 7'];
+const fallbackSectors = ['默认路段', 'A-12 路段', 'B-04 路段', '7 号隧道'];
 
 export default function Dashboard() {
   const navigate = useNavigate();

@@ -131,7 +131,7 @@ fun PatrolDashboardScreen(
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Refresh", fontSize = 12.sp)
+                    Text("刷新", fontSize = 12.sp)
                 }
                 Button(
                     onClick = { navController.navigate("account") },
@@ -142,7 +142,7 @@ fun PatrolDashboardScreen(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Account", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("账号", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -164,7 +164,7 @@ fun PatrolDashboardScreen(
                     title = if (state.needsConfiguration) "Account setup needed" else "Task sync failed",
                     message = state.error ?: "Unable to load tasks.",
                     tone = "error",
-                    primaryLabel = if (state.needsConfiguration) "Open Account" else "Retry",
+                    primaryLabel = if (state.needsConfiguration) "打开账号" else "重试",
                     onPrimary = {
                         if (state.needsConfiguration) navController.navigate("account") else viewModel.refresh()
                     }
@@ -173,10 +173,10 @@ fun PatrolDashboardScreen(
         } else if (state.incidents.isEmpty()) {
             item {
                 StatePanel(
-                    title = "No assigned tasks",
+                    title = "暂无派发任务",
                     message = "Web dispatch has not assigned anything to this patrol account yet.",
                     tone = "idle",
-                    primaryLabel = "Check Again",
+                    primaryLabel = "再次检查",
                     onPrimary = { viewModel.refresh() }
                 )
             }

@@ -110,7 +110,7 @@ fun SettingsScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Device",
+                text = "设备",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AegisOnSurface,
@@ -136,7 +136,7 @@ fun SettingsScreen(
             )
             MiniInfoCard(
                 icon = Icons.Default.People,
-                title = "Account",
+                title = "账号",
                 value = when {
                     username.isBlank() -> "Not set"
                     developerMode -> username
@@ -158,7 +158,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = baseUrl,
                 onValueChange = { baseUrl = it; urlError = null },
-                label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
+                label = { Text("后端地址", color = AegisOnSurfaceVariant) },
                 placeholder = { Text("http://192.168.2.103:8000") },
                 isError = urlError != null,
                 supportingText = urlError?.let { { Text(it, color = AegisError) } },
@@ -221,7 +221,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Backend account", color = AegisOnSurfaceVariant) },
+                label = { Text("后端账号", color = AegisOnSurfaceVariant) },
                 placeholder = { Text("operator account") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -241,7 +241,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password", color = AegisOnSurfaceVariant) },
+                label = { Text("密码", color = AegisOnSurfaceVariant) },
                 placeholder = {
                     if (uiState.username.isNotBlank()) Text("Leave blank to keep saved password")
                 },
@@ -280,7 +280,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Check server", fontSize = 12.sp)
+                    Text("检查服务", fontSize = 12.sp)
                 }
                 Button(
                     onClick = {
@@ -297,13 +297,13 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Save and connect", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("保存并连接", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             when (val status = uiState.connectionStatus) {
                 is SettingsUiState.ConnectionStatus.Testing ->
-                    Text("Checking backend...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
+                    Text("正在检查后端...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
                 is SettingsUiState.ConnectionStatus.Success ->
                     Text(status.msg, color = AegisPrimary, fontSize = 14.sp)
                 is SettingsUiState.ConnectionStatus.Error ->
@@ -353,7 +353,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Edit ROI", fontSize = 12.sp)
+                        Text("编辑 ROI", fontSize = 12.sp)
                     }
                 }
             }
@@ -389,7 +389,7 @@ fun SettingsScreen(
                     }
                 )
                 if (developerMode) {
-                    Text("Developer mode enabled", fontSize = 12.sp, color = AegisPrimary)
+                    Text("开发者模式已启用", fontSize = 12.sp, color = AegisPrimary)
                 }
                 Text("Model: ${SettingsStore.MODEL_VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
             }
