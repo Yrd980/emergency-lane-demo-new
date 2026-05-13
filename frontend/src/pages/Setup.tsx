@@ -27,15 +27,15 @@ export default function Setup() {
     <div className="space-y-lg">
       <PageHeader
         eyebrow="ONBOARDING"
-        title="Setup Guide"
+        title="配置向导"
         description="Bring an empty system to a running state. Each step corresponds to an observable result, avoiding guesswork."
-        action={<PrimaryButton href="/devices">View Device Status</PrimaryButton>}
+        action={<PrimaryButton href="/devices">查看设备状态</PrimaryButton>}
       />
 
       <section className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
         <SurfacePanel className="p-4">
           <div className="mb-2">
-            <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Android Backend Address</span>
+            <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Android 后端地址</span>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-outline-variant/20 bg-surface-container p-3 font-mono-data">
             <span className="text-on-surface-variant text-body-sm">$</span>
@@ -45,23 +45,23 @@ export default function Setup() {
               className="flex items-center gap-xs rounded-md bg-primary/10 px-sm py-xs text-label-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
             >
               <span className="material-symbols-outlined text-sm">content_copy</span>
-              Copy
+              复制
             </button>
           </div>
         </SurfacePanel>
         <SurfacePanel className="p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-body-sm font-semibold text-on-surface">Onboarding Progress</div>
+              <div className="text-body-sm font-semibold text-on-surface">接入进度</div>
               <p className="mt-1 text-body-sm text-on-surface-variant">Establish connectivity first, then check device registration and event inflow.</p>
             </div>
-            <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? 'Backend Ready' : 'Awaiting Backend'} />
+            <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端就绪' : 'Awaiting Backend'} />
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <ProgressChip label="Device Registered" ok={(data?.devices.total ?? 0) > 0} />
-            <ProgressChip label="Device Online" ok={(data?.devices.online ?? 0) > 0} />
-            <ProgressChip label="Event Queue" ok={(data?.events.pending_review_count ?? 0) > 0} />
-            <ProgressChip label="Can Generate Test" ok={(data?.devices.total ?? 0) > 0} />
+            <ProgressChip label="设备已注册" ok={(data?.devices.total ?? 0) > 0} />
+            <ProgressChip label="设备在线" ok={(data?.devices.online ?? 0) > 0} />
+            <ProgressChip label="事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
+            <ProgressChip label="可生成测试" ok={(data?.devices.total ?? 0) > 0} />
           </div>
         </SurfacePanel>
       </section>
@@ -85,10 +85,10 @@ export default function Setup() {
                 {done ? (
                   <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-label-xs font-label-xs text-primary">
                     <span className="material-symbols-outlined text-sm">check_circle</span>
-                    DONE
+                    完成
                   </span>
                 ) : (
-                  <span className="text-label-xs font-label-xs text-on-surface-variant">STEP {index + 1}</span>
+                  <span className="text-label-xs font-label-xs text-on-surface-variant">步骤 {index + 1}</span>
                 )}
               </div>
               <h2 className={`mt-4 font-semibold ${done ? 'text-primary' : 'text-on-surface'}`}>{step.title}</h2>
@@ -107,14 +107,14 @@ export default function Setup() {
           <StateBlock
             title="Waiting for first device registration"
             description="Next: enter the backend address above into the Android App, confirm phone and HP are on the same LAN."
-            action={<PrimaryButton icon="content_copy" onClick={copy}>Copy Backend Address</PrimaryButton>}
+            action={<PrimaryButton icon="content_copy" onClick={copy}>复制 Backend Address</PrimaryButton>}
           />
         ) : (
           <ActionPanel
             tone="success"
-            title="Device connected"
+            title="设备已连接"
             description={`${data.devices.total} device(s) registered, ${data.devices.online} online. Next: generate test events and enter the review workbench.`}
-            action={<PrimaryButton href="/review">Enter Review Workbench</PrimaryButton>}
+            action={<PrimaryButton href="/review">进入复核工作台</PrimaryButton>}
           />
         )}
       </section>
@@ -131,7 +131,7 @@ function ProgressChip({ label, ok }: { label: string; ok: boolean }) {
     >
       <div className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">{label}</div>
       <div className={`mt-1 font-semibold ${ok ? 'text-primary' : 'text-on-surface'}`}>
-        {ok ? 'Ready' : 'Not Ready'}
+        {ok ? '就绪' : 'Not 就绪'}
       </div>
     </div>
   );

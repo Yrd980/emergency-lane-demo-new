@@ -20,7 +20,7 @@ const fallbackSectors = ['默认路段', 'A-12 路段', 'B-04 路段', '7 号隧
 export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [exporting, setExporting] = useState(false);
+  const [exporting, set导出中] = useState(false);
   const selectedPeriod = (searchParams.get('period') as PeriodKey) || '30d';
   const selectedSector = searchParams.get('roi_id') || '';
   const customStart = searchParams.get('start_date') || '';
@@ -54,7 +54,7 @@ export default function Dashboard() {
     const operationData = operations.data;
     const summary = operationData.summary;
     const periodLabel = summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || 'Last 30 Days';
-    setExporting(true);
+    set导出中(true);
     const report = {
       generated_at: new Date().toISOString(),
       filters: { period: selectedPeriod, period_label: periodLabel, roi_id: selectedSector || 'all' },
@@ -71,7 +71,7 @@ export default function Dashboard() {
     link.download = `aegis-operations-${selectedPeriod}-${selectedSector || 'all'}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    window.setTimeout(() => setExporting(false), 250);
+    window.setTimeout(() => set导出中(false), 250);
   }, [operations.data, selectedPeriod, selectedSector, system.data]);
 
   useEffect(() => {
@@ -140,34 +140,34 @@ export default function Dashboard() {
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-label-xs font-label-xs text-primary">
               <span className="status-dot-healthy" />
-              Local Operations Loop
+              本地运营闭环
             </div>
             <div className="max-w-2xl">
-              <h1 className="text-display-lg font-display-lg text-on-surface tracking-tight">Emergency Lane Sentinel</h1>
+              <h1 className="text-display-lg font-display-lg text-on-surface tracking-tight">应急车道哨兵</h1>
               <p className="mt-4 max-w-2xl text-body-sm text-on-surface-variant sm:text-base/6">
-                Unified ingestion, events, review, and system health. Surface the most important next action first.
+                统一接入、事件、复核与系统健康，优先呈现最关键的下一步。
               </p>
             </div>
             <div className="flex flex-wrap gap-sm">
               {needsSetup ? (
                 <PrimaryButton href="/setup">Start Device Setup</PrimaryButton>
               ) : hasPending ? (
-                <PrimaryButton href="/review">Process Next Event</PrimaryButton>
+                <PrimaryButton href="/review">处理下一条事件</PrimaryButton>
               ) : (
                 <PrimaryButton href="/health">View System Health</PrimaryButton>
               )}
-              <PrimaryButton tone="light" href={eventHref}>View Events</PrimaryButton>
+              <PrimaryButton tone="light" href={eventHref}>查看事件</PrimaryButton>
               <PrimaryButton tone="light" icon="download" disabled={exporting} onClick={exportReport}>
-                {exporting ? 'Exporting' : 'Export Report'}
+                {exporting ? '导出中' : '导出报告'}
               </PrimaryButton>
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <StatusPill label="System Status" value={system.data.status === 'ready' ? 'Ready' : 'Needs Attention'} onClick={() => navigate('/health')} />
-            <StatusPill label="Pending Review" value={String(overview.data.pending_review_count)} onClick={() => navigate('/review')} />
-            <StatusPill label="Online Devices" value={`${system.data.devices.online}/${system.data.devices.total}`} onClick={() => navigate('/devices')} />
-            <StatusPill label="Last Event" value={formatDateTime(system.data.events.latest_event_at)} onClick={() => navigate('/events')} />
+            <StatusPill label="系统状态" value={system.data.status === 'ready' ? 'Ready' : '需关注'} onClick={() => navigate('/health')} />
+            <StatusPill label="待复核" value={String(overview.data.pending_review_count)} onClick={() => navigate('/review')} />
+            <StatusPill label="在线设备" value={`${system.data.devices.online}/${system.data.devices.total}`} onClick={() => navigate('/devices')} />
+            <StatusPill label="最新事件" value={formatDateTime(system.data.events.latest_event_at)} onClick={() => navigate('/events')} />
           </div>
         </div>
       </section>
@@ -177,7 +177,7 @@ export default function Dashboard() {
       ) : topIssue ? (
         <ActionPanel tone={topIssue.severity === 'critical' ? 'danger' : 'warning'} title={topIssue.message} description={topIssue.next_action} action={<PrimaryButton href={issueHref}>Resolve</PrimaryButton>} />
       ) : (
-        <ActionPanel tone="success" title="System ready" description="Devices online, backend available. Waiting for events, or review existing ones." action={<PrimaryButton href={eventHref}>View Events</PrimaryButton>} />
+        <ActionPanel tone="success" title="System ready" description="Devices online, backend available. Waiting for events, or review existing ones." action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-md">
@@ -208,7 +208,7 @@ export default function Dashboard() {
               value={selectedSector}
               onChange={(event) => setFilter({ roi_id: event.target.value || null })}
             >
-              <option value="">All Highway Sectors</option>
+              <option value="">全部路段</option>
               {sectors.map((sector) => <option key={sector} value={sector}>{sector}</option>)}
             </select>
             <span className="pointer-events-none absolute right-md top-1/2 -translate-y-1/2 text-lg text-on-surface-variant material-symbols-outlined">keyboard_arrow_down</span>
@@ -217,22 +217,22 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon="warning" label="Total Violations" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} pending review`} onClick={() => navigate(eventHref)} />
-        <MetricCard icon="schedule" tone="secondary" label="Avg. Response Time" value={`${summary.avg_response_minutes}m`} badge="Dispatch" helper="Sector dispatch average" onClick={() => navigate('/devices')} />
-        <MetricCard icon="task_alt" tone="tertiary" label="Validated Incidents" value={summary.validated} badge={`${summary.false_alarms} false`} helper="Validated review outcomes" onClick={() => navigate('/events?status=validated')} />
-        <MetricCard icon="route" label="Patrol Tasks" value={summary.assigned_tasks} badge="Active" helper={`${summary.completed_tasks} completed patrol tasks`} onClick={() => navigate('/devices')} />
+        <MetricCard icon="warning" label="违规总数" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} pending review`} onClick={() => navigate(eventHref)} />
+        <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${summary.avg_response_minutes}m`} badge="Dispatch" helper="路段调度平均值" onClick={() => navigate('/devices')} />
+        <MetricCard icon="task_alt" tone="tertiary" label="已确认事件" value={summary.validated} badge={`${summary.false_alarms} false`} helper="复核确认结果" onClick={() => navigate('/events?status=validated')} />
+        <MetricCard icon="route" label="巡检任务" value={summary.assigned_tasks} badge="Active" helper={`${summary.completed_tasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
         <button className="flex h-[400px] flex-col overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary lg:col-span-2" onClick={() => navigate(eventHref)} type="button">
           <div className="mb-lg flex items-center justify-between">
             <div>
-              <h2 className="text-headline-md font-headline-md text-on-surface">Violation Trend</h2>
+              <h2 className="text-headline-md font-headline-md text-on-surface">违规趋势</h2>
               <p className="text-label-xs text-on-surface-variant">Daily frequency, {periodLabel.toLowerCase()}</p>
             </div>
             <div className="flex gap-sm">
               <LegendDot label="Validated" tone="primary" />
-              <LegendDot label="Manual Review" tone="muted" />
+              <LegendDot label="人工复核" tone="muted" />
             </div>
           </div>
 

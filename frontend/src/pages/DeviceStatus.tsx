@@ -51,9 +51,9 @@ export default function DeviceStatus() {
     <div className="space-y-lg">
       <PageHeader
         eyebrow="DEVICES"
-        title="Device Status"
+        title="设备状态"
         description="Heartbeat, upload backlog, thermal state, and model version from registered Android devices."
-        action={<PrimaryButton href="/setup">Add New Device</PrimaryButton>}
+        action={<PrimaryButton href="/setup">新增设备</PrimaryButton>}
       />
 
       {error && <StateBlock tone="error" title="Device Load Failed" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>Retry</PrimaryButton>} />}
@@ -69,7 +69,7 @@ export default function DeviceStatus() {
               tone="warning"
               title={offline.length > 0 ? `${offline.length} device(s) offline` : `${backlog} uploads backlogged`}
               description={offline.length > 0 ? 'Next: check offline device details, network, backend address, foreground service.' : 'Next: check devices with backlog, wait for retransmission or check network.'}
-              action={<PrimaryButton href={offline[0] ? `/devices/${offline[0].device_id}` : '/devices'}>Investigate</PrimaryButton>}
+              action={<PrimaryButton href={offline[0] ? `/devices/${offline[0].device_id}` : '/devices'}>排查</PrimaryButton>}
             />
           ) : (
             <ActionPanel
@@ -81,10 +81,10 @@ export default function DeviceStatus() {
           )}
 
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-4">
-            <MetricTile label="Total Devices" value={devices.length} icon="sensors" helper="Registered on network" />
-            <MetricTile label="Online" value={onlineCount} tone={onlineCount > 0 ? 'success' : 'danger'} icon="wifi" helper="Active heartbeat window" />
-            <MetricTile label="Offline" value={offline.length} tone={offline.length > 0 ? 'danger' : 'neutral'} icon="wifi_off" helper="No recent signal" />
-            <MetricTile label="Upload Backlog" value={backlog} tone={backlog > 0 ? 'warning' : 'neutral'} icon="cloud_upload" helper="Pending data transfers" />
+            <MetricTile label="设备总数" value={devices.length} icon="sensors" helper="已在网络注册" />
+            <MetricTile label="Online" value={onlineCount} tone={onlineCount > 0 ? 'success' : 'danger'} icon="wifi" helper="心跳活跃窗口" />
+            <MetricTile label="Offline" value={offline.length} tone={offline.length > 0 ? 'danger' : 'neutral'} icon="wifi_off" helper="最近无信号" />
+            <MetricTile label="上传积压" value={backlog} tone={backlog > 0 ? 'warning' : 'neutral'} icon="cloud_upload" helper="待传输数据" />
           </div>
 
           <div className="grid min-h-[calc(100vh-320px)] grid-cols-1 gap-lg lg:grid-cols-3">
@@ -103,7 +103,7 @@ export default function DeviceStatus() {
 
             <div className="flex min-h-0 flex-col rounded-lg border border-outline-variant/10 bg-surface-container">
               <div className="flex items-center justify-between border-b border-outline-variant/10 p-md">
-                <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">Incident Log</h3>
+                <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">事件日志</h3>
               <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} ACTIVE</span>
               </div>
               <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto p-sm">
@@ -121,7 +121,7 @@ export default function DeviceStatus() {
                     <p className="mb-xs truncate text-body-sm font-bold">{event.device_id}</p>
                     <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)}s stop, confidence {Math.round(event.confidence * 100)}%, {event.review_status.replace('_', ' ')}.</p>
                     <div className="flex gap-xs">
-                      <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">Open Event</span>
+                      <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开事件</span>
                       <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{event.risk_level ?? 'normal'}</span>
                     </div>
                   </button>
@@ -137,14 +137,14 @@ export default function DeviceStatus() {
             <SparklinePanel title={topHotspot ? `Traffic Flow: ${topHotspot.roi_id}` : 'Traffic Flow'} bars={trendBars} tone="primary" />
             <SparklinePanel title="Violation Trend: Manual Review" bars={hotspotBars} tone="secondary" />
             <div className="flex flex-col justify-center rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
-              <p className="mb-sm text-label-xs uppercase tracking-widest text-on-surface-variant">Global Status</p>
+              <p className="mb-sm text-label-xs uppercase tracking-widest text-on-surface-variant">全局状态</p>
               <div className="flex items-center gap-md">
                 <div className="flex -space-x-2">
                   {(operatorInitials.length ? operatorInitials : ['AE']).map((item, index) => (
                     <div key={`${item}-${index}`} className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-background text-[10px] ${index === 0 ? 'bg-surface-bright' : index === 1 ? 'bg-primary-container text-on-primary-container' : 'bg-secondary-container text-on-secondary-container'}`}>{item}</div>
                   ))}
                 </div>
-                <p className="text-label-xs text-on-surface-variant">{operatorsOnDuty} operators on duty, {onlineCount} devices online.</p>
+                <p className="text-label-xs text-on-surface-variant">{operatorsOnDuty} 值班人员，{onlineCount} 台设备在线。</p>
               </div>
             </div>
           </div>
@@ -172,12 +172,12 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
         {device.is_online ? (
           <>
             <span className="status-dot-critical inline-block" />
-            <span className="text-[11px] font-bold tracking-widest text-primary drop-shadow-[0_1px_2px_rgb(0,0,0)]">ONLINE</span>
+            <span className="text-[11px] font-bold tracking-widest text-primary drop-shadow-[0_1px_2px_rgb(0,0,0)]">在线</span>
           </>
         ) : (
           <>
             <span className="inline-block h-2 w-2 rounded-full bg-on-surface-variant" />
-            <span className="text-[11px] font-bold tracking-widest text-on-surface-variant drop-shadow-[0_1px_2px_rgb(0,0,0)]">OFFLINE</span>
+            <span className="text-[11px] font-bold tracking-widest text-on-surface-variant drop-shadow-[0_1px_2px_rgb(0,0,0)]">离线</span>
           </>
         )}
       </div>
@@ -191,7 +191,7 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
       <div className="absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
         <div className="rounded-lg bg-surface-container-lowest/50 px-3 py-2 text-center">
           <span className="material-symbols-outlined text-lg text-on-surface-variant">{device.is_online ? 'sensors' : 'wifi_off'}</span>
-          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Heartbeat Active' : 'Signal Lost'}</div>
+          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Heartbeat Active' : '信号丢失'}</div>
         </div>
       </div>
 
@@ -199,8 +199,8 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
         <div className="text-sm font-semibold text-on-surface drop-shadow-[0_1px_3px_rgba(14,13,21,0.9)]">{device.device_name}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <span className="font-mono-data text-[11px] text-primary">FPS: {device.fps}</span>
-          <span className="font-mono-data text-[11px] text-on-surface-variant">Battery: {device.battery_level}%</span>
-          <span className="font-mono-data text-[11px] text-on-surface-variant">Queue: {device.pending_upload_count}</span>
+          <span className="font-mono-data text-[11px] text-on-surface-variant">电量： {device.battery_level}%</span>
+          <span className="font-mono-data text-[11px] text-on-surface-variant">队列： {device.pending_upload_count}</span>
         </div>
       </div>
     </Link>
