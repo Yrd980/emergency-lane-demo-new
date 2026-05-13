@@ -50,16 +50,16 @@ export default function DeviceStatus() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="DEVICES"
+        eyebrow="设备"
         title="设备状态"
-        description="Heartbeat, upload backlog, thermal state, and model version from registered Android devices."
+        description="查看已注册 Android 设备的心跳、上传积压、热状态与模型版本。"
         action={<PrimaryButton href="/setup">新增设备</PrimaryButton>}
       />
 
-      {error && <StateBlock tone="error" title="Device Load Failed" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>Retry</PrimaryButton>} />}
-      {loading && <StateBlock tone="loading" title="Loading Devices" description="Syncing heartbeat, version, and upload backlog." />}
+      {error && <StateBlock tone="error" title="设备加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>Retry</PrimaryButton>} />}
+      {loading && <StateBlock tone="loading" title="正在加载设备" description="正在同步心跳、版本和上传积压。" />}
       {!loading && devices.length === 0 && !error && (
-        <StateBlock title="No Devices" description="Open the setup guide, copy the backend address to the Android device to complete registration." action={<PrimaryButton href="/setup">Open Setup Guide</PrimaryButton>} />
+        <StateBlock title="暂无设备" description="打开配置向导，复制后端地址到 Android 设备以完成注册。" action={<PrimaryButton href="/setup">Open Setup Guide</PrimaryButton>} />
       )}
 
       {devices.length > 0 && (
@@ -67,23 +67,23 @@ export default function DeviceStatus() {
           {offline.length > 0 || backlog > 0 ? (
             <ActionPanel
               tone="warning"
-              title={offline.length > 0 ? `${offline.length} device(s) offline` : `${backlog} uploads backlogged`}
-              description={offline.length > 0 ? 'Next: check offline device details, network, backend address, foreground service.' : 'Next: check devices with backlog, wait for retransmission or check network.'}
+              title={offline.length > 0 ? `${offline.length} 台设备离线` : `${backlog} 条上传积压`}
+              description={offline.length > 0 ? '下一步：检查离线设备详情、网络、后端地址和前台服务。' : '下一步：检查积压设备，等待重传或排查网络。'}
               action={<PrimaryButton href={offline[0] ? `/devices/${offline[0].device_id}` : '/devices'}>排查</PrimaryButton>}
             />
           ) : (
             <ActionPanel
               tone="success"
-              title="All systems operational"
+              title="系统运行正常"
               description="Registered devices are reporting within the active heartbeat window."
-              action={<PrimaryButton href="/events">View Events</PrimaryButton>}
+              action={<PrimaryButton href="/events">查看事件</PrimaryButton>}
             />
           )}
 
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-4">
             <MetricTile label="设备总数" value={devices.length} icon="sensors" helper="已在网络注册" />
-            <MetricTile label="Online" value={onlineCount} tone={onlineCount > 0 ? 'success' : 'danger'} icon="wifi" helper="心跳活跃窗口" />
-            <MetricTile label="Offline" value={offline.length} tone={offline.length > 0 ? 'danger' : 'neutral'} icon="wifi_off" helper="最近无信号" />
+            <MetricTile label="在线" value={onlineCount} tone={onlineCount > 0 ? 'success' : 'danger'} icon="wifi" helper="心跳活跃窗口" />
+            <MetricTile label="离线" value={offline.length} tone={offline.length > 0 ? 'danger' : 'neutral'} icon="wifi_off" helper="最近无信号" />
             <MetricTile label="上传积压" value={backlog} tone={backlog > 0 ? 'warning' : 'neutral'} icon="cloud_upload" helper="待传输数据" />
           </div>
 
@@ -96,7 +96,7 @@ export default function DeviceStatus() {
               <Link to="/setup" className={`relative flex min-h-[220px] items-center justify-center overflow-hidden rounded-lg border border-outline-variant/20 bg-surface-container transition-colors hover:bg-surface-container-high ${devices.length === 1 ? 'min-h-[140px]' : ''}`}>
                 <div className="space-y-md text-center">
                   <span className="material-symbols-outlined text-4xl text-on-surface-variant">add_circle</span>
-                  <p className="text-label-xs uppercase tracking-widest text-on-surface-variant">Assign Source</p>
+                  <p className="text-label-xs uppercase tracking-widest text-on-surface-variant">分配来源</p>
                 </div>
               </Link>
             </div>
@@ -104,7 +104,7 @@ export default function DeviceStatus() {
             <div className="flex min-h-0 flex-col rounded-lg border border-outline-variant/10 bg-surface-container">
               <div className="flex items-center justify-between border-b border-outline-variant/10 p-md">
                 <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">事件日志</h3>
-              <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} ACTIVE</span>
+              <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} 活跃</span>
               </div>
               <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto p-sm">
                 {(recentEvents.length ? recentEvents : []).map((event) => (
@@ -115,11 +115,11 @@ export default function DeviceStatus() {
                     type="button"
                   >
                     <div className="mb-xs flex items-start justify-between gap-sm">
-                      <span className={`text-label-xs font-bold uppercase ${event.risk_level === 'high' ? 'text-secondary' : 'text-primary'}`}>{event.vehicle_class} violation</span>
+                      <span className={`text-label-xs font-bold uppercase ${event.risk_level === 'high' ? 'text-secondary' : 'text-primary'}`}>{event.vehicle_class} 违规</span>
                       <span className="shrink-0 text-[10px] text-on-surface-variant">{formatDateTime(event.start_time)}</span>
                     </div>
                     <p className="mb-xs truncate text-body-sm font-bold">{event.device_id}</p>
-                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)}s stop, confidence {Math.round(event.confidence * 100)}%, {event.review_status.replace('_', ' ')}.</p>
+                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)}秒占道，置信度 {Math.round(event.confidence * 100)}%, {event.review_status.replace('_', ' ')}.</p>
                     <div className="flex gap-xs">
                       <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开事件</span>
                       <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{event.risk_level ?? 'normal'}</span>
@@ -127,15 +127,15 @@ export default function DeviceStatus() {
                   </button>
                 ))}
                 {recentEvents.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-outline-variant/20 p-md text-body-sm text-on-surface-variant">No incidents in the current event window.</div>
+                  <div className="rounded-lg border border-dashed border-outline-variant/20 p-md text-body-sm text-on-surface-variant">当前时间窗口暂无事件。</div>
                 )}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
-            <SparklinePanel title={topHotspot ? `Traffic Flow: ${topHotspot.roi_id}` : 'Traffic Flow'} bars={trendBars} tone="primary" />
-            <SparklinePanel title="Violation Trend: Manual Review" bars={hotspotBars} tone="secondary" />
+            <SparklinePanel title={topHotspot ? `流量走势： ${topHotspot.roi_id}` : '流量走势'} bars={trendBars} tone="primary" />
+            <SparklinePanel title="违规趋势：人工复核" bars={hotspotBars} tone="secondary" />
             <div className="flex flex-col justify-center rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
               <p className="mb-sm text-label-xs uppercase tracking-widest text-on-surface-variant">全局状态</p>
               <div className="flex items-center gap-md">
@@ -191,7 +191,7 @@ function DeviceCameraCard({ device }: { device: DeviceInfo }) {
       <div className="absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center">
         <div className="rounded-lg bg-surface-container-lowest/50 px-3 py-2 text-center">
           <span className="material-symbols-outlined text-lg text-on-surface-variant">{device.is_online ? 'sensors' : 'wifi_off'}</span>
-          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? 'Heartbeat Active' : '信号丢失'}</div>
+          <div className="text-label-xs font-semibold text-on-surface">{device.is_online ? '心跳正常' : '信号丢失'}</div>
         </div>
       </div>
 

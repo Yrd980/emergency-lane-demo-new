@@ -150,11 +150,11 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-wrap gap-sm">
               {needsSetup ? (
-                <PrimaryButton href="/setup">Start Device Setup</PrimaryButton>
+                <PrimaryButton href="/setup">开始设备配置</PrimaryButton>
               ) : hasPending ? (
                 <PrimaryButton href="/review">处理下一条事件</PrimaryButton>
               ) : (
-                <PrimaryButton href="/health">View System Health</PrimaryButton>
+                <PrimaryButton href="/health">查看系统健康</PrimaryButton>
               )}
               <PrimaryButton tone="light" href={eventHref}>查看事件</PrimaryButton>
               <PrimaryButton tone="light" icon="download" disabled={exporting} onClick={exportReport}>
@@ -164,7 +164,7 @@ export default function Dashboard() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <StatusPill label="系统状态" value={system.data.status === 'ready' ? 'Ready' : '需关注'} onClick={() => navigate('/health')} />
+            <StatusPill label="系统状态" value={system.data.status === 'ready' ? '就绪' : '需关注'} onClick={() => navigate('/health')} />
             <StatusPill label="待复核" value={String(overview.data.pending_review_count)} onClick={() => navigate('/review')} />
             <StatusPill label="在线设备" value={`${system.data.devices.online}/${system.data.devices.total}`} onClick={() => navigate('/devices')} />
             <StatusPill label="最新事件" value={formatDateTime(system.data.events.latest_event_at)} onClick={() => navigate('/events')} />
@@ -173,11 +173,11 @@ export default function Dashboard() {
       </section>
 
       {needsSetup ? (
-        <ActionPanel tone="warning" title="No devices connected" description="Configure the Android app with the backend address and register a device before the system can enter long-running mode." action={<PrimaryButton href="/setup">Open Setup Guide</PrimaryButton>} />
+        <ActionPanel tone="warning" title="暂无设备接入" description="Configure the Android app with the backend address and register a device before the system can enter long-running mode." action={<PrimaryButton href="/setup">打开配置向导</PrimaryButton>} />
       ) : topIssue ? (
-        <ActionPanel tone={topIssue.severity === 'critical' ? 'danger' : 'warning'} title={topIssue.message} description={topIssue.next_action} action={<PrimaryButton href={issueHref}>Resolve</PrimaryButton>} />
+        <ActionPanel tone={topIssue.severity === 'critical' ? 'danger' : 'warning'} title={topIssue.message} description={topIssue.next_action} action={<PrimaryButton href={issueHref}>去处理</PrimaryButton>} />
       ) : (
-        <ActionPanel tone="success" title="System ready" description="Devices online, backend available. Waiting for events, or review existing ones." action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
+        <ActionPanel tone="success" title="系统已就绪" description="Devices online, backend available. Waiting for events, or review existing ones." action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-md">
@@ -217,10 +217,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon="warning" label="违规总数" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} pending review`} onClick={() => navigate(eventHref)} />
-        <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${summary.avg_response_minutes}m`} badge="Dispatch" helper="路段调度平均值" onClick={() => navigate('/devices')} />
+        <MetricCard icon="warning" label="违规总数" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} 待复核`} onClick={() => navigate(eventHref)} />
+        <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${summary.avg_response_minutes}m`} badge="调度" helper="路段调度平均值" onClick={() => navigate('/devices')} />
         <MetricCard icon="task_alt" tone="tertiary" label="已确认事件" value={summary.validated} badge={`${summary.false_alarms} false`} helper="复核确认结果" onClick={() => navigate('/events?status=validated')} />
-        <MetricCard icon="route" label="巡检任务" value={summary.assigned_tasks} badge="Active" helper={`${summary.completed_tasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
+        <MetricCard icon="route" label="巡检任务" value={summary.assigned_tasks} badge="活跃" helper={`${summary.completed_tasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
@@ -228,10 +228,10 @@ export default function Dashboard() {
           <div className="mb-lg flex items-center justify-between">
             <div>
               <h2 className="text-headline-md font-headline-md text-on-surface">违规趋势</h2>
-              <p className="text-label-xs text-on-surface-variant">Daily frequency, {periodLabel.toLowerCase()}</p>
+              <p className="text-label-xs text-on-surface-variant">日频趋势， {periodLabel.toLowerCase()}</p>
             </div>
             <div className="flex gap-sm">
-              <LegendDot label="Validated" tone="primary" />
+              <LegendDot label="已确认" tone="primary" />
               <LegendDot label="人工复核" tone="muted" />
             </div>
           </div>
