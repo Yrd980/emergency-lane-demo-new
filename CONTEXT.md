@@ -12,6 +12,10 @@ _Avoid_: violation, case, event
 The human judgment of whether a **Suspected Incident** is trustworthy enough to act on.
 _Avoid_: dispatch status, task status
 
+**Incident Review State**:
+The current review outcome for a **Suspected Incident**: pending, validated, false alarm, or closed.
+_Avoid_: assigned, accepted, completed
+
 **Response Task**:
 Operational work assigned after a **Suspected Incident** is considered actionable.
 _Avoid_: review status, incident status
@@ -43,6 +47,7 @@ _Avoid_: high risk
 ## Relationships
 
 - A **Suspected Incident** has exactly one current **Incident Review** state.
+- **Assigned**, **Accepted**, and **Completed** describe **Response Task** progress, not **Incident Review State**.
 - A **Suspected Incident** has zero or one **Evidence Sets**.
 - A **Validated Incident** may produce zero or one active **Response Tasks** when field action is needed.
 - A **Response Task** belongs to exactly one **Validated Incident**.
@@ -58,6 +63,7 @@ _Avoid_: high risk
 ## Flagged ambiguities
 
 - `review_status` has been used for both **Incident Review** and **Response Task** state. Resolved: these are distinct domain concepts.
+- `assigned`, `accepted`, and `completed` have appeared in old incident review data. Resolved: they are task states; legacy incident review data maps them back to **Validated Incident**.
 - "event", "case", and "violation" have all been used for the same core object. Resolved: the canonical domain term is **Suspected Incident** because the system has not made a legal judgment.
 - "complete evidence" could imply video is mandatory. Resolved: **Complete Evidence Set** requires before, peak, and after frames; video is optional supporting evidence.
 - `risk_level` has been used for review ordering. Resolved: the canonical domain term is **Review Priority** because the system is not assessing real-world public safety risk.

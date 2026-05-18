@@ -25,14 +25,14 @@ export default function Health() {
       <PageHeader
         eyebrow="系统健康"
         title="系统健康状态"
-        description="进入持续运行前，先确认系统可稳定运行，再处理事件复核。"
+        description="进入持续运行前，先确认系统可稳定运行，再处理疑似事件复核。"
         action={<PrimaryButton icon="refresh" onClick={refetch}>立即刷新</PrimaryButton>}
       />
 
       <ActionPanel
         tone={topIssue ? (topIssue.severity === 'critical' ? 'danger' : 'warning') : 'success'}
         title={topIssue ? topIssue.message : '暂无阻塞问题'}
-        description={topIssue ? topIssue.next_action : '下一步：返回工作台，或继续处理待复核事件。'}
+        description={topIssue ? topIssue.next_action : '下一步：返回工作台，或继续处理待复核疑似事件。'}
         action={<PrimaryButton href={nextStepHref}>{topIssue ? '处理下一步' : '返回工作台'}</PrimaryButton>}
       />
 
@@ -44,7 +44,7 @@ export default function Health() {
       </div>
 
       <div className="mt-lg grid gap-4 lg:grid-cols-2">
-        <HealthCard icon="dns" title="FastAPI 后端" status={data.backend.status} body="负责事件接入、复核状态和 Web 查询。" next="异常时检查 uvicorn stderr 输出。" />
+        <HealthCard icon="dns" title="FastAPI 后端" status={data.backend.status} body="负责疑似事件接入、复核状态和 Web 查询。" next="异常时检查 uvicorn stderr 输出。" />
         <HealthCard icon="database" title="SQLite 数据库" status={data.database.status} body={data.database.path} next="异常时检查 DB_PATH 与写入权限。" />
         <HealthCard icon="folder" title="证据目录" status={data.evidence.status} body={data.evidence.dir} next="持续运行前配置清理策略。" />
         <HealthCard

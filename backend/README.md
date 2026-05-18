@@ -45,3 +45,5 @@ Prefer these API and model terms in new work:
 - **Response Task** for field work assigned after validation.
 
 Avoid adding response task lifecycle states to incident review state. New backend changes should preserve the boundary recorded in `../docs/adr/0001-separate-incident-review-from-response-task.md`.
+
+Incident review persistence only admits `pending`, `validated`, `false_alarm`, and `closed`. Response task states live on `dispatch_tasks.status`; legacy incident review rows that contain task states are migrated to `validated` during database initialization.

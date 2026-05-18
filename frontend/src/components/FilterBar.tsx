@@ -31,9 +31,6 @@ export default function FilterBar({
             <option value="pending">待审核</option>
             <option value="validated">已确认</option>
             <option value="false_alarm">误报</option>
-            <option value="assigned">已派发</option>
-            <option value="accepted">已接单</option>
-            <option value="completed">已完成</option>
             <option value="closed">已关闭</option>
           </select>
         </label>

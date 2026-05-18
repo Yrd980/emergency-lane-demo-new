@@ -9,7 +9,7 @@ const steps = [
   { icon: 'dns', title: '启动 HP 后端', body: '运行 uvicorn，确保手机可访问 HP 局域网 IP 与 8000 端口。' },
   { icon: 'router', title: '配置 Android 地址', body: '在手机填写 http://<hp-ip>:8000，不要使用 localhost。' },
   { icon: 'smartphone', title: '注册设备与心跳', body: '连接成功后，设备会在“设备”页显示绿色在线状态。' },
-  { icon: 'science', title: '生成测试事件', body: 'ROI 标定后，使用手动事件验证上传、证据与复核闭环。' },
+  { icon: 'science', title: '生成测试疑似事件', body: 'ROI 标定后，使用手动上报验证上传、证据与复核闭环。' },
 ];
 
 export default function Setup() {
@@ -53,14 +53,14 @@ export default function Setup() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-body-sm font-semibold text-on-surface">接入进度</div>
-              <p className="mt-1 text-body-sm text-on-surface-variant">请先建立连通，再检查设备注册与事件流入。</p>
+              <p className="mt-1 text-body-sm text-on-surface-variant">请先建立连通，再检查设备注册与疑似事件流入。</p>
             </div>
             <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端就绪' : '等待后端'} />
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <ProgressChip label="设备已注册" ok={(data?.devices.total ?? 0) > 0} />
             <ProgressChip label="设备在线" ok={(data?.devices.online ?? 0) > 0} />
-            <ProgressChip label="事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
+            <ProgressChip label="疑似事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
             <ProgressChip label="可生成测试" ok={(data?.devices.total ?? 0) > 0} />
           </div>
         </SurfacePanel>
@@ -113,7 +113,7 @@ export default function Setup() {
           <ActionPanel
             tone="success"
             title="设备已连接"
-            description={`${data.devices.total} 台设备已注册, ${data.devices.online} 在线. 下一步：生成测试事件并进入复核工作台。`}
+            description={`${data.devices.total} 台设备已注册, ${data.devices.online} 在线. 下一步：生成测试疑似事件并进入复核工作台。`}
             action={<PrimaryButton href="/review">进入复核工作台</PrimaryButton>}
           />
         )}

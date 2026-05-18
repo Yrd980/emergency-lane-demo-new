@@ -39,3 +39,5 @@ Prefer these UI terms:
 - **Response Task** for field work assigned after validation.
 
 Avoid UI copy that implies legal adjudication, automatic enforcement, or confirmed violations.
+
+Incident log filters should expose only incident review states: pending, validated, false alarm, and closed. Assigned, accepted, completed, and cancelled belong to response task UI.

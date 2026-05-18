@@ -81,7 +81,7 @@ export default function EventDetail() {
   const { submit, submitting } = useReview(id!);
   const [assignees, setAssignees] = useState<{ username: string; display_name: string; role: string }[]>([]);
   const [selectedAssignee, setSelectedAssignee] = useState('');
-  const [assignmentNote, setAssignmentNote] = useState('从事件详情派发');
+  const [assignmentNote, setAssignmentNote] = useState('从疑似事件详情派发');
   const [assigning, setAssigning] = useState(false);
 
   const timeline = useMemo(() => (data ? buildTimeline(data) : []), [data]);
