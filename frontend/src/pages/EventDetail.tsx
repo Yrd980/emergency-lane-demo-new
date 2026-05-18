@@ -141,7 +141,7 @@ export default function EventDetail() {
   const gpsText = formatGpsLocation(data.gps_location);
   const images = data.evidence_files.filter((f) => f.mime_type.startsWith('image/'));
   const hasImages = images.length > 0;
-  const reviewPriority = data.review_priority ?? data.risk_level ?? 'normal';
+  const reviewPriority = data.review_priority ?? 'normal';
 
   const assignToPatrol = async () => {
     if (!selectedAssignee) {

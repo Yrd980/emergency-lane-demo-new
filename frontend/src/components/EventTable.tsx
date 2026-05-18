@@ -31,7 +31,7 @@ export default function EventTable({
   const selectableItems = items.filter((evt) => evt.review_status === 'pending');
   const selectedSet = new Set(selectedIds);
   const allSelected = selectableItems.length > 0 && selectableItems.every((evt) => selectedSet.has(evt.event_id));
-  const reviewPriority = (evt: EventListItem) => evt.review_priority ?? evt.risk_level ?? 'normal';
+  const reviewPriority = (evt: EventListItem) => evt.review_priority ?? 'normal';
 
   return (
     <div className="space-y-3">

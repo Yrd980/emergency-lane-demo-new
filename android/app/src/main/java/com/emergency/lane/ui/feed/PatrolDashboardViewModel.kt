@@ -120,7 +120,7 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
                             location = "设备：${api.deviceId}",
                             detectedAgo = api.status,
                             detectedTime = api.startTime.takeLast(8),
-                            reviewPriority = api.reviewPriority ?: api.riskLevel,
+                            reviewPriority = api.reviewPriority,
                             vehicleClass = api.vehicleClass,
                             confidence = api.confidence,
                             thumbnailUrl = absoluteUrl(baseUrl, api.thumbnailUrl)

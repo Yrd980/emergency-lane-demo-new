@@ -55,7 +55,6 @@ data class EventListItem(
     val confidence: Double,
     @SerialName("review_status") val reviewStatus: String,
     @SerialName("thumbnail_url") val thumbnailUrl: String = "",
-    @SerialName("risk_level") val riskLevel: String? = null,
     @SerialName("review_priority") val reviewPriority: String? = null,
     @SerialName("review_priority_reason") val reviewPriorityReason: String? = null
 )
@@ -101,8 +100,7 @@ data class TaskItem(
     val confidence: Double,
     @SerialName("start_time") val startTime: String,
     @SerialName("device_id") val deviceId: String,
-    @SerialName("risk_level") val riskLevel: String,
-    @SerialName("review_priority") val reviewPriority: String? = null,
+    @SerialName("review_priority") val reviewPriority: String,
     @SerialName("thumbnail_url") val thumbnailUrl: String = ""
 )
 

@@ -34,7 +34,7 @@ class TaskPublic(BaseModel):
     confidence: float
     start_time: str
     device_id: str
-    risk_level: str
+    review_priority: str
     thumbnail_url: str = ""
 
 

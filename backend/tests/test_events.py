@@ -94,7 +94,7 @@ def test_list_pending_events_prioritizes_high_risk(client):
     items = resp.json()["items"]
     ids = [item["event_id"] for item in items]
     assert ids.index("evt_priority_high") < ids.index("evt_priority_normal")
-    assert next(item for item in items if item["event_id"] == "evt_priority_high")["risk_level"] == "high"
+    assert next(item for item in items if item["event_id"] == "evt_priority_high")["review_priority"] == "high"
 
 
 def test_list_events_created_desc_sort_is_chronological(client):

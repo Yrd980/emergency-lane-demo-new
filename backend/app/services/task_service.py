@@ -8,12 +8,8 @@ def _now():
     return datetime.now(timezone(timedelta(hours=8))).isoformat()
 
 
-def _risk_level(row):
-    return "high" if row["confidence"] >= 0.85 or row["duration_seconds"] >= 10 else "normal"
-
-
 def _review_priority(row):
-    return _risk_level(row)
+    return "high" if row["confidence"] >= 0.85 or row["duration_seconds"] >= 10 else "normal"
 
 
 def _thumbnail_url(row):
@@ -39,7 +35,6 @@ def _serialize(row):
         "confidence": row["confidence"],
         "start_time": row["start_time"],
         "device_id": row["device_id"],
-        "risk_level": _risk_level(row),
         "review_priority": _review_priority(row),
         "thumbnail_url": _thumbnail_url(row),
     }

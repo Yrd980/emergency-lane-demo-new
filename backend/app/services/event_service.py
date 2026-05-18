@@ -107,7 +107,6 @@ def list_events(
             "confidence": r["confidence"],
             "review_status": r["review_status"],
             "thumbnail_url": thumbnail_url,
-            "risk_level": review_priority,
             "review_priority": review_priority,
             "review_priority_reason": priority_reason,
         })
@@ -194,7 +193,6 @@ def get_event(event_id: str):
             }
             for history in history_rows
         ],
-        "risk_level": review_priority,
         "review_priority": review_priority,
         "review_priority_reason": "高置信度或长时间停留" if review_priority == "high" else "按时间顺序处理",
         "previous_event_id": prev_row["event_id"] if prev_row else None,

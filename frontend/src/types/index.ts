@@ -72,7 +72,6 @@ export interface EventDetail {
   evidence_files: EvidenceFile[];
   review_history: ReviewHistoryItem[];
   evidence_summary?: EvidenceSummary;
-  risk_level?: ReviewPriority;
   review_priority?: ReviewPriority;
   review_priority_reason?: string;
   previous_event_id?: string | null;
@@ -98,7 +97,6 @@ export interface EventListItem {
   confidence: number;
   review_status: ReviewStatus;
   thumbnail_url: string;
-  risk_level?: ReviewPriority;
   review_priority?: ReviewPriority;
   review_priority_reason?: string;
 }
@@ -133,8 +131,7 @@ export interface TaskItem {
   confidence: number;
   start_time: string;
   device_id: string;
-  risk_level: ReviewPriority;
-  review_priority?: ReviewPriority;
+  review_priority: ReviewPriority;
   thumbnail_url: string;
 }
 

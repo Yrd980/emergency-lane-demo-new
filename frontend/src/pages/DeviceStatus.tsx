@@ -40,7 +40,7 @@ export default function DeviceStatus() {
   const topHotspot = operations?.hotspots[0];
   const trendBars = normalizeBars((operations?.trend ?? []).slice(-8).map((point) => point.total));
   const hotspotBars = normalizeBars((operations?.trend ?? []).slice(-8).map((point) => Math.max(0, point.total - point.validated)));
-  const criticalCount = recentEvents.filter((event) => event.risk_level === 'high' || event.review_status === 'pending').length;
+  const activePriorityCount = recentEvents.filter((event) => event.review_priority === 'high' || event.review_status === 'pending').length;
   const operatorsOnDuty = Math.max(onlineCount, operations?.operators.filter((operator) => operator.tasks > 0).length ?? 0);
   const operatorInitials = useMemo(
     () => (operations?.operators ?? []).slice(0, 3).map((operator) => initials(operator.display_name)),
@@ -103,26 +103,26 @@ export default function DeviceStatus() {
 
             <div className="flex min-h-0 flex-col rounded-lg border border-outline-variant/10 bg-surface-container">
               <div className="flex items-center justify-between border-b border-outline-variant/10 p-md">
-                <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">事件日志</h3>
-              <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{criticalCount} 活跃</span>
+                <h3 className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">疑似事件日志</h3>
+              <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{activePriorityCount} 活跃</span>
               </div>
               <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto p-sm">
                 {(recentEvents.length ? recentEvents : []).map((event) => (
                   <button
                     key={event.event_id}
-                    className={`w-full rounded-lg border p-md text-left transition-all hover:bg-surface-container-high ${event.risk_level === 'high' ? 'border-outline-variant/20 bg-surface-container-high' : 'border-outline-variant/10'}`}
+                    className={`w-full rounded-lg border p-md text-left transition-all hover:bg-surface-container-high ${event.review_priority === 'high' ? 'border-outline-variant/20 bg-surface-container-high' : 'border-outline-variant/10'}`}
                     onClick={() => navigate(`/events/${event.event_id}`)}
                     type="button"
                   >
                     <div className="mb-xs flex items-start justify-between gap-sm">
-                      <span className={`text-label-xs font-bold uppercase ${event.risk_level === 'high' ? 'text-secondary' : 'text-primary'}`}>{event.vehicle_class} 违规</span>
+                      <span className={`text-label-xs font-bold uppercase ${event.review_priority === 'high' ? 'text-secondary' : 'text-primary'}`}>{event.vehicle_class} 疑似占用</span>
                       <span className="shrink-0 text-[10px] text-on-surface-variant">{formatDateTime(event.start_time)}</span>
                     </div>
                     <p className="mb-xs truncate text-body-sm font-bold">{event.device_id}</p>
                     <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)} 秒占道，置信度 {Math.round(event.confidence * 100)}%，{formatReviewStatus(event.review_status)}。</p>
                     <div className="flex gap-xs">
-                      <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开事件</span>
-                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{formatRiskLevel(event.risk_level)}</span>
+                      <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开详情</span>
+                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{formatReviewPriority(event.review_priority)}</span>
                     </div>
                   </button>
                 ))}
@@ -253,8 +253,7 @@ function formatReviewStatus(status: string) {
   return labels[status] ?? status;
 }
 
-function formatRiskLevel(status?: string | null) {
-  if (status === 'high') return '高风险';
-  if (status === 'critical') return '严重';
-  return '正常';
+function formatReviewPriority(priority?: string | null) {
+  if (priority === 'high') return '高优先级';
+  return '普通优先级';
 }
