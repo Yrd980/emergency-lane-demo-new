@@ -1,6 +1,6 @@
 ---
 name: Aegis Traffic
-description: Local emergency-lane detection workbench for setup, device health, evidence review, dispatch tasks, and Android patrol flow.
+description: Local emergency-lane detection workbench for setup, device health, evidence review, response tasks, and Android patrol flow.
 colors:
   background: "#13131b"
   surface: "#13131b"
@@ -86,11 +86,11 @@ spacing:
 
 **Creative North Star: Precision Under Pressure**
 
-Aegis Traffic is a dark-mode-first local operations product for emergency-lane detection. The interface should feel precise, vigilant, and controlled: setup status, device health, evidence, review queues, and dispatch tasks dominate; visual treatment supports judgment without turning the product into a dramatic sci-fi dashboard.
+Aegis Traffic is a dark-mode-first local operations product for emergency-lane detection. The interface should feel precise, vigilant, and controlled: setup status, device health, evidence sets, review queues, and response tasks dominate; visual treatment supports judgment without turning the product into a dramatic sci-fi dashboard.
 
-The physical scene is an operator running a local HP backend and web console during a demo or long shift, while Android devices capture detections and patrol users handle assigned tasks. That scene justifies the dark base, high-contrast text, compact controls, and sparse use of high-intensity color.
+The physical scene is an operator running a local backend and web console during a demo or long shift, while Android devices capture detections and patrol users handle assigned response tasks. That scene justifies the dark base, high-contrast text, compact controls, and sparse use of high-intensity color.
 
-The visual language is minimalist-futuristic but functional. Deep violet-tinted charcoal surfaces create a quiet control-room canvas. Neon indigo marks active systems, primary actions, selected navigation, focus, and healthy live states. Safety orange is reserved for warnings, high-risk events, backlog, and intervention.
+The visual language is minimalist-futuristic but functional. Deep violet-tinted charcoal surfaces create a quiet control-room canvas. Neon indigo marks active systems, primary actions, selected navigation, focus, and healthy live states. Safety orange is reserved for review warnings, high-priority suspected incidents, backlog, and intervention.
 
 ## 2. Colors
 
@@ -103,7 +103,7 @@ Use a restrained product palette: tinted dark neutrals carry the UI, indigo guid
 
 ### Alert And Severity
 
-- **Safety Orange** (`#ffb5a0`, `#d73b00`): High-risk events, review warnings, offline/backlog banners, critical badges, and urgent evidence metadata.
+- **Safety Orange** (`#ffb5a0`, `#d73b00`): High-priority suspected incidents, review warnings, offline/backlog banners, critical badges, and urgent evidence metadata.
 - **Tertiary Amber** (`#ffb786`, `#ae5600`): Secondary urgency such as urgent but non-critical patrol tasks.
 - **Error Red** (`#ffb4ab`, `#93000a`): False alarm, destructive actions, failed validation, and system errors.
 
@@ -116,43 +116,43 @@ Use a restrained product palette: tinted dark neutrals carry the UI, indigo guid
 
 ### Rules
 
-**The Alert Color Rule.** Orange is not decorative. Use it only when the user needs to notice risk, severity, violation, or dispatch urgency.
+**The Alert Color Rule.** Orange is not decorative. Use it only when the user needs to notice review priority, severity, backlog, failure, or dispatch urgency.
 
 **The Dark Surface Rule.** Never use pure black or pure white. Every neutral should remain softly tinted toward the product's violet-charcoal base.
 
-**The Redundancy Rule.** Pair severity color with text, icon, placement, and shape. Color alone is never enough.
+**The Redundancy Rule.** Pair severity and priority color with text, icon, placement, and shape. Color alone is never enough.
 
 ## 3. Typography
 
 Use **Inter** for interface text and **Space Grotesk** for technical data. The current web theme loads these as Tailwind v4 tokens, while Android mirrors the same color system in Compose. The type should feel engineered and legible rather than editorial.
 
 - **Display Large:** Dashboard metrics and mobile summary numbers only.
-- **Headline Medium:** Page titles, section headings, incident IDs, and major panel titles.
-- **Body Small:** Incident descriptions, card text, helper copy, and navigation labels.
+- **Headline Medium:** Page titles, section headings, suspected incident IDs, and major panel titles.
+- **Body Small:** Suspected incident descriptions, card text, helper copy, and navigation labels.
 - **Label XS:** Uppercase metric labels, chips, camera tags, and compact metadata.
-- **Mono Data:** Plate numbers, camera IDs, timestamps, coordinates, percentages, durations, and case IDs.
+- **Mono Data:** Plate numbers, camera IDs, timestamps, coordinates, percentages, durations, and suspected incident IDs.
 
 Use the current token tracking: display `-0.02em`, headline `-0.01em`, body and mono `0em`, labels `0.02em`. Do not scale fonts with viewport width.
 
 ## 4. Layout
 
-Desktop uses a persistent left sidebar, a top control bar, a dense main work area, and context-specific panels. Mobile uses a fixed top bar, task-summary cards, a compact map/status preview, incident cards, and a bottom navigation dock where available.
+Desktop uses a persistent left sidebar, a top control bar, a dense main work area, and context-specific panels. Mobile uses a fixed top bar, task-summary cards, a compact map/status preview, suspected incident cards, and a bottom navigation dock where available.
 
 ### Desktop Patterns
 
 - **Dashboard:** Local operations loop hero, system status pills, setup/review/health next action, report export, operational filters, metrics, trends, hotspots, time distribution, and operator performance.
-- **Review Queue:** Pending-event queue, bulk review controls, queue metrics, and a primary "Process Next" path.
-- **Incident Log:** Searchable/filterable event history with status, confidence, thumbnail, pagination, and review entry points.
+- **Review Queue:** Pending suspected incident queue, bulk review controls, queue metrics, and a primary "Process Next" path.
+- **Incident Log:** Searchable/filterable suspected incident history with review state, confidence, thumbnail, pagination, and review entry points.
 - **Incident Detail:** Evidence viewer and snapshots on the left, detection metadata, timeline, location, review history, and review/assignment actions on the right.
 - **Devices / Live Feed:** Device cards, online/offline state, upload backlog, thermal/fps/battery metrics, and assign-source/setup entry.
-- **Health:** Backend, database, evidence directory, devices, and event readiness with next actions.
+- **Health:** Backend, database, evidence directory, devices, and suspected incident readiness with next actions.
 - **Settings:** Review policy, online detection window, evidence retention, and device access settings, including read-only role behavior.
 - **Setup:** Backend address copying, onboarding steps, and observable readiness checks for Android registration.
 
 ### Mobile Patterns
 
-- **Android Detection:** Camera, ROI calibration, event queue, backend address settings, and upload behavior.
-- **Android Patrol Task Center:** Active task count, today's cases, nearest/task context, incident cards, accept/complete task actions, and field-friendly touch targets.
+- **Android Detection:** Camera, ROI calibration, suspected incident queue, backend address settings, and upload behavior.
+- **Android Patrol Task Center:** Active task count, today's validated incidents, nearest/task context, response task cards, accept/complete task actions, and field-friendly touch targets.
 
 ### Spacing
 
@@ -160,7 +160,7 @@ Use the 4px baseline grid. Page margins are 24px on desktop and should compress 
 
 ## 5. Elevation
 
-Depth comes from tonal layering, borders, and evidence imagery, not heavy shadows. Use 1px borders with low-opacity outline colors for most panels. Glass or blur treatment is allowed for overlays on top of video, camera feeds, maps, or current implementation menus where preserving context matters.
+Depth comes from tonal layering, borders, and evidence imagery, not heavy shadows. Use 1px borders with low-opacity outline colors for most panels. Blur treatment is allowed for overlays on top of video, camera feeds, maps, or current implementation menus where preserving context matters.
 
 Avoid decorative glass panels in ordinary cards. Avoid large ambient glows except small status dots or live indicators.
 
@@ -172,15 +172,15 @@ Sidebar items use icon plus label. Active items currently combine indigo text, a
 
 ### Buttons
 
-Primary buttons use indigo or primary-container fills with high-contrast text and a minimum comfortable hit area. Core actions should be verb-led: "Start Device Setup", "Process Next", "Dispatch", "Validate Violation", "Assign to Patrol", "Accept Task", "Complete Task", "Copy Backend Address", "Retry". Secondary buttons use tonal fills or 1px borders. Destructive or dismissive actions must stay visually secondary unless they are the confirmed intent.
+Primary buttons use indigo or primary-container fills with high-contrast text and a minimum comfortable hit area. Core actions should be verb-led: "Start Device Setup", "Process Next", "Dispatch", "Validate Incident", "Assign to Patrol", "Accept Task", "Complete Task", "Copy Backend Address", "Retry". Secondary buttons use tonal fills or 1px borders. Destructive or dismissive actions must stay visually secondary unless they are the confirmed intent.
 
 ### Status Chips
 
-Use compact rounded chips for `Network Active`, `LIVE`, `pending`, `confirmed`, `rejected`, `validated`, `false_alarm`, `assigned`, `accepted`, `completed`, `online`, `offline`, `high`, and `normal`. Chips should include text and, where helpful, a small icon or dot.
+Use compact rounded chips for `Network Active`, `LIVE`, `pending`, `validated`, `false_alarm`, `assigned`, `accepted`, `completed`, `online`, `offline`, `high_priority`, and `normal_priority`. Chips should include text and, where helpful, a small icon or dot.
 
 ### Evidence Cards
 
-Camera cards and incident evidence tiles are media-first when real media exists. Device feed placeholders may use scanline/grid patterns only to communicate unavailable or simulated feed state. Use overlays only for camera ID, live/offline state, detected state, location, metrics, and open controls. Preserve image clarity; do not bury evidence under decorative gradients beyond legibility overlays.
+Camera cards and suspected incident evidence tiles are media-first when real media exists. Device feed placeholders may use scanline/grid patterns only to communicate unavailable or simulated feed state. Use overlays only for camera ID, live/offline state, detected state, location, metrics, and open controls. Preserve image clarity; do not bury evidence under decorative gradients beyond legibility overlays.
 
 ### AI Recognition Panel
 
@@ -188,11 +188,11 @@ Recognition data should be grouped in a compact grid: track or plate identifier,
 
 ### Incident Timeline
 
-Timeline entries use time first, action second. Detection, alert, review, assignment, acceptance, completion, and rejection steps should use consistent markers. Completed steps use indigo markers, warning steps use orange, rejected/failed steps use error, and pending steps use muted markers. Include exact times for auditability.
+Timeline entries use time first, action second. Detection, alert, incident review, assignment, acceptance, completion, and rejection steps should use consistent markers. Completed steps use indigo markers, warning steps use orange, rejected/failed steps use error, and pending steps use muted markers. Include exact times for auditability.
 
 ### Analytics
 
-Charts should be subdued and readable. Use indigo for system trends and validated/confirmed data, orange/red only for violations, backlog, or risk. Heatmaps may use indigo intensity ramps, but legends must be visible and labels compact. Dashboard charts should remain linked to the real backend `OperationsStats` shape rather than decorative telemetry.
+Charts should be subdued and readable. Use indigo for system trends and validated incident data, orange/red only for high-priority review work, backlog, or failure. Heatmaps may use indigo intensity ramps, but legends must be visible and labels compact. Dashboard charts should remain linked to the real backend `OperationsStats` shape rather than decorative telemetry.
 
 ## 7. Motion
 
@@ -206,7 +206,7 @@ Recommended easing: `cubic-bezier(0.22, 1, 0.36, 1)`.
 
 - Do make evidence, location, confidence, and next action visible together.
 - Do make local setup, health, device state, upload backlog, and evidence completeness visible when they affect trust.
-- Do reserve orange for real urgency.
+- Do reserve orange for real urgency or high review priority.
 - Do use indigo for orientation, primary action, and healthy live states.
 - Do keep desktop dense but scannable.
 - Do keep mobile cards large enough for field use.
@@ -219,8 +219,8 @@ Recommended easing: `cubic-bezier(0.22, 1, 0.36, 1)`.
 - Don't create marketing heroes or explanatory landing-page sections.
 - Don't use decorative cyberpunk glow, fake telemetry, or ornamental maps.
 - Don't use gradient text.
-- Don't rely on color alone for severity.
+- Don't rely on color alone for severity or review priority.
 - Don't stack cards inside cards when a split panel or list would be clearer.
-- Don't blur or darken evidence so much that the incident cannot be inspected.
+- Don't blur or darken evidence so much that the suspected incident cannot be inspected.
 - Don't imply automatic legal enforcement beyond validation, dispatch, and review workflow.
 - Don't imply cloud multi-tenancy, enforced device tokens, or external law-enforcement integration unless implemented.
