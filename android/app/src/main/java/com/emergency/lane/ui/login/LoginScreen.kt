@@ -76,17 +76,17 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
     }
 
     fun validateUrl(url: String): String? {
-        if (url.isBlank()) return "Enter backend address"
+        if (url.isBlank()) return "请输入后端地址"
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            return "Address must start with http:// or https://"
+            return "地址必须以 http:// 或 https:// 开头"
         }
         return null
     }
 
     fun validateForm(): String? {
         validateUrl(baseUrl)?.let { return it }
-        if (username.isBlank()) return "Enter backend account"
-        if (password.isBlank()) return "Enter password"
+        if (username.isBlank()) return "请输入后端账号"
+        if (password.isBlank()) return "请输入密码"
         return null
     }
 
@@ -109,7 +109,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
             letterSpacing = 0.sp
         )
         Text(
-            text = "Enter the patrol workspace for assigned tasks and camera capture.",
+            text = "进入巡查工作区，处理派发任务并执行相机采集。",
             fontSize = 13.sp,
             color = AegisOnSurfaceVariant
         )
@@ -165,7 +165,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
         ) {
             Icon(Icons.Default.PhoneAndroid, contentDescription = null, tint = AegisOnSurfaceVariant)
             Text(
-                text = deviceName.ifBlank { "Android patrol device" },
+                text = deviceName.ifBlank { "Android 巡查设备" },
                 color = AegisOnSurfaceVariant,
                 fontSize = 12.sp
             )
@@ -209,7 +209,7 @@ fun LoginScreen(viewModel: SettingsViewModel = viewModel()) {
         }
 
         Text(
-            text = "App Version: ${BuildConfig.VERSION_NAME}",
+            text = "应用版本：${BuildConfig.VERSION_NAME}",
             color = if (developerMode) AegisPrimary else AegisOnSurfaceVariant,
             fontSize = 12.sp,
             modifier = Modifier.clickable {

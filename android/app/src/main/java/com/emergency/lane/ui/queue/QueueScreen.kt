@@ -50,10 +50,10 @@ import com.emergency.lane.ui.theme.AegisPrimaryContainer
 fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
     val visibleStats = listOf(
-        "queued" to (uiState.stats["queued"] ?: 0),
-        "uploading" to (uiState.stats["uploading"] ?: 0),
-        "failed" to (uiState.stats["failed"] ?: 0),
-        "uploaded" to (uiState.stats["uploaded"] ?: 0)
+        "待上传" to (uiState.stats["queued"] ?: 0),
+        "上传中" to (uiState.stats["uploading"] ?: 0),
+        "失败" to (uiState.stats["failed"] ?: 0),
+        "已上传" to (uiState.stats["uploaded"] ?: 0)
     )
     val pendingCount = (uiState.stats["queued"] ?: 0) + (uiState.stats["failed"] ?: 0)
 
@@ -127,7 +127,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 )
                 if (uiState.uploading) {
                     Spacer(modifier = Modifier.size(8.dp))
-                    Text("Uploading pending evidence...", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+                    Text("正在上传待处理证据...", color = AegisOnSurfaceVariant, fontSize = 12.sp)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -142,7 +142,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                     .padding(12.dp)
             ) {
                 Text(
-                    text = uiState.error ?: "Queue load failed",
+                    text = uiState.error ?: "队列加载失败",
                     color = AegisError,
                     fontSize = 12.sp
                 )
@@ -184,7 +184,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    if (uiState.uploading) "上传中..." else "Upload Pending",
+                    if (uiState.uploading) "上传中..." else "上传待处理项",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -217,7 +217,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("暂无待上传项", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                    Text("New detections will appear here after capture.", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+                    Text("采集完成后，新检测会显示在这里。", color = AegisOnSurfaceVariant, fontSize = 12.sp)
                     Button(
                         onClick = { navController.navigate("camera") },
                         colors = ButtonDefaults.buttonColors(
@@ -254,13 +254,13 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                                 color = AegisOnSurface
                             )
                             Text(
-                                text = "Status: ${event.uploadState}  |  Attempts: ${event.uploadAttempts}  |  Class: ${event.vehicleClass}",
+                                text = "状态：${formatUploadState(event.uploadState)}  |  尝试：${event.uploadAttempts}  |  类型：${formatVehicleClass(event.vehicleClass)}",
                                 fontSize = 12.sp,
                                 color = AegisOnSurfaceVariant
                             )
                             if (event.lastError.isNotBlank()) {
                                 Text(
-                                    text = "Error: ${event.lastError}",
+                                    text = "错误：${event.lastError}",
                                     fontSize = 12.sp,
                                     color = AegisError
                                 )
@@ -276,7 +276,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                                 ) {
                                     Text(
                                         when {
-                                            uiState.uploading -> "Uploading"
+                                            uiState.uploading -> "上传中"
                                             event.uploadState == "UPLOADED" -> "已上传"
                                             else -> "上传"
                                         },
@@ -356,9 +356,29 @@ private fun evidenceOrder(type: String): Int {
 
 private fun evidenceLabel(type: String): String {
     return when (type) {
-        "frame_peak" -> "Peak"
-        "frame_before" -> "Before"
-        "frame_after" -> "After"
-        else -> "Photo"
+        "frame_peak" -> "峰值"
+        "frame_before" -> "进入前"
+        "frame_after" -> "离开后"
+        else -> "照片"
+    }
+}
+
+private fun formatUploadState(state: String): String {
+    return when (state) {
+        "QUEUED" -> "待上传"
+        "UPLOADING" -> "上传中"
+        "FAILED" -> "失败"
+        "UPLOADED" -> "已上传"
+        else -> state
+    }
+}
+
+private fun formatVehicleClass(value: String): String {
+    return when (value.lowercase()) {
+        "car" -> "轿车"
+        "truck" -> "货车"
+        "bus" -> "客车"
+        "motorcycle" -> "摩托车"
+        else -> value
     }
 }

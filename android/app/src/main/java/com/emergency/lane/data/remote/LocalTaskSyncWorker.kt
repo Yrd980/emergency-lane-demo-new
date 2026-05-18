@@ -82,8 +82,8 @@ class LocalTaskSyncWorker(
 
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("New patrol task")
-            .setContentText("${task.vehicleClass.replaceFirstChar { it.uppercase() }} task from ${task.deviceId}")
+            .setContentTitle("新的巡查任务")
+            .setContentText("${formatVehicleClass(task.vehicleClass)}任务来自 ${task.deviceId}")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -111,5 +111,15 @@ class LocalTaskSyncWorker(
             WorkManager.getInstance(context)
                 .enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.REPLACE, request)
         }
+    }
+}
+
+private fun formatVehicleClass(value: String): String {
+    return when (value.lowercase()) {
+        "car" -> "轿车"
+        "truck" -> "货车"
+        "bus" -> "客车"
+        "motorcycle" -> "摩托车"
+        else -> value
     }
 }

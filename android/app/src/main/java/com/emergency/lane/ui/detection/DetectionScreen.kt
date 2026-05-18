@@ -72,7 +72,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) {
-            viewModel.onCameraError("Camera permission denied. Enable in system settings.")
+            viewModel.onCameraError("相机权限被拒绝，请在系统设置中开启。")
         }
     }
 
@@ -197,15 +197,15 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("未配置 ROI", fontWeight = FontWeight.SemiBold, color = AegisOnSurface)
-                        Text("Auto detection requires ROI calibration", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                        Text("自动检测需要先完成 ROI 标定", fontSize = 14.sp, color = AegisOnSurfaceVariant)
                     }
                 }
             }
         } else if (!uiState.roiConfigured) {
-            Text("Complete ROI calibration first", color = AegisError, modifier = Modifier.padding(horizontal = 8.dp))
+            Text("请先完成 ROI 标定", color = AegisError, modifier = Modifier.padding(horizontal = 8.dp))
         }
         if (!uiState.hpConfigured) {
-            Text("Configure HP address first", color = AegisError, modifier = Modifier.padding(horizontal = 8.dp))
+            Text("请先配置 HP 后端地址", color = AegisError, modifier = Modifier.padding(horizontal = 8.dp))
         }
 
         // Model status
@@ -214,10 +214,10 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
             is ModelLoadStatus.Loading ->
                 Text("模型加载中...", modifier = Modifier.padding(horizontal = 8.dp), color = AegisOnSurfaceVariant)
             is ModelLoadStatus.Ready -> {
-                val fpsText = if (uiState.fps > 0) " | FPS: ${"%.1f".format(uiState.fps)}" else ""
-                val infText = if (uiState.inferenceMs > 0) " | Inference: ${uiState.inferenceMs}ms" else ""
+                val fpsText = if (uiState.fps > 0) " | 帧率：${"%.1f".format(uiState.fps)}" else ""
+                val infText = if (uiState.inferenceMs > 0) " | 推理：${uiState.inferenceMs}ms" else ""
                 Text(
-                    "Model: ${status.version}$fpsText$infText",
+                    "模型：${status.version}$fpsText$infText",
                     color = AegisPrimary,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
@@ -235,7 +235,7 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                         Text("模型加载失败", fontWeight = FontWeight.SemiBold, color = AegisError)
                         Text(status.error, fontSize = 14.sp, color = AegisOnSurfaceVariant)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Manual event reporting remains available.", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                        Text("仍可使用手动事件上报。", fontSize = 14.sp, color = AegisOnSurfaceVariant)
                     }
                 }
         }
@@ -304,13 +304,13 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
         // Status bar
         Row(modifier = Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             if (uiState.lastEventId != null) {
-                Text("Last: ${uiState.lastEventId}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+                Text("最近：${uiState.lastEventId}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
             }
             if (uiState.pendingUploadCount > 0) {
-                Text("Pending: ${uiState.pendingUploadCount}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+                Text("待上传：${uiState.pendingUploadCount}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
             }
             if (uiState.isDetecting) {
-                Text("Detecting...", color = AegisPrimary, fontSize = 12.sp)
+                Text("检测中...", color = AegisPrimary, fontSize = 12.sp)
             }
         }
     }
@@ -331,17 +331,17 @@ private fun DetectionGuide(uiState: DetectionUiState) {
             Text("检测", color = AegisOnSurface, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 text = when {
-                    !uiState.hpConfigured -> "Set backend URL first, then return here."
-                    !uiState.roiConfigured -> "Set the detection region from Account before starting camera detection."
-                    uiState.isDetecting -> "Camera is running. Vehicle boxes are tracked and uploaded after the ROI dwell rule is met."
-                    uiState.modelStatus is ModelLoadStatus.Ready -> "Model is loaded. Start detection or create one manual upload."
-                    else -> "Start Detection opens the camera and loads the local vehicle model."
+                    !uiState.hpConfigured -> "请先设置后端地址，再返回此处。"
+                    !uiState.roiConfigured -> "开始相机检测前，请先在账号页设置检测区域。"
+                    uiState.isDetecting -> "相机正在运行。车辆框会被持续跟踪，满足 ROI 停留规则后上传。"
+                    uiState.modelStatus is ModelLoadStatus.Ready -> "模型已加载。可开始检测，或创建一次手动上传。"
+                    else -> "开始检测会打开相机并加载本地车辆模型。"
                 },
                 color = AegisOnSurfaceVariant,
                 fontSize = 12.sp
             )
             Text(
-                "Rule: vehicle confidence >= 0.5, inside ROI for 10s, then before/peak/after images are queued. Manual upload also needs the camera running.",
+                "规则：车辆置信度 >= 0.5，并在 ROI 内停留 10 秒后，进入前、峰值、离开后图片会进入队列。手动上传同样需要相机运行。",
                 color = AegisOnSurfaceVariant,
                 fontSize = 12.sp
             )
