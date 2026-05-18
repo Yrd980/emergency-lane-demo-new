@@ -31,13 +31,14 @@ export default function EventTable({
   const selectableItems = items.filter((evt) => evt.review_status === 'pending');
   const selectedSet = new Set(selectedIds);
   const allSelected = selectableItems.length > 0 && selectableItems.every((evt) => selectedSet.has(evt.event_id));
+  const reviewPriority = (evt: EventListItem) => evt.review_priority ?? evt.risk_level ?? 'normal';
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 text-body-sm text-on-surface-variant">
-        <span>共 {total} 条事件</span>
+        <span>共 {total} 条疑似事件</span>
         <span className="hidden sm:inline">
-          {mode === 'review' ? '高优先级置顶，下一步：选择事件或打开详情复核' : '按事件时间追溯，下一步：打开详情查看证据和处理记录'}
+          {mode === 'review' ? '高优先级置顶，下一步：选择疑似事件或打开详情复核' : '按时间追溯，下一步：打开详情查看证据和处理记录'}
         </span>
       </div>
 
@@ -58,7 +59,7 @@ export default function EventTable({
               )}
               <th className="p-3">证据</th>
               <th className="p-3">优先级</th>
-              <th className="p-3">事件</th>
+              <th className="p-3">疑似事件</th>
               <th className="p-3">设备</th>
               <th className="p-3">停留</th>
               <th className="p-3">置信度</th>
@@ -77,13 +78,13 @@ export default function EventTable({
                       checked={selectedSet.has(evt.event_id)}
                       disabled={evt.review_status !== 'pending'}
                       onChange={() => onToggleSelect(evt.event_id)}
-                      aria-label={`选择事件 ${evt.event_id}`}
+                      aria-label={`选择疑似事件 ${evt.event_id}`}
                     />
                   </td>
                 )}
                 <td className="p-3">
                   {evt.thumbnail_url ? (
-                    <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-14 w-24 rounded-lg object-cover ring-1 ring-outline-variant" />
+                    <img src={evt.thumbnail_url} alt="疑似事件证据缩略图" className="h-14 w-24 rounded-lg object-cover ring-1 ring-outline-variant" />
                   ) : (
                     <div className="flex h-14 w-24 items-center justify-center rounded-lg bg-surface-container-low text-label-xs text-on-surface-variant">
                       待上传
@@ -92,7 +93,7 @@ export default function EventTable({
                 </td>
                 <td className="p-3">
                   <div className="space-y-1">
-                    <StatusBadge status={evt.risk_level ?? 'normal'} />
+                    <StatusBadge status={reviewPriority(evt)} />
                     <div className="max-w-28 text-label-xs leading-5 text-on-surface-variant">{evt.review_priority_reason ?? '按时间顺序处理'}</div>
                   </div>
                 </td>
@@ -132,17 +133,17 @@ export default function EventTable({
                     checked={selectedSet.has(evt.event_id)}
                     disabled={evt.review_status !== 'pending'}
                     onChange={() => onToggleSelect(evt.event_id)}
-                    aria-label={`选择事件 ${evt.event_id}`}
+                    aria-label={`选择疑似事件 ${evt.event_id}`}
                   />
                 )}
-                <StatusBadge status={evt.risk_level ?? 'normal'} />
+                <StatusBadge status={reviewPriority(evt)} />
               </div>
               <StatusBadge status={evt.review_status} />
             </div>
             <button onClick={() => navigate(detailHref(evt.event_id))} className="w-full rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <div className="flex gap-3">
               {evt.thumbnail_url ? (
-                <img src={evt.thumbnail_url} alt="事件证据缩略图" className="h-20 w-28 rounded-lg object-cover ring-1 ring-outline-variant" />
+                <img src={evt.thumbnail_url} alt="疑似事件证据缩略图" className="h-20 w-28 rounded-lg object-cover ring-1 ring-outline-variant" />
               ) : (
                 <div className="flex h-20 w-28 items-center justify-center rounded-lg bg-surface-container-low text-label-xs text-on-surface-variant">待上传</div>
               )}

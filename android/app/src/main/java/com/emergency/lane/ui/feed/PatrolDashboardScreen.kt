@@ -109,7 +109,7 @@ fun PatrolDashboardScreen(
                 StatusCard(
                     modifier = Modifier.weight(1f),
                     label = "已派发",
-                    value = state.todayCaseCount.toString(),
+                    value = state.assignedTaskCount.toString(),
                     valueColor = AegisOnSurface
                 )
             }
@@ -185,7 +185,7 @@ fun PatrolDashboardScreen(
         if (state.incidents.isNotEmpty()) {
             item {
                 Text(
-                    text = "已派发案件",
+                    text = "已派发处置任务",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AegisOnSurface
@@ -303,9 +303,9 @@ private fun IncidentCard(
     onOpenEvidence: () -> Unit,
     onNavigate: () -> Unit
 ) {
-    val isHighRisk = incident.riskLevel == "high" || incident.riskLevel == "critical"
-    val badgeColor = if (isHighRisk) AegisSecondaryContainer else AegisSurfaceContainerHigh
-    val badgeText = if (isHighRisk) "高风险" else "正常"
+    val isHighPriority = incident.reviewPriority == "high" || incident.reviewPriority == "critical"
+    val badgeColor = if (isHighPriority) AegisSecondaryContainer else AegisSurfaceContainerHigh
+    val badgeText = if (isHighPriority) "高优先级" else "普通优先级"
 
     Box(
         modifier = Modifier

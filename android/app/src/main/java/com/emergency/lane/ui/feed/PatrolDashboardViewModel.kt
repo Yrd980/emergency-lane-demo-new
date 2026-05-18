@@ -14,8 +14,7 @@ import kotlinx.coroutines.launch
 
 data class PatrolDashboardState(
     val activeTaskCount: Int = 0,
-    val todayCaseCount: Int = 0,
-    val caseChangePercent: Int = 0,
+    val assignedTaskCount: Int = 0,
     val incidents: List<IncidentItem> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
@@ -32,7 +31,7 @@ data class IncidentItem(
     val location: String,
     val detectedAgo: String,
     val detectedTime: String,
-    val riskLevel: String, // "critical" | "urgent" | "normal"
+    val reviewPriority: String,
     val vehicleClass: String,
     val confidence: Double,
     val thumbnailUrl: String = ""
@@ -117,11 +116,11 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
                             eventId = api.eventId,
                             taskId = api.taskId,
                             status = api.status,
-                            title = "${api.vehicleClass} 巡检任务",
+                            title = "${api.vehicleClass} 处置任务",
                             location = "设备：${api.deviceId}",
                             detectedAgo = api.status,
                             detectedTime = api.startTime.takeLast(8),
-                            riskLevel = api.riskLevel,
+                            reviewPriority = api.reviewPriority ?: api.riskLevel,
                             vehicleClass = api.vehicleClass,
                             confidence = api.confidence,
                             thumbnailUrl = absoluteUrl(baseUrl, api.thumbnailUrl)
@@ -130,7 +129,7 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
                     val activeCount = items.count { it.status != "completed" }
                     _uiState.value = PatrolDashboardState(
                         activeTaskCount = activeCount,
-                        todayCaseCount = response.total,
+                        assignedTaskCount = response.total,
                         incidents = items,
                         loading = false,
                         username = username,

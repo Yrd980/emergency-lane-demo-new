@@ -4,7 +4,7 @@ import { inputClassName } from './styles';
 import StatusBadge from './StatusBadge';
 
 const noteTemplates = [
-  '证据清晰，确认占用应急车道',
+  '证据清晰，验证为应急车道占用',
   '短暂经过，未形成持续占用',
   '证据不足，无法确认',
   '相机角度异常，需要重新标定 ROI',
@@ -85,7 +85,7 @@ export default function ReviewPanel({
               disabled={submitting}
               onClick={() => handleReview('validated')}
             >
-              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击确认违规' : '确认违规'}
+              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似事件'}
             </PrimaryButton>
             <PrimaryButton
               tone="danger"

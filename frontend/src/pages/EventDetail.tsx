@@ -32,13 +32,13 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   const entries: TimelineEntry[] = [
     {
       id: 'detection',
-      label: '系统检测：应急车道占用',
+      label: '系统检测：疑似应急车道占用',
       time: formatFullDateTime(data.start_time),
       tone: 'brand',
     },
     {
       id: 'alert',
-      label: '自动告警已生成',
+      label: '疑似事件已生成',
       time: formatFullDateTime(data.created_at),
       tone: 'warning',
     },
@@ -61,7 +61,7 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   } else {
     entries.push({
       id: 'pending',
-      label: '等待人工处置',
+      label: '等待人工复核',
       time: '--',
       tone: 'muted',
     });
@@ -87,6 +87,7 @@ export default function EventDetail() {
   const timeline = useMemo(() => (data ? buildTimeline(data) : []), [data]);
   const canAssign = Boolean(user?.permissions.includes('events:assign'));
   const canReview = Boolean(user?.permissions.includes('events:review'));
+  const canDispatchResponseTask = canAssign && data?.review_status === 'validated';
 
   useEffect(() => {
     if (!canAssign) return;
@@ -101,19 +102,19 @@ export default function EventDetail() {
     return () => { cancelled = true; };
   }, [canAssign, showToast]);
 
-  if (loading && !data) return <StateBlock tone="loading" title="正在加载事件详情" description="同步证据、结构化字段和复核状态。" />;
+  if (loading && !data) return <StateBlock tone="loading" title="正在加载疑似事件详情" description="同步证据、结构化字段和复核状态。" />;
   if (error) {
     return (
       <StateBlock
         tone="error"
-        title={error.includes('不存在') ? '事件不存在' : '事件详情加载失败'}
+        title={error.includes('不存在') ? '疑似事件不存在' : '疑似事件详情加载失败'}
         description={error}
         action={
           <PrimaryButton
             icon={error.includes('不存在') ? 'arrow_back' : 'refresh'}
             onClick={() => (error.includes('不存在') ? navigate('/events') : refetch())}
           >
-            {error.includes('不存在') ? '返回事件列表' : '重试'}
+            {error.includes('不存在') ? '返回疑似事件列表' : '重试'}
           </PrimaryButton>
         }
       />
@@ -131,7 +132,7 @@ export default function EventDetail() {
   const handleReview = async (status: string, note: string, operatorId?: string): Promise<boolean> => {
     const ok = await submit(status, note, operatorId);
     if (ok) {
-      showToast(status === 'validated' ? '已确认占用，复核结果已保存' : '已标记为误报，复核结果已保存', 'success');
+      showToast(status === 'validated' ? '已验证疑似事件，复核结果已保存' : '已标记为误报，复核结果已保存', 'success');
       refetch();
     }
     return ok;
@@ -140,6 +141,7 @@ export default function EventDetail() {
   const gpsText = formatGpsLocation(data.gps_location);
   const images = data.evidence_files.filter((f) => f.mime_type.startsWith('image/'));
   const hasImages = images.length > 0;
+  const reviewPriority = data.review_priority ?? data.risk_level ?? 'normal';
 
   const assignToPatrol = async () => {
     if (!selectedAssignee) {
@@ -162,9 +164,9 @@ export default function EventDetail() {
     <div className="space-y-6">
       {/* ─── Page header ─── */}
       <PageHeader
-        eyebrow="事件复核"
-        title="事件详情"
-        description={source === 'log' ? '按事件时间线查看证据、状态和处理记录。' : '先看证据链，再核对结构化字段，最后完成复核。'}
+        eyebrow="疑似事件复核"
+        title="疑似事件详情"
+        description={source === 'log' ? '按时间线查看证据、状态和处理记录。' : '先看证据组，再核对结构化字段，最后完成复核。'}
         action={
           <>
             <PrimaryButton tone="light" icon="arrow_back" onClick={() => navigate(backHref)}>
@@ -184,11 +186,11 @@ export default function EventDetail() {
 
       {/* ─── Incident badge bar ─── */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
-        <FieldChip label="事件 ID" value={data.event_id} mono />
+        <FieldChip label="疑似事件 ID" value={data.event_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
         <FieldChip label="设备" value={data.device_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <FieldChip label="优先级" value={<StatusBadge status={data.risk_level ?? 'normal'} />} />
+        <FieldChip label="复核优先级" value={<StatusBadge status={reviewPriority} />} />
         <div className="ml-auto">
           <FieldChip label="状态" value={<StatusBadge status={data.review_status} />} />
         </div>
@@ -197,17 +199,17 @@ export default function EventDetail() {
       {/* ─── Action banner ─── */}
       <ActionPanel
         tone={data.review_status === 'pending' ? 'warning' : 'success'}
-        title={data.review_status === 'pending' ? '下一步：完成此事件复核' : '此事件已复核'}
+        title={data.review_status === 'pending' ? '下一步：完成此疑似事件复核' : data.review_status === 'validated' ? '此疑似事件已验证' : '此疑似事件已复核'}
         description={
           data.review_status === 'pending'
-            ? data.review_priority_reason ?? '请根据证据链作出确认或驳回。'
-            : source === 'log' ? '可以继续按时间线查看下一条，或返回事件日志。' : '可以继续查看下一条待复核事件，或返回复核队列。'
+            ? data.review_priority_reason ?? '请根据证据组作出验证或驳回。'
+            : data.review_status === 'validated' && canAssign ? '如需现场行动，可以派发处置任务。' : source === 'log' ? '可以继续按时间线查看下一条，或返回疑似事件日志。' : '可以继续查看下一条待复核疑似事件，或返回复核队列。'
         }
         action={
           data.review_status === 'pending' ? (
-            <StatusBadge status={data.risk_level ?? 'normal'} />
+            <StatusBadge status={reviewPriority} />
           ) : (
-            <PrimaryButton href={backHref}>{source === 'log' ? '回到事件日志' : '回到复核队列'}</PrimaryButton>
+            <PrimaryButton href={backHref}>{source === 'log' ? '回到疑似事件日志' : '回到复核队列'}</PrimaryButton>
           )
         }
       />
@@ -326,7 +328,7 @@ export default function EventDetail() {
             <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-base text-primary">timeline</span>
-                <span className="text-sm font-semibold text-on-surface">事件时间线</span>
+                <span className="text-sm font-semibold text-on-surface">疑似事件时间线</span>
               </div>
             </div>
             <div className="p-4">
@@ -396,12 +398,12 @@ export default function EventDetail() {
           )}
 
           {/* ─── Response actions ─── */}
-          {data.review_status === 'pending' && (canReview || canAssign) && (
+          {(data.review_status === 'pending' && canReview) || canDispatchResponseTask ? (
             <SurfacePanel className="overflow-hidden">
               <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base text-primary">rule</span>
-                  <span className="text-sm font-semibold text-on-surface">处置动作</span>
+                  <span className="text-sm font-semibold text-on-surface">下一步动作</span>
                 </div>
               </div>
               <div className="grid gap-2 p-4">
@@ -409,13 +411,13 @@ export default function EventDetail() {
                   <button
                     type="button"
                     className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
-                    onClick={() => void handleReview('validated', '从事件详情确认占用', user?.display_name)}
+                    onClick={() => void handleReview('validated', '从疑似事件详情验证占用', user?.display_name)}
                   >
                     <span className="material-symbols-outlined text-base">gavel</span>
-                    确认违规
+                    验证疑似事件
                   </button>
                 )}
-                {canAssign && (
+                {canDispatchResponseTask && (
                   <div className="rounded-lg border border-outline-variant/20 bg-surface-container p-3">
                     <div className="grid gap-2">
                       <label className="grid gap-1 text-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
@@ -445,16 +447,16 @@ export default function EventDetail() {
                         onClick={() => void assignToPatrol()}
                       >
                         <span className="material-symbols-outlined text-base">assignment_ind</span>
-                        派发给巡查员
+                        派发处置任务
                       </button>
                     </div>
                   </div>
                 )}
-                {canReview && (
+                {data.review_status === 'pending' && canReview && (
                   <button
                     type="button"
                     className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/20 px-4 py-2.5 text-body-sm text-on-surface-variant transition-all hover:border-error/30 hover:bg-error-container/10 hover:text-error active:opacity-80"
-                    onClick={() => void handleReview('false_alarm', '从事件详情标记为误报', user?.display_name)}
+                    onClick={() => void handleReview('false_alarm', '从疑似事件详情标记为误报', user?.display_name)}
                   >
                     <span className="material-symbols-outlined text-base">block</span>
                     无效/误报
@@ -462,7 +464,7 @@ export default function EventDetail() {
                 )}
               </div>
             </SurfacePanel>
-          )}
+          ) : null}
 
           {/* ─── Review Panel (existing) ─── */}
           <ReviewPanel

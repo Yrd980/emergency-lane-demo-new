@@ -12,8 +12,8 @@ const statusConfig: Record<BadgeStatus, { label: string; cls: string; dot?: bool
   accepted: { label: '已接单', cls: 'bg-primary-container/20 text-primary border-primary/30', dot: true },
   completed: { label: '已完成', cls: 'bg-primary-container text-on-primary-container border-primary-container' },
   closed: { label: '已关闭', cls: 'bg-surface-container-high text-on-surface-variant border-outline-variant/30' },
-  high: { label: '高风险', cls: 'bg-secondary-container text-on-secondary-container border-secondary-container', dot: true },
-  normal: { label: '正常', cls: 'bg-surface-container-high text-on-surface-variant border-outline-variant/30' },
+  high: { label: '高优先级', cls: 'bg-secondary-container text-on-secondary-container border-secondary-container', dot: true },
+  normal: { label: '普通优先级', cls: 'bg-surface-container-high text-on-surface-variant border-outline-variant/30' },
   critical: { label: '严重', cls: 'bg-secondary-container text-on-secondary-container border-secondary-container', dot: true },
   active: { label: '活跃', cls: 'bg-primary-container text-on-primary-container border-primary-container' },
 };

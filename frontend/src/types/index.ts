@@ -1,4 +1,5 @@
-export type ReviewStatus = 'pending' | 'validated' | 'false_alarm' | 'assigned' | 'accepted' | 'completed' | 'closed';
+export type ReviewStatus = 'pending' | 'validated' | 'false_alarm' | 'closed';
+export type ReviewPriority = 'normal' | 'high';
 export type Role = 'admin' | 'reviewer' | 'dispatcher' | 'patrol';
 export type Permission =
   | 'events:read'
@@ -71,7 +72,8 @@ export interface EventDetail {
   evidence_files: EvidenceFile[];
   review_history: ReviewHistoryItem[];
   evidence_summary?: EvidenceSummary;
-  risk_level?: 'normal' | 'high';
+  risk_level?: ReviewPriority;
+  review_priority?: ReviewPriority;
   review_priority_reason?: string;
   previous_event_id?: string | null;
   next_event_id?: string | null;
@@ -96,7 +98,8 @@ export interface EventListItem {
   confidence: number;
   review_status: ReviewStatus;
   thumbnail_url: string;
-  risk_level?: 'normal' | 'high';
+  risk_level?: ReviewPriority;
+  review_priority?: ReviewPriority;
   review_priority_reason?: string;
 }
 
@@ -130,7 +133,8 @@ export interface TaskItem {
   confidence: number;
   start_time: string;
   device_id: string;
-  risk_level: 'normal' | 'high';
+  risk_level: ReviewPriority;
+  review_priority?: ReviewPriority;
   thumbnail_url: string;
 }
 
