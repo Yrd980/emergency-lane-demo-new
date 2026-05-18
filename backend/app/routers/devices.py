@@ -44,7 +44,7 @@ def device_heartbeat(body: DeviceHeartbeat):
     return result
 
 @router.delete("/{device_id}")
-def delete_device(device_id: str, user: dict = Depends(require_permission("events:delete"))):
+def delete_device(device_id: str, user: dict = Depends(require_permission("suspected_incidents:delete"))):
     result = device_service.delete_device(device_id)
     if not result:
         raise HTTPException(status_code=404, detail="Device not found")

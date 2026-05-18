@@ -25,7 +25,7 @@ export default function EvidenceViewer({
       <div className="rounded-lg border border-dashed border-outline-variant/40 bg-surface-container-high p-8 text-center">
         <span className="material-symbols-outlined text-2xl text-on-surface-variant mx-auto">hide_image</span>
         <div className="mt-3 font-semibold text-on-surface">证据尚未上传</div>
-        <p className="mt-2 text-body-sm text-on-surface-variant">下一步：检查 Android 队列和设备网络，等待重传后刷新疑似事件。</p>
+        <p className="mt-2 text-body-sm text-on-surface-variant">下一步：检查 Android 队列和设备网络，等待重传后刷新疑似疑似事件。</p>
       </div>
     );
   }

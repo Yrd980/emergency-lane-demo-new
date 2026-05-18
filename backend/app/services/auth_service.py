@@ -7,13 +7,13 @@ from app.database import get_db
 
 ROLE_PERMISSIONS = {
     "admin": [
-        "events:read", "events:review", "events:assign", "events:delete",
+        "suspected_incidents:read", "suspected_incidents:review", "suspected_incidents:assign", "suspected_incidents:delete",
         "tasks:read", "tasks:accept", "tasks:complete",
         "devices:read", "settings:read", "settings:write", "stats:read",
     ],
-    "reviewer": ["events:read", "events:review", "tasks:read", "devices:read", "stats:read"],
-    "dispatcher": ["events:read", "events:assign", "tasks:read", "devices:read", "stats:read"],
-    "patrol": ["events:read", "tasks:read", "tasks:accept", "tasks:complete", "devices:read"],
+    "reviewer": ["suspected_incidents:read", "suspected_incidents:review", "tasks:read", "devices:read", "stats:read"],
+    "dispatcher": ["suspected_incidents:read", "suspected_incidents:assign", "tasks:read", "devices:read", "stats:read"],
+    "patrol": ["suspected_incidents:read", "tasks:read", "tasks:accept", "tasks:complete", "devices:read"],
 }
 
 SESSION_DAYS = 7

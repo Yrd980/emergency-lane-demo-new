@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useDeviceDetail } from '../hooks/useDeviceDetail';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
-import StatusBadge from '../components/StatusBadge';
+import { DeviceStatusBadge, IncidentReviewStateBadge } from '../components/StatusBadge';
 import type { DeviceMetricSnapshot } from '../types';
 import { formatDateTime } from '../utils/format';
 
@@ -9,20 +9,20 @@ export default function DeviceDetail() {
   const { id } = useParams<{ id: string }>();
   const { data, loading, error, refetch } = useDeviceDetail(id!);
 
-  if (loading) return <StateBlock tone="loading" title="正在加载设备详情" description="正在同步心跳、上传积压和近期事件。" />;
+  if (loading) return <StateBlock tone="loading" title="正在加载设备详情" description="正在同步心跳、上传积压和近期疑似事件。" />;
   if (error) return <StateBlock tone="error" title="设备详情加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />;
   if (!data) return null;
 
   const firstIssue = data.issues[0];
-  const issueActionHref = firstIssue?.code === 'pending_uploads' ? '/events' : firstIssue ? '/setup' : '/events';
-  const issueActionLabel = firstIssue?.code === 'pending_uploads' ? '查看近期事件' : firstIssue ? '查看配置步骤' : '查看事件';
+  const issueActionHref = firstIssue?.code === 'pending_uploads' ? '/suspected-incidents' : firstIssue ? '/setup' : '/suspected-incidents';
+  const issueActionLabel = firstIssue?.code === 'pending_uploads' ? '查看近期疑似事件' : firstIssue ? '查看配置步骤' : '查看疑似事件';
 
   return (
     <div className="space-y-lg">
       <PageHeader
         eyebrow="设备详情"
         title={data.device_name}
-        description="核查单台设备是否适合继续采集：心跳、性能、上传积压和近期事件。"
+        description="核查单台设备是否适合继续采集：心跳、性能、上传积压和近期疑似事件。"
         action={<PrimaryButton tone="light" icon="arrow_back" href="/devices">返回设备列表</PrimaryButton>}
       />
 
@@ -30,7 +30,7 @@ export default function DeviceDetail() {
         <ActionPanel
           tone={firstIssue ? (firstIssue.severity === 'critical' ? 'danger' : 'warning') : 'success'}
           title={firstIssue ? firstIssue.message : '设备可继续运行'}
-          description={firstIssue ? firstIssue.next_action : '下一步：查看近期事件，或返回工作台等待新事件。'}
+          description={firstIssue ? firstIssue.next_action : '下一步：查看近期疑似事件，或返回工作台等待新疑似事件。'}
           action={<PrimaryButton href={issueActionHref}>{issueActionLabel}</PrimaryButton>}
         />
       </div>
@@ -61,28 +61,28 @@ export default function DeviceDetail() {
       <div className="mt-lg">
         <SurfacePanel className="p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold text-on-surface">近期事件</h2>
-            <StatusBadge status={data.is_online ? 'online' : 'offline'} />
+            <h2 className="font-semibold text-on-surface">近期疑似事件</h2>
+            <DeviceStatusBadge status={data.is_online ? 'online' : 'offline'} />
           </div>
-          {data.recent_events.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-outline-variant/20 bg-surface-container p-4 text-body-sm text-on-surface-variant">暂无事件。下一步：在 Android 设备上生成测试事件。</div>
+          {data.recent_suspected_incidents.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-outline-variant/20 bg-surface-container p-4 text-body-sm text-on-surface-variant">暂无疑似事件。下一步：在 Android 设备上生成测试疑似事件。</div>
           ) : (
             <div className="divide-y divide-outline-variant/10">
-              {data.recent_events.map((event) => (
+              {data.recent_suspected_incidents.map((suspectedIncident) => (
                 <Link
-                  key={event.event_id}
-                  to={`/events/${event.event_id}`}
+                  key={suspectedIncident.suspected_incident_id}
+                  to={`/suspected-incidents/${suspectedIncident.suspected_incident_id}`}
                   className="group flex items-center justify-between gap-3 rounded-lg px-3 py-3 text-body-sm transition-all hover:bg-surface-container"
                 >
                   <div>
-                    <div className="font-mono-data text-label-xs font-semibold text-on-surface">{event.event_id}</div>
+                    <div className="font-mono-data text-label-xs font-semibold text-on-surface">{suspectedIncident.suspected_incident_id}</div>
                     <div className="mt-1 text-label-xs text-on-surface-variant">
-                      {formatDateTime(event.start_time)}
+                      {formatDateTime(suspectedIncident.start_time)}
                       <span className="mx-1 text-outline-variant">·</span>
-                      {event.duration_seconds} 秒
+                      {suspectedIncident.duration_seconds} 秒
                     </div>
                   </div>
-                  <StatusBadge status={event.review_status} />
+                  <IncidentReviewStateBadge state={suspectedIncident.review_status} />
                 </Link>
               ))}
             </div>

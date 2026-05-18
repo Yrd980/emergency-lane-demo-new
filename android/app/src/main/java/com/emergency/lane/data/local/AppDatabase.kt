@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Entity(tableName = "local_events")
-data class LocalEventEntity(
-    @PrimaryKey val eventId: String,
+@Entity(tableName = "local_suspected_incidents")
+data class LocalSuspectedIncidentEntity(
+    @PrimaryKey val suspectedIncidentId: String,
     val deviceId: String,
     val startTime: String,
     val endTime: String,
@@ -29,23 +29,23 @@ data class LocalEventEntity(
 @Entity(tableName = "evidence_files")
 data class EvidenceFileEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val eventId: String,
+    val suspectedIncidentId: String,
     val evidenceType: String,
     val localPath: String,
     val mimeType: String,
     val uploadState: String = "QUEUED"
 )
 
-@Database(entities = [LocalEventEntity::class, EvidenceFileEntity::class], version = 1)
+@Database(entities = [LocalSuspectedIncidentEntity::class, EvidenceFileEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun localEventDao(): LocalEventDao
+    abstract fun localSuspectedIncidentDao(): LocalSuspectedIncidentDao
     abstract fun evidenceFileDao(): EvidenceFileDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                Room.databaseBuilder(context, AppDatabase::class.java, "event_queue.db")
+                Room.databaseBuilder(context, AppDatabase::class.java, "suspected_incident_queue.db")
                     .build()
                     .also { INSTANCE = it }
             }

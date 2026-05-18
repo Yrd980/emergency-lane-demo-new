@@ -39,7 +39,7 @@ export default function Health() {
       <div className="mt-lg grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricTile label="后端" value={data.backend.status === 'ok' ? '正常' : data.backend.status} tone="success" helper={formatDateTime(data.server_time)} />
         <MetricTile label="在线设备" value={`${data.devices.online}/${data.devices.total}`} tone={data.devices.online > 0 ? 'success' : 'warning'} helper="按心跳窗口统计" />
-        <MetricTile label="待复核" value={data.events.pending_review_count} tone={data.events.pending_review_count > 0 ? 'warning' : 'neutral'} helper="复核工作台队列" />
+        <MetricTile label="待复核" value={data.suspected_incidents.pending_review_count} tone={data.suspected_incidents.pending_review_count > 0 ? 'warning' : 'neutral'} helper="复核工作台队列" />
         <MetricTile label="证据占用" value={formatBytes(data.evidence.usage_bytes)} helper={`${data.evidence.file_count} 个文件`} />
       </div>
 

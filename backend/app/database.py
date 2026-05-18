@@ -2,13 +2,6 @@ import sqlite3
 import os
 from app.config import settings
 
-EVENT_REVIEW_STATUSES = (
-    "'pending', 'validated', 'false_alarm', 'closed'"
-)
-REVIEW_OUTCOME_STATUSES = "'validated', 'false_alarm', 'closed'"
-LEGACY_TASK_REVIEW_STATUSES = ("assigned", "accepted", "completed")
-LEGACY_REVIEW_STATUSES = ("confirmed", "rejected", *LEGACY_TASK_REVIEW_STATUSES)
-
 def get_db() -> sqlite3.Connection:
     os.makedirs(os.path.dirname(settings.db_path), exist_ok=True)
     conn = sqlite3.connect(settings.db_path, timeout=15)
@@ -63,8 +56,8 @@ def init_db():
             FOREIGN KEY(device_id) REFERENCES devices(device_id)
         );
 
-        CREATE TABLE IF NOT EXISTS events (
-            event_id TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS suspected_incidents (
+            suspected_incident_id TEXT PRIMARY KEY,
             device_id TEXT NOT NULL,
             start_time TEXT NOT NULL,
             end_time TEXT NOT NULL,
@@ -84,25 +77,25 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS evidence_files (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_id TEXT NOT NULL,
+            suspected_incident_id TEXT NOT NULL,
             evidence_type TEXT NOT NULL,
             file_path TEXT NOT NULL,
             mime_type TEXT NOT NULL,
             size_bytes INTEGER NOT NULL,
             sha256 TEXT NOT NULL DEFAULT '',
             uploaded_at TEXT NOT NULL,
-            FOREIGN KEY(event_id) REFERENCES events(event_id)
+            FOREIGN KEY(suspected_incident_id) REFERENCES suspected_incidents(suspected_incident_id)
         );
 
         CREATE TABLE IF NOT EXISTS review_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_id TEXT NOT NULL,
+            suspected_incident_id TEXT NOT NULL,
             operator_id TEXT NOT NULL,
             from_status TEXT NOT NULL,
             to_status TEXT NOT NULL,
             operator_note TEXT NOT NULL DEFAULT '',
             reviewed_at TEXT NOT NULL,
-            FOREIGN KEY(event_id) REFERENCES events(event_id),
+            FOREIGN KEY(suspected_incident_id) REFERENCES suspected_incidents(suspected_incident_id),
             CHECK (from_status IN ('pending', 'validated', 'false_alarm', 'closed')),
             CHECK (to_status IN ('validated', 'false_alarm', 'closed'))
         );
@@ -110,7 +103,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS dispatch_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             task_id TEXT NOT NULL UNIQUE,
-            event_id TEXT NOT NULL,
+            suspected_incident_id TEXT NOT NULL,
             assigned_to_user_id INTEGER,
             assigned_to_device_id TEXT,
             assigned_by_user_id INTEGER NOT NULL,
@@ -120,7 +113,7 @@ def init_db():
             accepted_at TEXT,
             completed_at TEXT,
             completed_note TEXT NOT NULL DEFAULT '',
-            FOREIGN KEY(event_id) REFERENCES events(event_id),
+            FOREIGN KEY(suspected_incident_id) REFERENCES suspected_incidents(suspected_incident_id),
             FOREIGN KEY(assigned_to_user_id) REFERENCES users(id),
             FOREIGN KEY(assigned_by_user_id) REFERENCES users(id),
             CHECK (status IN ('assigned', 'accepted', 'completed', 'cancelled'))
@@ -141,157 +134,22 @@ def init_db():
             CHECK (require_complete_evidence IN (0, 1))
         );
 
-        CREATE INDEX IF NOT EXISTS idx_events_device ON events(device_id);
-        CREATE INDEX IF NOT EXISTS idx_events_status ON events(review_status);
-        CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at);
-        CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
+        CREATE INDEX IF NOT EXISTS idx_suspected_incidents_device ON suspected_incidents(device_id);
+        CREATE INDEX IF NOT EXISTS idx_suspected_incidents_status ON suspected_incidents(review_status);
+        CREATE INDEX IF NOT EXISTS idx_suspected_incidents_created ON suspected_incidents(created_at);
+        CREATE INDEX IF NOT EXISTS idx_suspected_incidents_start_time ON suspected_incidents(start_time);
         CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
-        CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_event ON dispatch_tasks(event_id);
+        CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_suspected_incident ON dispatch_tasks(suspected_incident_id);
         CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_user ON dispatch_tasks(assigned_to_user_id, status);
         CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_device ON dispatch_tasks(assigned_to_device_id, status);
         CREATE INDEX IF NOT EXISTS idx_device_metric_history_device ON device_metric_history(device_id, recorded_at DESC);
-        CREATE INDEX IF NOT EXISTS idx_evidence_event ON evidence_files(event_id);
-        CREATE INDEX IF NOT EXISTS idx_review_history_event ON review_history(event_id);
+        CREATE INDEX IF NOT EXISTS idx_evidence_suspected_incident ON evidence_files(suspected_incident_id);
+        CREATE INDEX IF NOT EXISTS idx_review_history_suspected_incident ON review_history(suspected_incident_id);
     """)
     conn.commit()
-    conn.execute("PRAGMA foreign_keys=OFF")
-    try:
-        _migrate_events_status_check(conn)
-        _migrate_review_history_status_check(conn)
-        _migrate_dispatch_tasks_event_fk(conn)
-    finally:
-        conn.execute("PRAGMA foreign_keys=ON")
     _seed_builtin_users(conn)
     conn.commit()
     conn.close()
-
-
-def _migrate_events_status_check(conn: sqlite3.Connection):
-    row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='events'").fetchone()
-    sql = row["sql"] if row else ""
-    if not row or _has_canonical_review_status_check(sql):
-        return
-    conn.executescript(f"""
-        ALTER TABLE events RENAME TO events_old;
-        CREATE TABLE events (
-            event_id TEXT PRIMARY KEY,
-            device_id TEXT NOT NULL,
-            start_time TEXT NOT NULL,
-            end_time TEXT NOT NULL,
-            duration_seconds REAL NOT NULL,
-            roi_id TEXT NOT NULL,
-            track_id TEXT NOT NULL,
-            vehicle_class TEXT NOT NULL,
-            vehicle_box_json TEXT NOT NULL,
-            confidence REAL NOT NULL,
-            gps_json TEXT NOT NULL DEFAULT '{{}}',
-            review_status TEXT NOT NULL DEFAULT 'pending',
-            operator_note TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL,
-            reviewed_at TEXT,
-            CHECK (review_status IN ({EVENT_REVIEW_STATUSES}))
-        );
-        INSERT INTO events (
-            event_id, device_id, start_time, end_time, duration_seconds,
-            roi_id, track_id, vehicle_class, vehicle_box_json, confidence,
-            gps_json, review_status, operator_note, created_at, reviewed_at
-        )
-        SELECT
-            event_id, device_id, start_time, end_time, duration_seconds,
-            roi_id, track_id, vehicle_class, vehicle_box_json, confidence,
-            gps_json,
-            CASE
-                WHEN review_status = 'confirmed' THEN 'validated'
-                WHEN review_status = 'rejected' THEN 'false_alarm'
-                WHEN review_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
-                ELSE review_status
-            END,
-            operator_note, created_at, reviewed_at
-        FROM events_old;
-        DROP TABLE events_old;
-    """)
-
-
-def _migrate_review_history_status_check(conn: sqlite3.Connection):
-    row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='review_history'").fetchone()
-    sql = row["sql"] if row else ""
-    if not row or _has_canonical_review_status_check(sql):
-        return
-    conn.executescript(f"""
-        ALTER TABLE review_history RENAME TO review_history_old;
-        CREATE TABLE review_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            event_id TEXT NOT NULL,
-            operator_id TEXT NOT NULL,
-            from_status TEXT NOT NULL,
-            to_status TEXT NOT NULL,
-            operator_note TEXT NOT NULL DEFAULT '',
-            reviewed_at TEXT NOT NULL,
-            FOREIGN KEY(event_id) REFERENCES events(event_id),
-            CHECK (from_status IN ({EVENT_REVIEW_STATUSES})),
-            CHECK (to_status IN ({REVIEW_OUTCOME_STATUSES}))
-        );
-        INSERT INTO review_history (
-            id, event_id, operator_id, from_status, to_status, operator_note, reviewed_at
-        )
-        SELECT
-            id, event_id, operator_id,
-            CASE
-                WHEN from_status = 'confirmed' THEN 'validated'
-                WHEN from_status = 'rejected' THEN 'false_alarm'
-                WHEN from_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
-                ELSE from_status
-            END,
-            CASE
-                WHEN to_status = 'confirmed' THEN 'validated'
-                WHEN to_status = 'rejected' THEN 'false_alarm'
-                WHEN to_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
-                ELSE to_status
-            END,
-            operator_note, reviewed_at
-        FROM review_history_old
-        WHERE event_id IN (SELECT event_id FROM events);
-        DROP TABLE review_history_old;
-    """)
-
-
-def _has_canonical_review_status_check(sql: str | None) -> bool:
-    sql = sql or ""
-    return all(status not in sql for status in LEGACY_REVIEW_STATUSES)
-
-
-def _migrate_dispatch_tasks_event_fk(conn: sqlite3.Connection):
-    rows = conn.execute("PRAGMA foreign_key_list(dispatch_tasks)").fetchall()
-    if not any(row["table"] == "events_old" for row in rows):
-        return
-    conn.executescript("""
-        ALTER TABLE dispatch_tasks RENAME TO dispatch_tasks_old;
-        CREATE TABLE dispatch_tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            task_id TEXT NOT NULL UNIQUE,
-            event_id TEXT NOT NULL,
-            assigned_to_user_id INTEGER,
-            assigned_to_device_id TEXT,
-            assigned_by_user_id INTEGER NOT NULL,
-            status TEXT NOT NULL DEFAULT 'assigned',
-            note TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL,
-            accepted_at TEXT,
-            completed_at TEXT,
-            completed_note TEXT NOT NULL DEFAULT '',
-            FOREIGN KEY(event_id) REFERENCES events(event_id),
-            FOREIGN KEY(assigned_to_user_id) REFERENCES users(id),
-            FOREIGN KEY(assigned_by_user_id) REFERENCES users(id),
-            CHECK (status IN ('assigned', 'accepted', 'completed', 'cancelled'))
-        );
-        INSERT INTO dispatch_tasks
-        SELECT * FROM dispatch_tasks_old
-        WHERE event_id IN (SELECT event_id FROM events);
-        DROP TABLE dispatch_tasks_old;
-        CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_event ON dispatch_tasks(event_id);
-        CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_user ON dispatch_tasks(assigned_to_user_id, status);
-        CREATE INDEX IF NOT EXISTS idx_dispatch_tasks_device ON dispatch_tasks(assigned_to_device_id, status);
-    """)
 
 
 def _seed_builtin_users(conn: sqlite3.Connection):

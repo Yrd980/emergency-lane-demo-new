@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { to: '/', label: '概览' },
-  { to: '/events', label: '疑似事件' },
+  { to: '/suspected-incidents', label: '疑似疑似事件' },
   { to: '/devices', label: '设备' },
 ];
 

@@ -36,4 +36,4 @@ Prefer these UI and data terms in new work:
 - **Response Task** for patrol work assigned from the Web console.
 - **Review Priority** for backend-provided queue ordering.
 
-Avoid UI copy that implies legal adjudication, automatic enforcement, or confirmed violations. The app may capture detections and complete response tasks, but incident review remains a human workflow in the shared product context.
+Avoid UI copy that implies legal adjudication or automatic enforcement. The app may capture detections and complete response tasks, but incident review remains a human workflow in the shared product context.

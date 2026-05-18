@@ -208,7 +208,7 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
             .fillMaxWidth()
             .weight(1f)
 
-        if (uiState.events.isEmpty()) {
+        if (uiState.suspectedIncidents.isEmpty()) {
             Box(
                 modifier = listModifier
                     .clip(RoundedCornerShape(12.dp))
@@ -235,9 +235,9 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = listModifier
             ) {
-                items(uiState.events) { item ->
-                    val event = item.event
-                    val canUpload = event.uploadState == "QUEUED" || event.uploadState == "FAILED"
+                items(uiState.suspectedIncidents) { item ->
+                    val suspectedIncident = item.suspectedIncident
+                    val canUpload = suspectedIncident.uploadState == "QUEUED" || suspectedIncident.uploadState == "FAILED"
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -248,19 +248,19 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = event.eventId,
+                                text = suspectedIncident.suspectedIncidentId,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = AegisOnSurface
                             )
                             Text(
-                                text = "状态：${formatUploadState(event.uploadState)}  |  尝试：${event.uploadAttempts}  |  类型：${formatVehicleClass(event.vehicleClass)}",
+                                text = "状态：${formatUploadState(suspectedIncident.uploadState)}  |  尝试：${suspectedIncident.uploadAttempts}  |  类型：${formatVehicleClass(suspectedIncident.vehicleClass)}",
                                 fontSize = 12.sp,
                                 color = AegisOnSurfaceVariant
                             )
-                            if (event.lastError.isNotBlank()) {
+                            if (suspectedIncident.lastError.isNotBlank()) {
                                 Text(
-                                    text = "错误：${event.lastError}",
+                                    text = "错误：${suspectedIncident.lastError}",
                                     fontSize = 12.sp,
                                     color = AegisError
                                 )
@@ -271,20 +271,20 @@ fun QueueScreen(navController: NavController, viewModel: QueueViewModel = viewMo
                                     Text("相机", color = AegisPrimary)
                                 }
                                 TextButton(
-                                    onClick = { viewModel.retryEvent(event.eventId) },
+                                    onClick = { viewModel.retrySuspectedIncident(suspectedIncident.suspectedIncidentId) },
                                     enabled = !uiState.uploading && canUpload
                                 ) {
                                     Text(
                                         when {
                                             uiState.uploading -> "上传中"
-                                            event.uploadState == "UPLOADED" -> "已上传"
+                                            suspectedIncident.uploadState == "UPLOADED" -> "已上传"
                                             else -> "上传"
                                         },
                                         color = if (!canUpload || uiState.uploading) AegisOnSurfaceVariant else AegisPrimary
                                     )
                                 }
                                 TextButton(
-                                    onClick = { viewModel.deleteEvent(event.eventId) },
+                                    onClick = { viewModel.deleteSuspectedIncident(suspectedIncident.suspectedIncidentId) },
                                     enabled = !uiState.uploading
                                 ) {
                                     Text("删除", color = AegisError)

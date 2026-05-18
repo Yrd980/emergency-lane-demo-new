@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import { useEventDetail } from '../hooks/useEventDetail';
-import { useReview } from '../hooks/useReview';
-import StatusBadge from '../components/StatusBadge';
+import { useSuspectedIncidentDetail } from '../hooks/useSuspectedIncidentDetail';
+import { useIncidentReview } from '../hooks/useIncidentReview';
+import { IncidentReviewStateBadge, ReviewPriorityBadge } from '../components/StatusBadge';
 import EvidenceViewer from '../components/EvidenceViewer';
 import ReviewPanel from '../components/ReviewPanel';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
 import { inputClassName, selectClassName } from '../components/styles';
 import { useToast } from '../hooks/useToast';
-import type { EventDetail as EventDetailType, ReviewHistoryItem } from '../types';
+import type { SuspectedIncidentDetail as SuspectedIncidentDetailType, ReviewHistoryItem } from '../types';
 import { cn, formatFullDateTime, formatPercent } from '../utils/format';
 import { useAuth } from '../access/useRole';
 
@@ -28,7 +28,7 @@ interface TimelineEntry {
   tone: 'brand' | 'warning' | 'danger' | 'muted';
 }
 
-function buildTimeline(data: EventDetailType): TimelineEntry[] {
+function buildTimeline(data: SuspectedIncidentDetailType): TimelineEntry[] {
   const entries: TimelineEntry[] = [
     {
       id: 'detection',
@@ -71,22 +71,22 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
 }
 
 /* ─── Main component ─── */
-export default function EventDetail() {
+export default function SuspectedIncidentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
   const { user } = useAuth();
-  const { data, loading, error, refetch } = useEventDetail(id!);
-  const { submit, submitting } = useReview(id!);
+  const { data, loading, error, refetch } = useSuspectedIncidentDetail(id!);
+  const { submit, submitting } = useIncidentReview(id!);
   const [assignees, setAssignees] = useState<{ username: string; display_name: string; role: string }[]>([]);
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [assignmentNote, setAssignmentNote] = useState('从疑似事件详情派发');
   const [assigning, setAssigning] = useState(false);
 
   const timeline = useMemo(() => (data ? buildTimeline(data) : []), [data]);
-  const canAssign = Boolean(user?.permissions.includes('events:assign'));
-  const canReview = Boolean(user?.permissions.includes('events:review'));
+  const canAssign = Boolean(user?.permissions.includes('suspected_incidents:assign'));
+  const canReview = Boolean(user?.permissions.includes('suspected_incidents:review'));
   const canDispatchResponseTask = canAssign && data?.review_status === 'validated';
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function EventDetail() {
         action={
           <PrimaryButton
             icon={error.includes('不存在') ? 'arrow_back' : 'refresh'}
-            onClick={() => (error.includes('不存在') ? navigate('/events') : refetch())}
+            onClick={() => (error.includes('不存在') ? navigate('/suspected-incidents') : refetch())}
           >
             {error.includes('不存在') ? '返回疑似事件列表' : '重试'}
           </PrimaryButton>
@@ -123,10 +123,10 @@ export default function EventDetail() {
   if (!data) return null;
 
   const source = searchParams.get('from') === 'log' ? 'log' : 'review';
-  const backHref = source === 'log' ? '/events' : '/review';
+  const backHref = source === 'log' ? '/suspected-incidents' : '/review';
   const backLabel = source === 'log' ? '返回日志' : '返回队列';
-  const nextEventId = source === 'log' ? data.previous_event_id : data.next_event_id;
-  const nextHref = nextEventId ? `/events/${nextEventId}?from=${source}` : null;
+  const nextSuspectedIncidentId = source === 'log' ? data.previous_suspected_incident_id : data.next_suspected_incident_id;
+  const nextHref = nextSuspectedIncidentId ? `/suspected-incidents/${nextSuspectedIncidentId}?from=${source}` : null;
   const nextLabel = source === 'log' ? '下一条日志' : '下一条待复核';
 
   const handleReview = async (status: string, note: string, operatorId?: string): Promise<boolean> => {
@@ -150,7 +150,7 @@ export default function EventDetail() {
     }
     setAssigning(true);
     try {
-      await api.assignEvent(data.event_id, { assigned_to_username: selectedAssignee, note: assignmentNote });
+      await api.assignSuspectedIncident(data.suspected_incident_id, { assigned_to_username: selectedAssignee, note: assignmentNote });
       showToast('任务已派发给巡查员', 'success');
       refetch();
     } catch (e: unknown) {
@@ -186,13 +186,13 @@ export default function EventDetail() {
 
       {/* ─── Incident badge bar ─── */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
-        <FieldChip label="疑似事件 ID" value={data.event_id} mono />
+        <FieldChip label="疑似事件 ID" value={data.suspected_incident_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
         <FieldChip label="设备" value={data.device_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <FieldChip label="复核优先级" value={<StatusBadge status={reviewPriority} />} />
+        <FieldChip label="复核优先级" value={<ReviewPriorityBadge priority={reviewPriority} />} />
         <div className="ml-auto">
-          <FieldChip label="状态" value={<StatusBadge status={data.review_status} />} />
+          <FieldChip label="状态" value={<IncidentReviewStateBadge state={data.review_status} />} />
         </div>
       </div>
 
@@ -207,7 +207,7 @@ export default function EventDetail() {
         }
         action={
           data.review_status === 'pending' ? (
-            <StatusBadge status={reviewPriority} />
+            <ReviewPriorityBadge priority={reviewPriority} />
           ) : (
             <PrimaryButton href={backHref}>{source === 'log' ? '回到疑似事件日志' : '回到复核队列'}</PrimaryButton>
           )
@@ -583,9 +583,9 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
               </span>
             </div>
             <div className="mt-3 flex items-center gap-2">
-              <StatusBadge status={item.from_status} />
+              <IncidentReviewStateBadge state={item.from_status} />
               <span className="material-symbols-outlined text-sm text-on-surface-variant">arrow_forward</span>
-              <StatusBadge status={item.to_status} />
+              <IncidentReviewStateBadge state={item.to_status} />
             </div>
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               {item.operator_note || (

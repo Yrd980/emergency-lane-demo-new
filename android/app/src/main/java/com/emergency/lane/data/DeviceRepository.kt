@@ -5,7 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import com.emergency.lane.BuildConfig
-import com.emergency.lane.data.local.EventQueueRepository
+import com.emergency.lane.data.local.SuspectedIncidentQueueRepository
 import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.data.remote.DeviceRegisterRequest
 import com.emergency.lane.data.remote.HeartbeatRequest
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.first
 
 class DeviceRepository(private val context: Context) {
     private val settings = SettingsStore(context)
-    private val queue = EventQueueRepository(context)
+    private val queue = SuspectedIncidentQueueRepository(context)
     private var apiClient: HpApiClient? = null
     private var isRunning = false
 

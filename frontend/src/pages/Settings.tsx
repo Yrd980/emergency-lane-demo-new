@@ -118,7 +118,7 @@ export default function Settings() {
       />
 
       <div className="mt-lg grid gap-4 lg:grid-cols-2">
-        <SettingCard icon="shield" title="复核策略" description="所有疑似事件必须经过人工复核后才能确认。">
+        <SettingCard icon="shield" title="复核策略" description="所有疑似疑似事件必须经过人工复核后才能确认。">
           <select
             className={selectClassName('mt-3 w-full')}
             value={settings.review_mode}

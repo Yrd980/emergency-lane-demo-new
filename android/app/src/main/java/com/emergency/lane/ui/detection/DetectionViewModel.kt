@@ -6,7 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.emergency.lane.camera.CameraController
 import com.emergency.lane.camera.CoordinateMapper
-import com.emergency.lane.camera.EventStateMachine
+import com.emergency.lane.camera.SuspectedIncidentStateMachine
 import com.emergency.lane.camera.InferenceEngine
 import com.emergency.lane.camera.InferenceScheduler
 import com.emergency.lane.camera.ModelLoadResult
@@ -14,13 +14,13 @@ import com.emergency.lane.camera.ModelLoader
 import com.emergency.lane.camera.NmsProcessor
 import com.emergency.lane.camera.Tracker
 import com.emergency.lane.data.local.EvidenceFileEntity
-import com.emergency.lane.data.local.EventQueueRepository
-import com.emergency.lane.data.local.LocalEventEntity
+import com.emergency.lane.data.local.SuspectedIncidentQueueRepository
+import com.emergency.lane.data.local.LocalSuspectedIncidentEntity
 import com.emergency.lane.data.local.RoiStore
 import com.emergency.lane.data.local.SettingsStore
 import com.emergency.lane.data.remote.UploadWorker
 import com.emergency.lane.domain.DetectionBox
-import com.emergency.lane.domain.EventFactory
+import com.emergency.lane.domain.SuspectedIncidentFactory
 import com.emergency.lane.domain.GeometryUtils
 import com.emergency.lane.domain.RoiConfig
 import com.emergency.lane.domain.RuntimeMetrics
@@ -48,10 +48,10 @@ sealed class ModelLoadStatus {
 
 data class DetectionUiState(
     val isPreviewActive: Boolean = false,
-    val lastEventId: String? = null,
+    val lastSuspectedIncidentId: String? = null,
     val pendingUploadCount: Int = 0,
     val cameraError: String? = null,
-    val canGenerateEvent: Boolean = false,
+    val canGenerateSuspectedIncident: Boolean = false,
     val roiConfigured: Boolean = false,
     val hpConfigured: Boolean = false,
     // Model detection
@@ -73,7 +73,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val settingsStore = SettingsStore(application)
     private val roiStore = RoiStore(application)
-    private val eventQueue = EventQueueRepository(application)
+    private val suspectedIncidentQueue = SuspectedIncidentQueueRepository(application)
 
     var cameraController: CameraController? = null
 
@@ -81,7 +81,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
     private var modelLoader: ModelLoader? = null
     private var inferenceEngine: InferenceEngine? = null
     private var tracker: Tracker? = null
-    private var stateMachine: EventStateMachine? = null
+    private var stateMachine: SuspectedIncidentStateMachine? = null
     private var scheduler: InferenceScheduler? = null
     private var frameCounter = 0L
 
@@ -100,7 +100,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
                 _uiState.value = _uiState.value.copy(
                     hpConfigured = hasUrl,
                     roiConfigured = hasRoi,
-                    canGenerateEvent = hasUrl && hasRoi
+                    canGenerateSuspectedIncident = hasUrl && hasRoi
                 )
             }
         }
@@ -130,7 +130,7 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
             is ModelLoadResult.Loaded -> {
                 inferenceEngine = InferenceEngine(result.interpreter, result.info)
                 tracker = Tracker()
-                stateMachine = EventStateMachine()
+                stateMachine = SuspectedIncidentStateMachine()
                 scheduler = InferenceScheduler(15)
                 _uiState.value = _uiState.value.copy(
                     modelStatus = ModelLoadStatus.Ready(result.info.version)
@@ -225,11 +225,11 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
                 val result = sm.update(track, insideRoi, nowMs)
                 tkr.updateRoiState(
                     track.trackId, insideRoi, result.roiEnterMs,
-                    result.durationMs, result.shouldCreateEvent
+                    result.durationMs, result.shouldCreateSuspectedIncident
                 )
 
-                if (result.shouldCreateEvent) {
-                    createAutoEvent(track, result)
+                if (result.shouldCreateSuspectedIncident) {
+                    createAutoSuspectedIncident(track, result)
                 }
             }
 
@@ -258,15 +258,15 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private suspend fun createAutoEvent(track: Track, result: EventStateMachine.UpdateResult) {
+    private suspend fun createAutoSuspectedIncident(track: Track, result: SuspectedIncidentStateMachine.UpdateResult) {
         val deviceId = settingsStore.deviceId.first()
         val roiConfig = roiStore.roiConfig.first()
 
-        val eventId = EventFactory.createAutoEventId()
+        val suspectedIncidentId = SuspectedIncidentFactory.createAutoSuspectedIncidentId()
         val now = Instant.now()
 
-        val event = LocalEventEntity(
-            eventId = eventId,
+        val suspectedIncident = LocalSuspectedIncidentEntity(
+            suspectedIncidentId = suspectedIncidentId,
             deviceId = deviceId,
             startTime = Instant.ofEpochMilli(result.roiEnterMs!!).toString(),
             endTime = now.toString(),
@@ -284,32 +284,32 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         val evidenceFiles = mutableListOf<EvidenceFileEntity>()
         try {
             recentFrames.firstOrNull()?.let { before ->
-                val path = saveBitmapToCache(before, "${eventId}_frame_before.jpg")
-                evidenceFiles.add(evidenceFile(eventId, "frame_before", path))
+                val path = saveBitmapToCache(before, "${suspectedIncidentId}_frame_before.jpg")
+                evidenceFiles.add(evidenceFile(suspectedIncidentId, "frame_before", path))
             }
             val bitmap = cameraController?.captureFrame()
             if (bitmap != null) {
-                val peakPath = saveBitmapToCache(bitmap, "${eventId}_frame_peak.jpg")
-                evidenceFiles.add(evidenceFile(eventId, "frame_peak", peakPath))
+                val peakPath = saveBitmapToCache(bitmap, "${suspectedIncidentId}_frame_peak.jpg")
+                evidenceFiles.add(evidenceFile(suspectedIncidentId, "frame_peak", peakPath))
             }
             delay(250)
             val after = cameraController?.captureFrame()
             if (after != null) {
-                val afterPath = saveBitmapToCache(after, "${eventId}_frame_after.jpg")
-                evidenceFiles.add(evidenceFile(eventId, "frame_after", afterPath))
+                val afterPath = saveBitmapToCache(after, "${suspectedIncidentId}_frame_after.jpg")
+                evidenceFiles.add(evidenceFile(suspectedIncidentId, "frame_after", afterPath))
             }
         } catch (_: Exception) {}
 
         if (evidenceFiles.none { it.evidenceType == "frame_peak" }) {
-            evidenceFiles.add(evidenceFile(eventId, "frame_peak", ""))
+            evidenceFiles.add(evidenceFile(suspectedIncidentId, "frame_peak", ""))
         }
 
-        eventQueue.enqueueEvent(event, evidenceFiles)
+        suspectedIncidentQueue.enqueueSuspectedIncident(suspectedIncident, evidenceFiles)
         UploadWorker.enqueue(getApplication())
 
         _uiState.value = _uiState.value.copy(
-            lastEventId = eventId,
-            pendingUploadCount = eventQueue.getPendingCount()
+            lastSuspectedIncidentId = suspectedIncidentId,
+            pendingUploadCount = suspectedIncidentQueue.getPendingCount()
         )
     }
 
@@ -322,23 +322,23 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    // -- Manual event --
+    // -- Manual suspectedIncident --
 
-    fun generateManualEvent() {
-        if (!_uiState.value.canGenerateEvent) return
+    fun generateManualSuspectedIncident() {
+        if (!_uiState.value.canGenerateSuspectedIncident) return
         viewModelScope.launch {
             val deviceId = settingsStore.deviceId.first()
-            val (event, evidence) = EventFactory.createManualEvent(deviceId)
+            val (suspectedIncident, evidence) = SuspectedIncidentFactory.createManualSuspectedIncident(deviceId)
 
             val evidenceFiles = mutableListOf<EvidenceFileEntity>()
             try {
                 recentFrames.firstOrNull()?.let { before ->
-                    val path = saveBitmapToCache(before, "${event.eventId}_frame_before.jpg")
-                    evidenceFiles.add(evidenceFile(event.eventId, "frame_before", path))
+                    val path = saveBitmapToCache(before, "${suspectedIncident.suspectedIncidentId}_frame_before.jpg")
+                    evidenceFiles.add(evidenceFile(suspectedIncident.suspectedIncidentId, "frame_before", path))
                 }
                 val bitmap = cameraController?.captureFrame()
                 if (bitmap != null) {
-                    val path = saveBitmapToCache(bitmap, "${event.eventId}_frame_peak.jpg")
+                    val path = saveBitmapToCache(bitmap, "${suspectedIncident.suspectedIncidentId}_frame_peak.jpg")
                     evidenceFiles.add(evidence.copy(localPath = path))
                 } else {
                     evidenceFiles.add(evidence)
@@ -346,8 +346,8 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
                 delay(250)
                 val after = cameraController?.captureFrame()
                 if (after != null) {
-                    val path = saveBitmapToCache(after, "${event.eventId}_frame_after.jpg")
-                    evidenceFiles.add(evidenceFile(event.eventId, "frame_after", path))
+                    val path = saveBitmapToCache(after, "${suspectedIncident.suspectedIncidentId}_frame_after.jpg")
+                    evidenceFiles.add(evidenceFile(suspectedIncident.suspectedIncidentId, "frame_after", path))
                 }
             } catch (_: Exception) {}
 
@@ -355,10 +355,10 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
                 evidenceFiles.add(evidence)
             }
 
-            eventQueue.enqueueEvent(event, evidenceFiles)
+            suspectedIncidentQueue.enqueueSuspectedIncident(suspectedIncident, evidenceFiles)
             _uiState.value = _uiState.value.copy(
-                lastEventId = event.eventId,
-                pendingUploadCount = eventQueue.getPendingCount()
+                lastSuspectedIncidentId = suspectedIncident.suspectedIncidentId,
+                pendingUploadCount = suspectedIncidentQueue.getPendingCount()
             )
 
             UploadWorker.enqueue(getApplication())
@@ -381,9 +381,9 @@ class DetectionViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun evidenceFile(eventId: String, evidenceType: String, localPath: String): EvidenceFileEntity {
+    private fun evidenceFile(suspectedIncidentId: String, evidenceType: String, localPath: String): EvidenceFileEntity {
         return EvidenceFileEntity(
-            eventId = eventId,
+            suspectedIncidentId = suspectedIncidentId,
             evidenceType = evidenceType,
             localPath = localPath,
             mimeType = "image/jpeg"

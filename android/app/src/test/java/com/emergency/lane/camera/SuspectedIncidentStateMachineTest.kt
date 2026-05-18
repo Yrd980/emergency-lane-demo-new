@@ -5,19 +5,19 @@ import com.emergency.lane.domain.Track
 import org.junit.Assert.*
 import org.junit.Test
 
-class EventStateMachineTest {
+class SuspectedIncidentStateMachineTest {
 
-    private val config = EventStateMachine.Config(
+    private val config = SuspectedIncidentStateMachine.Config(
         occupationSeconds = 10,
         confidenceThreshold = 0.5f
     )
-    private val machine = EventStateMachine(config)
+    private val machine = SuspectedIncidentStateMachine(config)
 
     @Test
     fun `track entering ROI becomes candidate`() {
         val track = makeTrack("track_0", "car", 0.9f, insideRoi = false)
         val result = machine.update(track, insideRoi = true, nowMs = 10000)
-        assertEquals(EventStateMachine.State.CANDIDATE, result.state)
+        assertEquals(SuspectedIncidentStateMachine.State.CANDIDATE, result.state)
         assertEquals(10000L, result.roiEnterMs)
     }
 
@@ -25,16 +25,16 @@ class EventStateMachineTest {
     fun `candidate stays candidate under occupation threshold`() {
         val track = makeTrack("track_0", "car", 0.9f, insideRoi = true, roiEnterMs = 10000)
         val result = machine.update(track, insideRoi = true, nowMs = 15000)
-        assertEquals(EventStateMachine.State.CANDIDATE, result.state)
-        assertFalse(result.shouldCreateEvent)
+        assertEquals(SuspectedIncidentStateMachine.State.CANDIDATE, result.state)
+        assertFalse(result.shouldCreateSuspectedIncident)
     }
 
     @Test
-    fun `candidate triggers event after occupation threshold`() {
+    fun `candidate triggers suspectedIncident after occupation threshold`() {
         val track = makeTrack("track_0", "car", 0.9f, insideRoi = true, roiEnterMs = 10000)
         val result = machine.update(track, insideRoi = true, nowMs = 21000)
-        assertEquals(EventStateMachine.State.EVENT_CREATED, result.state)
-        assertTrue(result.shouldCreateEvent)
+        assertEquals(SuspectedIncidentStateMachine.State.SUSPECTED_INCIDENT_CREATED, result.state)
+        assertTrue(result.shouldCreateSuspectedIncident)
     }
 
     @Test
@@ -42,28 +42,28 @@ class EventStateMachineTest {
         val track = makeTrack("track_0", "car", 0.9f, insideRoi = true, roiEnterMs = 10000)
         machine.update(track, insideRoi = true, nowMs = 12000)
         val result = machine.update(track, insideRoi = false, nowMs = 13000)
-        assertEquals(EventStateMachine.State.OUTSIDE_ROI, result.state)
+        assertEquals(SuspectedIncidentStateMachine.State.OUTSIDE_ROI, result.state)
     }
 
     @Test
-    fun `already created event does not trigger again`() {
+    fun `already created suspectedIncident does not trigger again`() {
         val track = makeTrack("track_0", "car", 0.9f, insideRoi = true, roiEnterMs = 10000, eventCreated = true)
         val result = machine.update(track, insideRoi = true, nowMs = 21000)
-        assertFalse(result.shouldCreateEvent)
+        assertFalse(result.shouldCreateSuspectedIncident)
     }
 
     @Test
     fun `low confidence track does not trigger`() {
         val track = makeTrack("track_0", "car", 0.4f, insideRoi = true, roiEnterMs = 10000)
         val result = machine.update(track, insideRoi = true, nowMs = 21000)
-        assertFalse(result.shouldCreateEvent)
+        assertFalse(result.shouldCreateSuspectedIncident)
     }
 
     @Test
     fun `non-vehicle class does not trigger`() {
         val track = makeTrack("track_0", "person", 0.9f, insideRoi = true, roiEnterMs = 10000)
         val result = machine.update(track, insideRoi = true, nowMs = 21000)
-        assertEquals(EventStateMachine.State.OUTSIDE_ROI, result.state)
+        assertEquals(SuspectedIncidentStateMachine.State.OUTSIDE_ROI, result.state)
     }
 
     private fun makeTrack(

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { ActionPanel, PageHeader, PrimaryButton, SkeletonGrid, StateBlock } from '../components/ProductPrimitives';
+import { toOperationsMetrics } from '../domain/operationsMetrics';
 import { usePolling } from '../hooks/usePolling';
 import { formatDateTime } from '../utils/format';
 import type { OperationsStats, OverviewStats, SystemStatus } from '../types';
@@ -118,10 +119,12 @@ export default function Dashboard() {
     topIssue?.code === 'no_devices' ? '/setup' :
     '/health';
   const summary = operationData.summary;
+  const metrics = toOperationsMetrics(operationData);
+  const metricSummary = metrics.summary;
   const topHotspots = operationData.hotspots.slice(0, 5);
   const operators = operationData.operators.slice(0, 5);
   const sectors = Array.from(new Set([...operationData.hotspots.map((item) => item.roi_id), ...fallbackSectors])).filter(Boolean);
-  const periodLabel = localizePeriodLabel(summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || '近 30 天');
+  const periodLabel = localizePeriodLabel(metricSummary.periodLabel || PERIODS.find((period) => period.key === selectedPeriod)?.label || '近 30 天');
   const trendPath = buildTrendPath(operationData.trend);
   const areaPath = trendPath ? `${trendPath} L800,200 L0,200 Z` : '';
   const dayLabels = buildDayLabels(operationData.trend);
@@ -130,8 +133,8 @@ export default function Dashboard() {
 
   const eventFilterQuery = new URLSearchParams();
   if (selectedSector) eventFilterQuery.set('roi_id', selectedSector);
-  const eventHref = `/events${eventFilterQuery.toString() ? `?${eventFilterQuery.toString()}` : ''}`;
-  const insight = localizeInsight(operationData.insight);
+  const suspectedIncidentHref = `/suspected-incidents${eventFilterQuery.toString() ? `?${eventFilterQuery.toString()}` : ''}`;
+  const insight = metrics.insight;
 
   return (
     <div className="space-y-lg">
@@ -146,18 +149,18 @@ export default function Dashboard() {
             <div className="max-w-2xl">
               <h1 className="text-display-lg font-display-lg text-on-surface tracking-tight">应急车道哨兵</h1>
               <p className="mt-4 max-w-2xl text-body-sm text-on-surface-variant sm:text-base/6">
-                统一接入、事件、复核与系统健康，优先呈现最关键的下一步。
+                统一接入、疑似事件、复核与系统健康，优先呈现最关键的下一步。
               </p>
             </div>
             <div className="flex flex-wrap gap-sm">
               {needsSetup ? (
                 <PrimaryButton href="/setup">开始设备配置</PrimaryButton>
               ) : hasPending ? (
-                <PrimaryButton href="/review">处理下一条事件</PrimaryButton>
+                <PrimaryButton href="/review">处理下一条疑似事件</PrimaryButton>
               ) : (
                 <PrimaryButton href="/health">查看系统健康</PrimaryButton>
               )}
-              <PrimaryButton tone="light" href={eventHref}>查看事件</PrimaryButton>
+              <PrimaryButton tone="light" href={suspectedIncidentHref}>查看疑似事件</PrimaryButton>
               <PrimaryButton tone="light" icon="download" disabled={exporting} onClick={exportReport}>
                 {exporting ? '导出中' : '导出报告'}
               </PrimaryButton>
@@ -168,7 +171,7 @@ export default function Dashboard() {
             <StatusPill label="系统状态" value={system.data.status === 'ready' ? '就绪' : '需关注'} onClick={() => navigate('/health')} />
             <StatusPill label="待复核" value={String(overview.data.pending_review_count)} onClick={() => navigate('/review')} />
             <StatusPill label="在线设备" value={`${system.data.devices.online}/${system.data.devices.total}`} onClick={() => navigate('/devices')} />
-            <StatusPill label="最新事件" value={formatDateTime(system.data.events.latest_event_at)} onClick={() => navigate('/events')} />
+            <StatusPill label="最新疑似事件" value={formatDateTime(system.data.suspected_incidents.latest_suspected_incident_at)} onClick={() => navigate('/suspected-incidents')} />
           </div>
         </div>
       </section>
@@ -178,7 +181,7 @@ export default function Dashboard() {
       ) : topIssue ? (
         <ActionPanel tone={topIssue.severity === 'critical' ? 'danger' : 'warning'} title={topIssue.message} description={topIssue.next_action} action={<PrimaryButton href={issueHref}>去处理</PrimaryButton>} />
       ) : (
-        <ActionPanel tone="success" title="系统已就绪" description="设备在线，后端可用。可等待新事件，或继续复核已有事件。" action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
+        <ActionPanel tone="success" title="系统已就绪" description="设备在线，后端可用。可等待新疑似事件，或继续复核已有疑似事件。" action={<PrimaryButton href={suspectedIncidentHref}>查看疑似事件</PrimaryButton>} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-md">
@@ -198,16 +201,16 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-sm">
           {selectedPeriod === 'custom' && (
             <div className="flex flex-wrap items-center gap-xs rounded-lg border border-outline-variant/10 bg-surface-container px-xs py-xs">
-              <input aria-label="开始日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customStart} onChange={(event) => setFilter({ start_date: event.target.value })} />
+              <input aria-label="开始日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customStart} onChange={(suspectedIncident) => setFilter({ start_date: suspectedIncident.target.value })} />
               <span className="text-on-surface-variant">至</span>
-              <input aria-label="结束日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customEnd} onChange={(event) => setFilter({ end_date: event.target.value })} />
+              <input aria-label="结束日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customEnd} onChange={(suspectedIncident) => setFilter({ end_date: suspectedIncident.target.value })} />
             </div>
           )}
           <div className="relative">
             <select
               className="min-w-[220px] appearance-none rounded-lg border border-outline-variant/10 bg-surface-container py-sm pl-md pr-xl text-label-xs text-on-surface outline-none focus:border-primary"
               value={selectedSector}
-              onChange={(event) => setFilter({ roi_id: event.target.value || null })}
+              onChange={(suspectedIncident) => setFilter({ roi_id: suspectedIncident.target.value || null })}
             >
               <option value="">全部路段</option>
               {sectors.map((sector) => <option key={sector} value={sector}>{sector}</option>)}
@@ -218,17 +221,17 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon="warning" label="违规总数" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} 待复核`} onClick={() => navigate(eventHref)} />
-        <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${summary.avg_response_minutes}m`} badge="调度" helper="路段调度平均值" onClick={() => navigate('/devices')} />
-        <MetricCard icon="task_alt" tone="tertiary" label="已确认事件" value={summary.validated} badge={`${summary.false_alarms} 误报`} helper="复核确认结果" onClick={() => navigate('/events?status=validated')} />
-        <MetricCard icon="route" label="巡检任务" value={summary.assigned_tasks} badge="活跃" helper={`${summary.completed_tasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
+        <MetricCard icon="warning" label="疑似事件总数" value={metricSummary.totalSuspectedIncidents} badge={periodLabel} helper={`${metricSummary.pendingReview} 待复核`} onClick={() => navigate(suspectedIncidentHref)} />
+        <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${metricSummary.avgResponseMinutes}m`} badge="调度" helper="路段调度平均值" onClick={() => navigate('/devices')} />
+        <MetricCard icon="task_alt" tone="tertiary" label="已确认疑似事件" value={metricSummary.validatedIncidents} badge={`${metricSummary.falseAlarms} 误报`} helper="复核确认结果" onClick={() => navigate('/suspected-incidents?status=validated')} />
+        <MetricCard icon="route" label="巡检任务" value={metricSummary.activeResponseTasks} badge="活跃" helper={`${metricSummary.completedResponseTasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
       </div>
 
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-3">
-        <button className="flex h-[400px] flex-col overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary lg:col-span-2" onClick={() => navigate(eventHref)} type="button">
+        <button className="flex h-[400px] flex-col overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary lg:col-span-2" onClick={() => navigate(suspectedIncidentHref)} type="button">
           <div className="mb-lg flex items-center justify-between">
             <div>
-              <h2 className="text-headline-md font-headline-md text-on-surface">违规趋势</h2>
+              <h2 className="text-headline-md font-headline-md text-on-surface">疑似占用趋势</h2>
               <p className="text-label-xs text-on-surface-variant">日频趋势， {periodLabel.toLowerCase()}</p>
             </div>
             <div className="flex gap-sm">
@@ -261,9 +264,9 @@ export default function Dashboard() {
 
         <div className="flex h-[400px] flex-col rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
           <h2 className="mb-xs text-headline-md font-headline-md text-on-surface">高发路段排行</h2>
-          <p className="mb-lg text-label-xs text-on-surface-variant">占用事件最活跃的路段</p>
+          <p className="mb-lg text-label-xs text-on-surface-variant">占用疑似事件最活跃的路段</p>
 
-          <button className="relative mb-lg h-32 w-full overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container text-left" onClick={() => navigate(eventHref)} type="button">
+          <button className="relative mb-lg h-32 w-full overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container text-left" onClick={() => navigate(suspectedIncidentHref)} type="button">
             <div className="h-full w-full opacity-[0.14]" style={{ backgroundImage: 'linear-gradient(rgba(145,143,160,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(145,143,160,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
             <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent" />
             {topHotspots.slice(0, 4).map((item, index) => (
@@ -350,14 +353,14 @@ export default function Dashboard() {
 
       <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
         <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
-          <button className="flex items-start gap-sm text-left" onClick={() => selectedSector ? navigate(eventHref) : navigate('/devices')} type="button">
+          <button className="flex items-start gap-sm text-left" onClick={() => selectedSector ? navigate(suspectedIncidentHref) : navigate('/devices')} type="button">
             <span className="material-symbols-outlined text-primary">auto_awesome</span>
             <div>
               <h2 className="text-headline-md font-headline-md text-on-surface">{insight.title}</h2>
               <p className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">{insight.message}</p>
             </div>
           </button>
-          <PrimaryButton tone="light" href={selectedSector ? eventHref : '/devices'}>{insight.action}</PrimaryButton>
+          <PrimaryButton tone="light" href={selectedSector ? suspectedIncidentHref : '/devices'}>{insight.action}</PrimaryButton>
         </div>
       </div>
     </div>
@@ -446,19 +449,6 @@ function heatClass(level: number) {
   if (level === 2) return 'bg-primary/60';
   if (level === 1) return 'bg-primary/30';
   return 'bg-surface-container';
-}
-
-function localizeInsight(insight: OperationsStats['insight']) {
-  const hotspotMatch = insight.message.match(/^(.+) is the current top violation hotspot\.$/);
-  return {
-    title: insight.title === 'System Insights' ? '系统洞察' : insight.title,
-    message: insight.message === 'No abnormal congestion pattern yet.'
-      ? '暂未发现异常拥堵模式。'
-      : hotspotMatch
-        ? `${hotspotMatch[1]} 是当前违规高发路段。`
-        : insight.message,
-    action: insight.action === 'Optimize Patrol Dispatch' ? '优化巡查调度' : insight.action,
-  };
 }
 
 function localizePeriodLabel(label: string) {

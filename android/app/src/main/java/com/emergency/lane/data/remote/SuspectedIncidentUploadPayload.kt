@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-data class EventUploadPayload(
-    val event_id: String,
+data class SuspectedIncidentUploadPayload(
+    val suspected_incident_id: String,
     val device_id: String,
     val start_time: String,
     val end_time: String,

@@ -1,12 +1,12 @@
 import { useSearchParams } from 'react-router-dom';
-import { useEvents } from '../hooks/useEvents';
+import { useSuspectedIncidents } from '../hooks/useSuspectedIncidents';
 import FilterBar from '../components/FilterBar';
-import EventTable from '../components/EventTable';
+import SuspectedIncidentTable from '../components/SuspectedIncidentTable';
 import { PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 
-export default function EventList() {
+export default function SuspectedIncidentList() {
   const [searchParams] = useSearchParams();
-  const { data, loading, error, filters, setFilters, refetch } = useEvents({
+  const { data, loading, error, filters, setFilters, refetch } = useSuspectedIncidents({
     sort: 'created_desc',
     ...(searchParams.get('roi_id') ? { roi_id: searchParams.get('roi_id') || '' } : {}),
     ...(searchParams.get('status') ? { status: searchParams.get('status') || '' } : {}),
@@ -15,8 +15,8 @@ export default function EventList() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="疑似事件"
-        title="疑似事件日志"
+        eyebrow="疑似疑似事件"
+        title="疑似疑似疑似事件日志"
         description="使用历史筛选进行证据追溯；日常待处理请前往审核工作台。"
         action={
           <>
@@ -30,17 +30,17 @@ export default function EventList() {
       />
 
       <FilterBar filters={filters} onChange={setFilters} />
-      {error && <StateBlock tone="error" title="疑似事件加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />}
-      {loading && !data && <StateBlock tone="loading" title="正在加载疑似事件" description="正在同步疑似事件列表与证据缩略图。" />}
+      {error && <StateBlock tone="error" title="疑似疑似事件加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />}
+      {loading && !data && <StateBlock tone="loading" title="正在加载疑似疑似事件" description="正在同步疑似疑似事件列表与证据缩略图。" />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock
-          title="未找到匹配疑似事件"
-          description={filters.status ? '建议：清空筛选，或返回配置向导生成测试疑似事件。' : '建议：先完成设备接入，再从 Android 端生成测试疑似事件。'}
-          action={<PrimaryButton href={filters.status ? '/events' : '/setup'}>{filters.status ? '清空筛选' : '打开配置向导'}</PrimaryButton>}
+          title="未找到匹配疑似疑似事件"
+          description={filters.status ? '建议：清空筛选，或返回配置向导生成测试疑似疑似事件。' : '建议：先完成设备接入，再从 Android 端生成测试疑似疑似事件。'}
+          action={<PrimaryButton href={filters.status ? '/suspected-incidents' : '/setup'}>{filters.status ? '清空筛选' : '打开配置向导'}</PrimaryButton>}
         />
       )}
       {data && data.items.length > 0 && (
-        <EventTable
+        <SuspectedIncidentTable
           items={data.items}
           total={data.total}
           offset={parseInt(filters.offset || '0')}

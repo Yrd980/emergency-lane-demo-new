@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock } from '../components/ProductPrimitives';
 import { formatDateTime } from '../utils/format';
-import type { DeviceInfo, EventListItem, OperationsStats } from '../types';
+import type { DeviceInfo, SuspectedIncidentListItem, OperationsStats } from '../types';
 
 export default function DeviceStatus() {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
-  const [recentEvents, setRecentEvents] = useState<EventListItem[]>([]);
+  const [recentSuspectedIncidents, setRecentSuspectedIncidents] = useState<SuspectedIncidentListItem[]>([]);
   const [operations, setOperations] = useState<OperationsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,12 +18,12 @@ export default function DeviceStatus() {
     setError(null);
     Promise.all([
       api.getDevices(),
-      api.getEvents({ limit: '8', offset: '0', sort: 'created_desc' }),
+      api.getSuspectedIncidents({ limit: '8', offset: '0', sort: 'created_desc' }),
       api.getOperationsStats({ period: '30d' }),
     ])
-      .then(([deviceData, eventData, operationData]) => {
+      .then(([deviceData, suspectedIncidentData, operationData]) => {
         setDevices(deviceData);
-        setRecentEvents(eventData.items);
+        setRecentSuspectedIncidents(suspectedIncidentData.items);
         setOperations(operationData);
         setError(null);
       })
@@ -40,7 +40,7 @@ export default function DeviceStatus() {
   const topHotspot = operations?.hotspots[0];
   const trendBars = normalizeBars((operations?.trend ?? []).slice(-8).map((point) => point.total));
   const hotspotBars = normalizeBars((operations?.trend ?? []).slice(-8).map((point) => Math.max(0, point.total - point.validated)));
-  const activePriorityCount = recentEvents.filter((event) => event.review_priority === 'high' || event.review_status === 'pending').length;
+  const activePriorityCount = recentSuspectedIncidents.filter((suspectedIncident) => suspectedIncident.review_priority === 'high' || suspectedIncident.review_status === 'pending').length;
   const operatorsOnDuty = Math.max(onlineCount, operations?.operators.filter((operator) => operator.tasks > 0).length ?? 0);
   const operatorInitials = useMemo(
     () => (operations?.operators ?? []).slice(0, 3).map((operator) => initials(operator.display_name)),
@@ -76,7 +76,7 @@ export default function DeviceStatus() {
               tone="success"
               title="系统运行正常"
               description="已注册设备均在有效心跳窗口内上报。"
-              action={<PrimaryButton href="/events">查看事件</PrimaryButton>}
+              action={<PrimaryButton href="/suspected-incidents">查看疑似事件</PrimaryButton>}
             />
           )}
 
@@ -107,27 +107,27 @@ export default function DeviceStatus() {
               <span className="rounded-full bg-secondary/20 px-sm py-xs text-[10px] font-bold text-secondary">{activePriorityCount} 活跃</span>
               </div>
               <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto p-sm">
-                {(recentEvents.length ? recentEvents : []).map((event) => (
+                {(recentSuspectedIncidents.length ? recentSuspectedIncidents : []).map((suspectedIncident) => (
                   <button
-                    key={event.event_id}
-                    className={`w-full rounded-lg border p-md text-left transition-all hover:bg-surface-container-high ${event.review_priority === 'high' ? 'border-outline-variant/20 bg-surface-container-high' : 'border-outline-variant/10'}`}
-                    onClick={() => navigate(`/events/${event.event_id}`)}
+                    key={suspectedIncident.suspected_incident_id}
+                    className={`w-full rounded-lg border p-md text-left transition-all hover:bg-surface-container-high ${suspectedIncident.review_priority === 'high' ? 'border-outline-variant/20 bg-surface-container-high' : 'border-outline-variant/10'}`}
+                    onClick={() => navigate(`/suspected-incidents/${suspectedIncident.suspected_incident_id}`)}
                     type="button"
                   >
                     <div className="mb-xs flex items-start justify-between gap-sm">
-                      <span className={`text-label-xs font-bold uppercase ${event.review_priority === 'high' ? 'text-secondary' : 'text-primary'}`}>{event.vehicle_class} 疑似占用</span>
-                      <span className="shrink-0 text-[10px] text-on-surface-variant">{formatDateTime(event.start_time)}</span>
+                      <span className={`text-label-xs font-bold uppercase ${suspectedIncident.review_priority === 'high' ? 'text-secondary' : 'text-primary'}`}>{suspectedIncident.vehicle_class} 疑似占用</span>
+                      <span className="shrink-0 text-[10px] text-on-surface-variant">{formatDateTime(suspectedIncident.start_time)}</span>
                     </div>
-                    <p className="mb-xs truncate text-body-sm font-bold">{event.device_id}</p>
-                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)} 秒占道，置信度 {Math.round(event.confidence * 100)}%，{formatReviewStatus(event.review_status)}。</p>
+                    <p className="mb-xs truncate text-body-sm font-bold">{suspectedIncident.device_id}</p>
+                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(suspectedIncident.duration_seconds)} 秒占道，置信度 {Math.round(suspectedIncident.confidence * 100)}%，{formatReviewStatus(suspectedIncident.review_status)}。</p>
                     <div className="flex gap-xs">
                       <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开详情</span>
-                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{formatReviewPriority(event.review_priority)}</span>
+                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{formatReviewPriority(suspectedIncident.review_priority)}</span>
                     </div>
                   </button>
                 ))}
-                {recentEvents.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-outline-variant/20 p-md text-body-sm text-on-surface-variant">当前时间窗口暂无事件。</div>
+                {recentSuspectedIncidents.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-outline-variant/20 p-md text-body-sm text-on-surface-variant">当前时间窗口暂无疑似事件。</div>
                 )}
               </div>
             </div>
@@ -135,7 +135,7 @@ export default function DeviceStatus() {
 
           <div className="grid grid-cols-1 gap-lg md:grid-cols-3">
             <SparklinePanel title={topHotspot ? `流量走势： ${topHotspot.roi_id}` : '流量走势'} bars={trendBars} tone="primary" />
-            <SparklinePanel title="违规趋势：人工复核" bars={hotspotBars} tone="secondary" />
+            <SparklinePanel title="复核趋势：人工复核" bars={hotspotBars} tone="secondary" />
             <div className="flex flex-col justify-center rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
               <p className="mb-sm text-label-xs uppercase tracking-widest text-on-surface-variant">全局状态</p>
               <div className="flex items-center gap-md">
@@ -245,9 +245,6 @@ function formatReviewStatus(status: string) {
     pending: '待复核',
     validated: '已确认',
     false_alarm: '误报',
-    assigned: '已派发',
-    accepted: '已接单',
-    completed: '已完成',
     closed: '已关闭',
   };
   return labels[status] ?? status;

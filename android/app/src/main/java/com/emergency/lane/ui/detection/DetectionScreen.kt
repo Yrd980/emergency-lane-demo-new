@@ -279,8 +279,8 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
                 )
             }
             Button(
-                onClick = { viewModel.generateManualEvent() },
-                enabled = uiState.canGenerateEvent && uiState.isPreviewActive,
+                onClick = { viewModel.generateManualSuspectedIncident() },
+                enabled = uiState.canGenerateSuspectedIncident && uiState.isPreviewActive,
                 colors = ButtonDefaults.buttonColors(containerColor = AegisSurfaceContainerHigh, contentColor = AegisOnSurface),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.weight(1f)
@@ -303,8 +303,8 @@ fun DetectionScreen(navController: NavController, viewModel: DetectionViewModel 
 
         // Status bar
         Row(modifier = Modifier.padding(8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (uiState.lastEventId != null) {
-                Text("最近：${uiState.lastEventId}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
+            if (uiState.lastSuspectedIncidentId != null) {
+                Text("最近：${uiState.lastSuspectedIncidentId}", color = AegisOnSurfaceVariant, fontSize = 12.sp)
             }
             if (uiState.pendingUploadCount > 0) {
                 Text("待上传：${uiState.pendingUploadCount}", color = AegisOnSurfaceVariant, fontSize = 12.sp)

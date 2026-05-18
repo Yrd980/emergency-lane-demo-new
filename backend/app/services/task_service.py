@@ -2,24 +2,18 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from app.database import get_db
+from app.domain import response_task, suspected_incident_read_model
+from app.queries import response_task_queries
 
 
 def _now():
     return datetime.now(timezone(timedelta(hours=8))).isoformat()
 
 
-def _review_priority(row):
-    return "high" if row["confidence"] >= 0.85 or row["duration_seconds"] >= 10 else "normal"
-
-
-def _thumbnail_url(row):
-    return f"/evidence/{row['event_id']}/{row['thumbnail_file_path'].split('/')[-1]}" if row["thumbnail_file_path"] else ""
-
-
 def _serialize(row):
     return {
         "task_id": row["task_id"],
-        "event_id": row["event_id"],
+        "suspected_incident_id": row["suspected_incident_id"],
         "status": row["status"],
         "note": row["note"],
         "assigned_to_username": row["assigned_to_username"],
@@ -31,69 +25,36 @@ def _serialize(row):
         "accepted_at": row["accepted_at"],
         "completed_at": row["completed_at"],
         "completed_note": row["completed_note"],
-        "vehicle_class": row["vehicle_class"],
-        "confidence": row["confidence"],
-        "start_time": row["start_time"],
-        "device_id": row["device_id"],
-        "review_priority": _review_priority(row),
-        "thumbnail_url": _thumbnail_url(row),
+        **suspected_incident_read_model.task_context(row),
     }
-
-
-def _task_select():
-    return """
-        SELECT t.*,
-               assignee.username AS assigned_to_username,
-               assignee.display_name AS assigned_to_display_name,
-               assigner.username AS assigned_by_username,
-               assigner.display_name AS assigned_by_display_name,
-               e.device_id, e.start_time, e.duration_seconds, e.vehicle_class, e.confidence,
-               (SELECT file_path FROM evidence_files ef
-                WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
-                LIMIT 1) AS thumbnail_file_path
-        FROM dispatch_tasks t
-        JOIN events e ON e.event_id = t.event_id
-        LEFT JOIN users assignee ON assignee.id = t.assigned_to_user_id
-        JOIN users assigner ON assigner.id = t.assigned_by_user_id
-    """
 
 
 def list_tasks(user: dict, status: str | None = None, assigned_to_me: bool = False, limit: int = 50):
     conn = get_db()
     try:
-        clauses = []
-        params = []
-        if status:
-            clauses.append("t.status = ?")
-            params.append(status)
-        if assigned_to_me or user["role"] == "patrol":
-            clauses.append("t.assigned_to_user_id = ?")
-            params.append(user["id"])
-        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
-        rows = conn.execute(
-            f"{_task_select()} {where} ORDER BY t.created_at DESC LIMIT ?",
-            params + [max(1, min(limit, 200))],
-        ).fetchall()
+        rows = response_task_queries.list_response_tasks(
+            conn,
+            user,
+            status=status,
+            assigned_to_me=assigned_to_me,
+            limit=limit,
+        )
         return {"items": [_serialize(row) for row in rows], "total": len(rows)}
     finally:
         conn.close()
 
 
-def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_device_id: str | None, note: str, assigner: dict):
+def assign_task(suspected_incident_id: str, assigned_to_username: str | None, assigned_to_device_id: str | None, note: str, assigner: dict):
     conn = get_db()
     try:
-        event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (event_id,)).fetchone()
-        if not event:
+        suspected_incident = conn.execute("SELECT review_status FROM suspected_incidents WHERE suspected_incident_id=?", (suspected_incident_id,)).fetchone()
+        if not suspected_incident:
             return None
-        if event["review_status"] != "validated":
-            return {"error": "Response tasks can only be assigned after the suspected incident is validated"}
+        guard = response_task.assignment_guard(suspected_incident["review_status"])
+        if guard:
+            return {"error": guard}
 
-        active_task = conn.execute(
-            """SELECT task_id FROM dispatch_tasks
-               WHERE event_id=? AND status IN ('assigned', 'accepted')
-               LIMIT 1""",
-            (event_id,),
-        ).fetchone()
+        active_task = response_task_queries.get_active_task_for_suspected_incident(conn, suspected_incident_id)
         if active_task:
             return {"error": "Suspected incident already has an active response task"}
 
@@ -110,12 +71,12 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
         now = _now()
         conn.execute(
             """INSERT INTO dispatch_tasks (
-                   task_id, event_id, assigned_to_user_id, assigned_to_device_id,
+                   task_id, suspected_incident_id, assigned_to_user_id, assigned_to_device_id,
                    assigned_by_user_id, status, note, created_at
                ) VALUES (?, ?, ?, ?, ?, 'assigned', ?, ?)""",
             (
                 task_id,
-                event_id,
+                suspected_incident_id,
                 assignee["id"] if assignee else None,
                 assigned_to_device_id,
                 assigner["id"],
@@ -132,12 +93,13 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
 def accept_task(task_id: str, user: dict):
     conn = get_db()
     try:
-        row = conn.execute("SELECT * FROM dispatch_tasks WHERE task_id=?", (task_id,)).fetchone()
+        row = response_task_queries.get_task_row(conn, task_id)
         if not row:
             return None
-        if row["assigned_to_user_id"] and row["assigned_to_user_id"] != user["id"] and user["role"] != "admin":
-            return {"error": "任务已派发给其他巡查员"}
-        if row["status"] not in ("assigned", "accepted"):
+        guard = response_task.actor_guard(row, user)
+        if guard:
+            return {"error": guard}
+        if not response_task.can_accept(row["status"]):
             return {"error": "当前状态无法接单"}
         now = _now()
         conn.execute(
@@ -153,12 +115,13 @@ def accept_task(task_id: str, user: dict):
 def complete_task(task_id: str, completed_note: str, user: dict):
     conn = get_db()
     try:
-        row = conn.execute("SELECT * FROM dispatch_tasks WHERE task_id=?", (task_id,)).fetchone()
+        row = response_task_queries.get_task_row(conn, task_id)
         if not row:
             return None
-        if row["assigned_to_user_id"] and row["assigned_to_user_id"] != user["id"] and user["role"] != "admin":
-            return {"error": "任务已派发给其他巡查员"}
-        if row["status"] not in ("assigned", "accepted"):
+        guard = response_task.actor_guard(row, user)
+        if guard:
+            return {"error": guard}
+        if not response_task.can_complete(row["status"]):
             return {"error": "当前状态无法完成任务"}
         now = _now()
         conn.execute(
@@ -178,7 +141,7 @@ def get_task(task_id: str, conn=None):
     own_conn = conn is None
     conn = conn or get_db()
     try:
-        row = conn.execute(f"{_task_select()} WHERE t.task_id=?", (task_id,)).fetchone()
+        row = response_task_queries.get_response_task(conn, task_id)
         return _serialize(row) if row else None
     finally:
         if own_conn:

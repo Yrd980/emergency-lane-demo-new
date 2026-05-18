@@ -22,11 +22,11 @@ def get_status():
         (threshold,),
     ).fetchone()[0]
     pending_review = conn.execute(
-        "SELECT COUNT(*) FROM events WHERE review_status='pending'",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE review_status='pending'",
     ).fetchone()[0]
     evidence_count = conn.execute("SELECT COUNT(*) FROM evidence_files").fetchone()[0]
-    latest_event = conn.execute(
-        "SELECT created_at FROM events ORDER BY created_at DESC LIMIT 1",
+    latest_suspected_incident = conn.execute(
+        "SELECT created_at FROM suspected_incidents ORDER BY created_at DESC LIMIT 1",
     ).fetchone()
     pending_upload_total = conn.execute(
         "SELECT COALESCE(SUM(pending_upload_count), 0) FROM devices",
@@ -77,8 +77,8 @@ def get_status():
         issues.append({
             "severity": "info",
             "code": "pending_reviews",
-            "message": f"还有 {pending_review} 条事件待复核",
-            "next_action": "进入复核工作台处理下一条事件",
+            "message": f"还有 {pending_review} 条疑似事件待复核",
+            "next_action": "进入复核工作台处理下一条疑似事件",
         })
 
     return {
@@ -99,9 +99,9 @@ def get_status():
             "pending_upload_count": pending_upload_total,
             "backlog_device_id": backlog_device["device_id"] if backlog_device else None,
         },
-        "events": {
+        "suspected_incidents": {
             "pending_review_count": pending_review,
-            "latest_event_at": latest_event["created_at"] if latest_event else None,
+            "latest_suspected_incident_at": latest_suspected_incident["created_at"] if latest_suspected_incident else None,
         },
         "issues": issues,
     }

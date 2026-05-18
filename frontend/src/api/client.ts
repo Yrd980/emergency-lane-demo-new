@@ -3,8 +3,8 @@ import type {
   BulkReviewResponse,
   DeviceDetail,
   DeviceInfo,
-  EventDetail,
-  EventListResponse,
+  SuspectedIncidentDetail,
+  SuspectedIncidentListResponse,
   OperationsStats,
   OverviewStats,
   RuntimeSettings,
@@ -68,27 +68,27 @@ export const api = {
     return request<OperationsStats>(`/stats/operations${qs ? `?${qs}` : ''}`);
   },
 
-  getEvents: (params: Record<string, string>) => {
+  getSuspectedIncidents: (params: Record<string, string>) => {
     const qs = new URLSearchParams(params).toString();
-    return request<EventListResponse>(`/events?${qs}`);
+    return request<SuspectedIncidentListResponse>(`/suspected-incidents?${qs}`);
   },
 
-  getEvent: (id: string) => request<EventDetail>(`/events/${id}`),
+  getSuspectedIncident: (id: string) => request<SuspectedIncidentDetail>(`/suspected-incidents/${id}`),
 
-  reviewEvent: (id: string, review_status: string, operator_note: string, operator_id?: string) =>
-    request(`/events/${id}/review`, {
+  reviewSuspectedIncident: (id: string, review_status: string, operator_note: string, operator_id?: string) =>
+    request(`/suspected-incidents/${id}/review`, {
       method: 'PATCH',
       body: JSON.stringify({ review_status, operator_note, operator_id }),
     }),
 
-  bulkReviewEvents: (event_ids: string[], review_status: string, operator_note: string, operator_id: string) =>
-    request<BulkReviewResponse>('/events/review/bulk', {
+  bulkReviewSuspectedIncidents: (suspected_incident_ids: string[], review_status: string, operator_note: string, operator_id: string) =>
+    request<BulkReviewResponse>('/suspected-incidents/review/bulk', {
       method: 'PATCH',
-      body: JSON.stringify({ event_ids, review_status, operator_note, operator_id }),
+      body: JSON.stringify({ suspected_incident_ids, review_status, operator_note, operator_id }),
     }),
 
-  assignEvent: (id: string, body: { assigned_to_username?: string; assigned_to_device_id?: string; note?: string }) =>
-    request<TaskItem>(`/events/${id}/assign`, {
+  assignSuspectedIncident: (id: string, body: { assigned_to_username?: string; assigned_to_device_id?: string; note?: string }) =>
+    request<TaskItem>(`/suspected-incidents/${id}/assign`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),

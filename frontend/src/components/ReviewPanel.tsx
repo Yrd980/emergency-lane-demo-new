@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PrimaryButton } from './ProductPrimitives';
 import { inputClassName } from './styles';
-import StatusBadge from './StatusBadge';
+import { IncidentReviewStateBadge, type IncidentReviewState } from './StatusBadge';
 
 const noteTemplates = [
   '证据清晰，验证为应急车道占用',
@@ -17,7 +17,7 @@ export default function ReviewPanel({
   submitting,
   operatorName,
 }: {
-  reviewStatus: string;
+  reviewStatus: IncidentReviewState;
   operatorNote: string;
   onSubmit: (status: string, note: string, operatorId?: string) => Promise<boolean>;
   submitting: boolean;
@@ -46,7 +46,7 @@ export default function ReviewPanel({
           <p className="mt-1 text-label-xs text-on-surface-variant">下一步：确认或驳回，并留下可追溯备注。</p>
         </div>
         <div className="shrink-0">
-          <StatusBadge status={reviewStatus} />
+          <IncidentReviewStateBadge state={reviewStatus} />
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function ReviewPanel({
               disabled={submitting}
               onClick={() => handleReview('validated')}
             >
-              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似事件'}
+              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似疑似事件'}
             </PrimaryButton>
             <PrimaryButton
               tone="danger"

@@ -2,27 +2,27 @@ import { useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useAuth } from '../access/useRole';
 import { api } from '../api/client';
-import EventTable from '../components/EventTable';
+import SuspectedIncidentTable from '../components/SuspectedIncidentTable';
 import { ActionPanel, MetricTile, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
-import { useEvents } from '../hooks/useEvents';
+import { useSuspectedIncidents } from '../hooks/useSuspectedIncidents';
 import { usePolling } from '../hooks/usePolling';
 import type { OverviewStats } from '../types';
 
 export default function ReviewQueue() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data, loading, error, filters, setFilters, refetch } = useEvents({ status: 'pending', sort: 'review_priority', limit: '50', offset: '0' });
+  const { data, loading, error, filters, setFilters, refetch } = useSuspectedIncidents({ status: 'pending', sort: 'review_priority', limit: '50', offset: '0' });
   const overview = usePolling<OverviewStats>(() => api.getStats(), 5000);
-  const firstEvent = data?.items[0];
+  const firstSuspectedIncident = data?.items[0];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<'validated' | 'false_alarm' | null>(null);
   const [submittingBulk, setSubmittingBulk] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
-  const pendingIds = useMemo(() => data?.items.filter((item) => item.review_status === 'pending').map((item) => item.event_id) ?? [], [data]);
+  const pendingIds = useMemo(() => data?.items.filter((item) => item.review_status === 'pending').map((item) => item.suspected_incident_id) ?? [], [data]);
 
-  const toggleSelect = (eventId: string) => {
+  const toggleSelect = (suspectedIncidentId: string) => {
     setBulkMessage(null);
-    setSelectedIds((current) => current.includes(eventId) ? current.filter((id) => id !== eventId) : [...current, eventId]);
+    setSelectedIds((current) => current.includes(suspectedIncidentId) ? current.filter((id) => id !== suspectedIncidentId) : [...current, suspectedIncidentId]);
   };
 
   const toggleSelectAll = () => {
@@ -34,32 +34,32 @@ export default function ReviewQueue() {
 
   const submitBulkReview = async (reviewStatus: 'validated' | 'false_alarm') => {
     if (selectedIds.length === 0) {
-      setBulkMessage('请先选择待审核事件，再选择审核结果。');
+      setBulkMessage('请先选择待审核疑似事件，再选择审核结果。');
       return;
     }
     if (bulkStatus !== reviewStatus) {
       setBulkStatus(reviewStatus);
       setBulkMessage(
         reviewStatus === 'validated'
-          ? `确认将 ${selectedIds.length} 条事件标记为已确认。批量确认要求证据包含前段、峰值、后段。再次点击以执行。`
-          : `将 ${selectedIds.length} 条事件标记为误报。再次点击以执行。`,
+          ? `确认将 ${selectedIds.length} 条疑似事件标记为已确认。批量确认要求证据包含前段、峰值、后段。再次点击以执行。`
+          : `将 ${selectedIds.length} 条疑似事件标记为误报。再次点击以执行。`,
       );
       return;
     }
     setSubmittingBulk(true);
     try {
-      const result = await api.bulkReviewEvents(
+      const result = await api.bulkReviewSuspectedIncidents(
         selectedIds,
         reviewStatus,
         reviewStatus === 'validated' ? '批量确认' : '批量标记误报',
         user?.display_name ?? 'Aegis 审核员',
       );
-      const failedCount = result.failed_event_ids?.length ?? 0;
-      const missingCount = result.missing_event_ids.length;
+      const failedCount = result.failed_suspected_incident_ids?.length ?? 0;
+      const missingCount = result.missing_suspected_incident_ids.length;
       setBulkMessage(
         failedCount || missingCount
-          ? `已处理 ${result.updated_count} 条事件。${failedCount} 条因证据或状态策略被阻止，${missingCount} 条不存在。`
-          : `已处理 ${result.updated_count} 条事件。`,
+          ? `已处理 ${result.updated_count} 条疑似事件。${failedCount} 条因证据或状态策略被阻止，${missingCount} 条不存在。`
+          : `已处理 ${result.updated_count} 条疑似事件。`,
       );
       setSelectedIds([]);
       setBulkStatus(null);
@@ -79,40 +79,40 @@ export default function ReviewQueue() {
         title="审核工作台"
         description="将待审核队列作为工单处理：优先处理高优先级，再依次推进。"
         action={
-          firstEvent ? (
-            <PrimaryButton icon="fact_check" href={`/events/${firstEvent.event_id}?from=review`}>处理下一个</PrimaryButton>
+          firstSuspectedIncident ? (
+            <PrimaryButton icon="fact_check" href={`/suspected-incidents/${firstSuspectedIncident.suspected_incident_id}?from=review`}>处理下一个</PrimaryButton>
           ) : (
-            <PrimaryButton href="/events">查看历史</PrimaryButton>
+            <PrimaryButton href="/suspected-incidents">查看历史</PrimaryButton>
           )
         }
       />
 
       <div>
         <ActionPanel
-          title={firstEvent ? '下一步：打开队列首个事件' : '当前无待审核事件'}
-          description={firstEvent ? `队列按优先级排序：${firstEvent.review_priority_reason ?? '按时间顺序'}，详情页仅推进待审核事件。` : '请等待新事件，或查看历史记录。'}
-          tone={firstEvent ? 'warning' : 'success'}
-          action={firstEvent ? <PrimaryButton href={`/events/${firstEvent.event_id}?from=review`}>开始审核</PrimaryButton> : <PrimaryButton href="/">返回工作台</PrimaryButton>}
+          title={firstSuspectedIncident ? '下一步：打开队列首个疑似事件' : '当前无待审核疑似事件'}
+          description={firstSuspectedIncident ? `队列按优先级排序：${firstSuspectedIncident.review_priority_reason ?? '按时间顺序'}，详情页仅推进待审核疑似事件。` : '请等待新疑似事件，或查看历史记录。'}
+          tone={firstSuspectedIncident ? 'warning' : 'success'}
+          action={firstSuspectedIncident ? <PrimaryButton href={`/suspected-incidents/${firstSuspectedIncident.suspected_incident_id}?from=review`}>开始审核</PrimaryButton> : <PrimaryButton href="/">返回工作台</PrimaryButton>}
         />
       </div>
 
       {overview.data && (
         <div className="mb-lg grid gap-4 sm:grid-cols-3">
           <MetricTile label="待审核" value={overview.data.pending_review_count} tone="warning" />
-          <MetricTile label="已确认" value={overview.data.confirmed_count} tone="success" />
-          <MetricTile label="误报" value={overview.data.rejected_count} tone="danger" />
+          <MetricTile label="已确认" value={overview.data.validated_count} tone="success" />
+          <MetricTile label="误报" value={overview.data.false_alarm_count} tone="danger" />
         </div>
       )}
 
       {error && (
         <StateBlock tone="error" title="审核队列加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重试</PrimaryButton>} />
       )}
-      {loading && !data && <StateBlock tone="loading" title="正在加载审核队列" description="正在获取待审核事件。" />}
+      {loading && !data && <StateBlock tone="loading" title="正在加载审核队列" description="正在获取待审核疑似事件。" />}
       {data && data.items.length === 0 && !error && !loading && (
         <StateBlock
           tone="success"
           title="审核队列已清空"
-          description="可返回工作台查看设备健康状态，或等待 Android 端新事件。"
+          description="可返回工作台查看设备健康状态，或等待 Android 端新疑似事件。"
           action={<PrimaryButton href="/">返回工作台</PrimaryButton>}
         />
       )}
@@ -154,7 +154,7 @@ export default function ReviewQueue() {
             )}
           </SurfacePanel>
 
-          <EventTable
+          <SuspectedIncidentTable
             mode="review"
             items={data.items}
             total={data.total}

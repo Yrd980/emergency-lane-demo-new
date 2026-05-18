@@ -1,6 +1,6 @@
 import { api } from '../api/client';
 import { ActionPanel, PageHeader, PrimaryButton, StateBlock, SurfacePanel } from '../components/ProductPrimitives';
-import StatusBadge from '../components/StatusBadge';
+import { DeviceStatusBadge } from '../components/StatusBadge';
 import { useToast } from '../hooks/useToast';
 import { usePolling } from '../hooks/usePolling';
 import type { SystemStatus } from '../types';
@@ -55,12 +55,12 @@ export default function Setup() {
               <div className="text-body-sm font-semibold text-on-surface">接入进度</div>
               <p className="mt-1 text-body-sm text-on-surface-variant">请先建立连通，再检查设备注册与疑似事件流入。</p>
             </div>
-            <StatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端就绪' : '等待后端'} />
+            <DeviceStatusBadge status={data?.backend.status === 'ok' ? 'online' : 'offline'} label={data?.backend.status === 'ok' ? '后端就绪' : '等待后端'} />
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <ProgressChip label="设备已注册" ok={(data?.devices.total ?? 0) > 0} />
             <ProgressChip label="设备在线" ok={(data?.devices.online ?? 0) > 0} />
-            <ProgressChip label="疑似事件队列" ok={(data?.events.pending_review_count ?? 0) > 0} />
+            <ProgressChip label="疑似事件队列" ok={(data?.suspected_incidents.pending_review_count ?? 0) > 0} />
             <ProgressChip label="可生成测试" ok={(data?.devices.total ?? 0) > 0} />
           </div>
         </SurfacePanel>

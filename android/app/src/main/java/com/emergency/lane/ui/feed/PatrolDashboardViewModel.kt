@@ -24,7 +24,7 @@ data class PatrolDashboardState(
 )
 
 data class IncidentItem(
-    val eventId: String,
+    val suspectedIncidentId: String,
     val taskId: String,
     val status: String,
     val title: String,
@@ -113,7 +113,7 @@ class PatrolDashboardViewModel(application: Application) : AndroidViewModel(appl
                 onSuccess = { response ->
                     val items = response.items.map { api ->
                         IncidentItem(
-                            eventId = api.eventId,
+                            suspectedIncidentId = api.suspectedIncidentId,
                             taskId = api.taskId,
                             status = api.status,
                             title = "${api.vehicleClass} 处置任务",

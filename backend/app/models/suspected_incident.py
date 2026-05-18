@@ -12,8 +12,8 @@ class GpsLocation(BaseModel):
     lng: float = 0.0
     accuracy_meters: float = 0.0
 
-class EventCreate(BaseModel):
-    event_id: str
+class SuspectedIncidentCreate(BaseModel):
+    suspected_incident_id: str
     device_id: str
     start_time: str
     end_time: str
@@ -31,10 +31,10 @@ class ReviewUpdate(BaseModel):
     operator_id: str = "本地复核员"
 
 class BulkReviewUpdate(ReviewUpdate):
-    event_ids: list[str] = Field(default_factory=list, min_length=1)
+    suspected_incident_ids: list[str] = Field(default_factory=list, min_length=1)
 
 
-class AssignEventRequest(BaseModel):
+class AssignSuspectedIncidentRequest(BaseModel):
     assigned_to_username: str | None = None
     assigned_to_device_id: str | None = None
     note: str = ""

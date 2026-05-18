@@ -30,7 +30,7 @@ export default function Login() {
             本地应急车道运维控制台。
           </h1>
           <p className="mt-md max-w-lg text-[15px] leading-6 text-on-surface-variant">
-            登录后可审核证据、检查设备健康状态，并将已确认事件流转到下一环节。
+            登录后可审核证据、检查设备健康状态，并将已确认疑似事件流转到下一环节。
           </p>
         </div>
         <div className="grid grid-cols-3 gap-sm text-label-xs text-on-surface-variant">

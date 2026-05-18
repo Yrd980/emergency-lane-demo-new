@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api/client';
 
-export function useReview(eventId: string) {
+export function useIncidentReview(suspectedIncidentId: string) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -9,7 +9,7 @@ export function useReview(eventId: string) {
     setSubmitting(true);
     setError(null);
     try {
-      await api.reviewEvent(eventId, review_status, operator_note, operator_id);
+      await api.reviewSuspectedIncident(suspectedIncidentId, review_status, operator_note, operator_id);
       return true;
     } catch (e: unknown) {
       setError((e as Error).message);

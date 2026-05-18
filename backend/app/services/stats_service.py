@@ -1,5 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from app.database import get_db
+from app.domain import suspected_incident_read_model
+from app.queries import suspected_incident_queries
 from app.services.settings_service import get_effective_online_threshold
 
 def _now():
@@ -48,52 +50,28 @@ def get_overview():
     now_iso = now.isoformat()
 
     total_today = conn.execute(
-        "SELECT COUNT(*) FROM events WHERE start_time >= ? AND start_time <= ?",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE start_time >= ? AND start_time <= ?",
         (today_start, now_iso),
     ).fetchone()[0]
 
-    pending = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='pending'").fetchone()[0]
-    confirmed = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='validated'").fetchone()[0]
-    rejected = conn.execute("SELECT COUNT(*) FROM events WHERE review_status='false_alarm'").fetchone()[0]
+    pending = conn.execute("SELECT COUNT(*) FROM suspected_incidents WHERE review_status='pending'").fetchone()[0]
+    validated = conn.execute("SELECT COUNT(*) FROM suspected_incidents WHERE review_status='validated'").fetchone()[0]
+    false_alarm = conn.execute("SELECT COUNT(*) FROM suspected_incidents WHERE review_status='false_alarm'").fetchone()[0]
 
     threshold = (now - timedelta(seconds=get_effective_online_threshold())).isoformat()
     online = conn.execute(
         "SELECT COUNT(*) FROM devices WHERE last_seen_at >= ?", (threshold,)
     ).fetchone()[0]
 
-    recent_rows = conn.execute(
-        """SELECT e.*,
-                  (SELECT file_path FROM evidence_files ef
-                   WHERE ef.event_id = e.event_id AND ef.evidence_type = 'frame_peak'
-                   LIMIT 1) AS thumbnail_file_path
-           FROM events e
-           ORDER BY e.created_at DESC LIMIT 10"""
-    ).fetchall()
-
-    recent = []
-    for r in recent_rows:
-        thumbnail_url = (
-            f"/evidence/{r['event_id']}/{r['thumbnail_file_path'].split('/')[-1]}"
-            if r["thumbnail_file_path"] else ""
-        )
-        recent.append({
-            "event_id": r["event_id"],
-            "device_id": r["device_id"],
-            "start_time": r["start_time"],
-            "duration_seconds": r["duration_seconds"],
-            "vehicle_class": r["vehicle_class"],
-            "confidence": r["confidence"],
-            "review_status": r["review_status"],
-            "thumbnail_url": thumbnail_url,
-        })
+    recent_rows = suspected_incident_queries.recent_suspected_incidents(conn)
 
     return {
-        "total_events_today": total_today,
+        "total_suspected_incidents_today": total_today,
         "pending_review_count": pending,
-        "confirmed_count": confirmed,
-        "rejected_count": rejected,
+        "validated_count": validated,
+        "false_alarm_count": false_alarm,
         "online_device_count": online,
-        "recent_events": recent,
+        "recent_suspected_incidents": [suspected_incident_read_model.recent_item(row) for row in recent_rows],
     }
 
 
@@ -104,28 +82,28 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
     window_start, window_end, period_label = _operation_window(period, start_date, end_date)
 
     total_sql, total_params = _with_roi(
-        "SELECT COUNT(*) FROM events WHERE start_time >= ? AND start_time <= ?",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE start_time >= ? AND start_time <= ?",
         (window_start, window_end),
         roi_id,
     )
-    total_violations = conn.execute(total_sql, total_params).fetchone()[0]
+    total_suspected_incidents = conn.execute(total_sql, total_params).fetchone()[0]
 
     pending_sql, pending_params = _with_roi(
-        "SELECT COUNT(*) FROM events WHERE review_status='pending' AND start_time >= ? AND start_time <= ?",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE review_status='pending' AND start_time >= ? AND start_time <= ?",
         (window_start, window_end),
         roi_id,
     )
     pending = conn.execute(pending_sql, pending_params).fetchone()[0]
 
     validated_sql, validated_params = _with_roi(
-        "SELECT COUNT(*) FROM events WHERE review_status='validated' AND start_time >= ? AND start_time <= ?",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE review_status='validated' AND start_time >= ? AND start_time <= ?",
         (window_start, window_end),
         roi_id,
     )
     validated = conn.execute(validated_sql, validated_params).fetchone()[0]
 
     false_sql, false_params = _with_roi(
-        "SELECT COUNT(*) FROM events WHERE review_status='false_alarm' AND start_time >= ? AND start_time <= ?",
+        "SELECT COUNT(*) FROM suspected_incidents WHERE review_status='false_alarm' AND start_time >= ? AND start_time <= ?",
         (window_start, window_end),
         roi_id,
     )
@@ -143,7 +121,7 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
     trend_sql = """SELECT substr(start_time, 1, 10) AS day,
                           COUNT(*) AS total,
                           SUM(CASE WHEN review_status='validated' THEN 1 ELSE 0 END) AS validated
-                   FROM events
+                   FROM suspected_incidents
                    WHERE start_time >= ? AND start_time <= ?"""
     trend_params = (window_start, window_end)
     trend_sql, trend_params = _with_roi(trend_sql, trend_params, roi_id)
@@ -155,7 +133,7 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
     hotspot_sql = """SELECT roi_id,
                             COUNT(*) AS count,
                             SUM(CASE WHEN review_status='pending' THEN 1 ELSE 0 END) AS pending
-                     FROM events
+                     FROM suspected_incidents
                      WHERE start_time >= ? AND start_time <= ?"""
     hotspot_params = (window_start, window_end)
     hotspot_sql, hotspot_params = _with_roi(hotspot_sql, hotspot_params, roi_id)
@@ -176,18 +154,18 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
            LIMIT 5"""
     ).fetchall()
 
-    latest_event = conn.execute("SELECT MAX(created_at) FROM events").fetchone()[0]
+    latest_suspected_incident = conn.execute("SELECT MAX(created_at) FROM suspected_incidents").fetchone()[0]
     return {
         "summary": {
-            "total_violations": total_violations,
+            "total_suspected_incidents": total_suspected_incidents,
             "pending_review": pending,
             "validated": validated,
             "false_alarms": false_alarms,
             "assigned_tasks": assigned,
             "completed_tasks": completed,
             "avg_response_minutes": round(avg_response, 1),
-            "today_events": conn.execute("SELECT COUNT(*) FROM events WHERE start_time >= ?", (today_start,)).fetchone()[0],
-            "latest_event_at": latest_event,
+            "today_suspected_incidents": conn.execute("SELECT COUNT(*) FROM suspected_incidents WHERE start_time >= ?", (today_start,)).fetchone()[0],
+            "latest_suspected_incident_at": latest_suspected_incident,
             "period_label": period_label,
             "roi_id": roi_id,
         },
@@ -211,7 +189,7 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
         ],
         "insight": {
             "title": "系统洞察",
-            "message": "暂未发现异常拥堵模式。" if not hotspot_rows else f"{hotspot_rows[0]['roi_id']} 是当前违规高发路段。",
+            "message": "暂未发现异常拥堵模式。" if not hotspot_rows else f"{hotspot_rows[0]['roi_id']} 是当前疑似占用高发路段。",
             "action": "优化巡查调度",
         },
     }
