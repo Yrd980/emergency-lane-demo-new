@@ -32,13 +32,13 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   const entries: TimelineEntry[] = [
     {
       id: 'detection',
-      label: 'System Detection: Lane Intrusion',
+      label: '系统检测：应急车道占用',
       time: formatFullDateTime(data.start_time),
       tone: 'brand',
     },
     {
       id: 'alert',
-      label: 'Automated Alert Dispatched',
+      label: '自动告警已生成',
       time: formatFullDateTime(data.created_at),
       tone: 'warning',
     },
@@ -47,21 +47,21 @@ function buildTimeline(data: EventDetailType): TimelineEntry[] {
   if (data.review_status === 'validated') {
     entries.push({
       id: 'validated',
-      label: 'Review Validated',
+      label: '复核已确认',
       time: formatFullDateTime(data.reviewed_at),
       tone: 'brand',
     });
   } else if (data.review_status === 'false_alarm') {
     entries.push({
       id: 'false_alarm',
-      label: 'False Alarm',
+      label: '已标记误报',
       time: formatFullDateTime(data.reviewed_at),
       tone: 'danger',
     });
   } else {
     entries.push({
       id: 'pending',
-      label: 'Dispatcher Action Required',
+      label: '等待人工处置',
       time: '--',
       tone: 'muted',
     });
@@ -81,7 +81,7 @@ export default function EventDetail() {
   const { submit, submitting } = useReview(id!);
   const [assignees, setAssignees] = useState<{ username: string; display_name: string; role: string }[]>([]);
   const [selectedAssignee, setSelectedAssignee] = useState('');
-  const [assignmentNote, setAssignmentNote] = useState('Dispatch from incident detail');
+  const [assignmentNote, setAssignmentNote] = useState('从事件详情派发');
   const [assigning, setAssigning] = useState(false);
 
   const timeline = useMemo(() => (data ? buildTimeline(data) : []), [data]);
@@ -149,7 +149,7 @@ export default function EventDetail() {
     setAssigning(true);
     try {
       await api.assignEvent(data.event_id, { assigned_to_username: selectedAssignee, note: assignmentNote });
-      showToast('Task assigned to patrol unit', 'success');
+      showToast('任务已派发给巡查员', 'success');
       refetch();
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
@@ -162,8 +162,8 @@ export default function EventDetail() {
     <div className="space-y-6">
       {/* ─── Page header ─── */}
       <PageHeader
-        eyebrow="INCIDENT REVIEW"
-        title="Incident Detail"
+        eyebrow="事件复核"
+        title="事件详情"
         description={source === 'log' ? '按事件时间线查看证据、状态和处理记录。' : '先看证据链，再核对结构化字段，最后完成复核。'}
         action={
           <>
@@ -184,13 +184,13 @@ export default function EventDetail() {
 
       {/* ─── Incident badge bar ─── */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-outline-variant/10 bg-surface-container-low p-md">
-        <FieldChip label="Event ID" value={data.event_id} mono />
+        <FieldChip label="事件 ID" value={data.event_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <FieldChip label="Device" value={data.device_id} mono />
+        <FieldChip label="设备" value={data.device_id} mono />
         <div className="h-4 w-px bg-outline-variant/30" />
-        <FieldChip label="Priority" value={<StatusBadge status={data.risk_level ?? 'normal'} />} />
+        <FieldChip label="优先级" value={<StatusBadge status={data.risk_level ?? 'normal'} />} />
         <div className="ml-auto">
-          <FieldChip label="Status" value={<StatusBadge status={data.review_status} />} />
+          <FieldChip label="状态" value={<StatusBadge status={data.review_status} />} />
         </div>
       </div>
 
@@ -227,7 +227,7 @@ export default function EventDetail() {
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1.5 rounded-full bg-error-container/30 px-2.5 py-0.5 text-[11px] font-semibold text-error">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-error shadow-[0_0_6px_#ffb4ab]" />
-                  LIVE
+                  实时
                 </span>
                 <span className="rounded-md bg-primary/10 px-2 py-0.5 font-mono-data text-[11px] text-primary">
                   {data.roi_id}
@@ -245,7 +245,7 @@ export default function EventDetail() {
               <div className="mb-3 flex items-center gap-2">
                 <span className="material-symbols-outlined text-base text-primary">photo_library</span>
                 <span className="text-label-xs font-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
-                  Evidence Snapshots
+                  证据快照
                 </span>
                 <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
                   {images.length}
@@ -272,11 +272,11 @@ export default function EventDetail() {
                     </div>
                     <span className="absolute bottom-1.5 left-1.5 rounded bg-surface-container-lowest/70 px-1.5 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
                       {file.evidence_type === 'frame_peak'
-                        ? 'PEAK'
+                        ? '峰值'
                         : file.evidence_type === 'frame_before'
-                          ? 'BEFORE'
+                          ? '进入前'
                           : file.evidence_type === 'frame_after'
-                            ? 'AFTER'
+                            ? '离开后'
                             : file.evidence_type}
                     </span>
                   </a>
@@ -293,28 +293,28 @@ export default function EventDetail() {
             <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-base text-primary">precision_manufacturing</span>
-                <span className="text-sm font-semibold text-on-surface">AI Recognition</span>
+                <span className="text-sm font-semibold text-on-surface">AI 识别</span>
               </div>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-2 gap-2">
                 <AiField
-                  label="Plate Number"
+                  label="车牌/轨迹"
                   value={data.track_id}
                   mono
                 />
                 <AiField
-                  label="Confidence"
+                  label="置信度"
                   value={formatPercent(data.confidence)}
                   mono
                   tone={data.confidence >= 0.85 ? 'brand' : data.confidence >= 0.6 ? 'warning' : 'danger'}
                 />
                 <AiField
-                  label="Brand / Model"
-                  value={data.vehicle_class === 'car' ? 'Sedan' : data.vehicle_class === 'truck' ? 'Truck' : data.vehicle_class === 'bus' ? 'Bus' : data.vehicle_class === 'motorcycle' ? 'Motorcycle' : data.vehicle_class}
+                  label="车型"
+                  value={formatVehicleClass(data.vehicle_class)}
                 />
                 <AiField
-                  label="Color"
+                  label="颜色"
                   value="--"
                 />
               </div>
@@ -326,7 +326,7 @@ export default function EventDetail() {
             <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-base text-primary">timeline</span>
-                <span className="text-sm font-semibold text-on-surface">Incident Timeline</span>
+                <span className="text-sm font-semibold text-on-surface">事件时间线</span>
               </div>
             </div>
             <div className="p-4">
@@ -375,13 +375,13 @@ export default function EventDetail() {
               <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base text-primary">location_on</span>
-                  <span className="text-sm font-semibold text-on-surface">Location Context</span>
+                  <span className="text-sm font-semibold text-on-surface">位置上下文</span>
                 </div>
               </div>
               <div className="p-4">
                 <div className="mb-3 flex items-end justify-between">
                   <span className="text-label-xs font-bold uppercase tracking-widest text-on-surface-variant">
-                    GPS Coordinates
+                    GPS 坐标
                   </span>
                   <span className="font-mono-data text-xs text-primary">{gpsText}</span>
                 </div>
@@ -401,7 +401,7 @@ export default function EventDetail() {
               <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-base text-primary">rule</span>
-                  <span className="text-sm font-semibold text-on-surface">Response Actions</span>
+                  <span className="text-sm font-semibold text-on-surface">处置动作</span>
                 </div>
               </div>
               <div className="grid gap-2 p-4">
@@ -409,17 +409,17 @@ export default function EventDetail() {
                   <button
                     type="button"
                     className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
-                    onClick={() => void handleReview('validated', 'Evidence validated from incident detail', user?.display_name)}
+                    onClick={() => void handleReview('validated', '从事件详情确认占用', user?.display_name)}
                   >
                     <span className="material-symbols-outlined text-base">gavel</span>
-                    Validate Violation
+                    确认违规
                   </button>
                 )}
                 {canAssign && (
                   <div className="rounded-lg border border-outline-variant/20 bg-surface-container p-3">
                     <div className="grid gap-2">
                       <label className="grid gap-1 text-label-xs font-semibold uppercase tracking-wider text-on-surface-variant">
-                        Patrol assignee
+                        巡查员
                         <select
                           className={selectClassName('w-full normal-case tracking-normal')}
                           value={selectedAssignee}
@@ -436,7 +436,7 @@ export default function EventDetail() {
                         className={inputClassName('w-full')}
                         value={assignmentNote}
                         onChange={(e) => setAssignmentNote(e.target.value)}
-                        placeholder="Dispatch note"
+                        placeholder="派发备注"
                       />
                       <button
                         type="button"
@@ -445,7 +445,7 @@ export default function EventDetail() {
                         onClick={() => void assignToPatrol()}
                       >
                         <span className="material-symbols-outlined text-base">assignment_ind</span>
-                        Assign to Patrol
+                        派发给巡查员
                       </button>
                     </div>
                   </div>
@@ -454,10 +454,10 @@ export default function EventDetail() {
                   <button
                     type="button"
                     className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/20 px-4 py-2.5 text-body-sm text-on-surface-variant transition-all hover:border-error/30 hover:bg-error-container/10 hover:text-error active:opacity-80"
-                    onClick={() => void handleReview('false_alarm', 'Marked as false alarm from incident detail', user?.display_name)}
+                    onClick={() => void handleReview('false_alarm', '从事件详情标记为误报', user?.display_name)}
                   >
                     <span className="material-symbols-outlined text-base">block</span>
-                    Invalid / False Alarm
+                    无效/误报
                   </button>
                 )}
               </div>
@@ -470,7 +470,7 @@ export default function EventDetail() {
             operatorNote={data.operator_note}
             onSubmit={handleReview}
             submitting={submitting}
-            operatorName={user?.display_name ?? 'Aegis Operator'}
+            operatorName={user?.display_name ?? 'Aegis 操作员'}
           />
 
           {/* ─── Review History ─── */}
@@ -524,18 +524,28 @@ function AiField({
   );
 }
 
+function formatVehicleClass(value: string) {
+  const labels: Record<string, string> = {
+    car: '轿车',
+    truck: '货车',
+    bus: '客车',
+    motorcycle: '摩托车',
+  };
+  return labels[value] ?? value;
+}
+
 function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
   if (history.length === 0) {
     return (
       <SurfacePanel className="p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-on-surface">
           <span className="material-symbols-outlined text-base text-primary">history</span>
-          Review History
+          复核历史
         </div>
         <div className="mt-3 flex items-center gap-3 rounded-lg border border-dashed border-outline-variant/20 bg-surface-container p-4">
           <span className="material-symbols-outlined text-lg text-on-surface-variant">history</span>
           <p className="text-sm leading-6 text-on-surface-variant">
-            No review records yet. Complete the review to log operator decisions.
+            暂无复核记录。完成复核后会记录操作员决策。
           </p>
         </div>
       </SurfacePanel>
@@ -546,7 +556,7 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
     <SurfacePanel className="p-4">
       <div className="flex items-center gap-2 text-sm font-semibold text-on-surface">
         <span className="material-symbols-outlined text-base text-primary">history</span>
-        Review History
+        复核历史
         <span className="rounded-full bg-surface-container px-2 py-0.5 font-mono-data text-[10px] text-on-surface-variant">
           {history.length}
         </span>
@@ -577,7 +587,7 @@ function ReviewHistory({ history }: { history: ReviewHistoryItem[] }) {
             </div>
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               {item.operator_note || (
-                <span className="italic text-on-surface-variant opacity-50">No notes provided</span>
+                <span className="italic text-on-surface-variant opacity-50">未填写备注</span>
               )}
             </p>
           </div>

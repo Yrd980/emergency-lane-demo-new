@@ -56,10 +56,10 @@ export default function DeviceStatus() {
         action={<PrimaryButton href="/setup">新增设备</PrimaryButton>}
       />
 
-      {error && <StateBlock tone="error" title="设备加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>Retry</PrimaryButton>} />}
+      {error && <StateBlock tone="error" title="设备加载失败" description={error} action={<PrimaryButton icon="refresh" onClick={loadDevices}>重试</PrimaryButton>} />}
       {loading && <StateBlock tone="loading" title="正在加载设备" description="正在同步心跳、版本和上传积压。" />}
       {!loading && devices.length === 0 && !error && (
-        <StateBlock title="暂无设备" description="打开配置向导，复制后端地址到 Android 设备以完成注册。" action={<PrimaryButton href="/setup">Open Setup Guide</PrimaryButton>} />
+        <StateBlock title="暂无设备" description="打开配置向导，复制后端地址到 Android 设备以完成注册。" action={<PrimaryButton href="/setup">打开配置向导</PrimaryButton>} />
       )}
 
       {devices.length > 0 && (
@@ -75,7 +75,7 @@ export default function DeviceStatus() {
             <ActionPanel
               tone="success"
               title="系统运行正常"
-              description="Registered devices are reporting within the active heartbeat window."
+              description="已注册设备均在有效心跳窗口内上报。"
               action={<PrimaryButton href="/events">查看事件</PrimaryButton>}
             />
           )}
@@ -119,10 +119,10 @@ export default function DeviceStatus() {
                       <span className="shrink-0 text-[10px] text-on-surface-variant">{formatDateTime(event.start_time)}</span>
                     </div>
                     <p className="mb-xs truncate text-body-sm font-bold">{event.device_id}</p>
-                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)}秒占道，置信度 {Math.round(event.confidence * 100)}%, {event.review_status.replace('_', ' ')}.</p>
+                    <p className="mb-md text-label-xs text-on-surface-variant">{Math.round(event.duration_seconds)} 秒占道，置信度 {Math.round(event.confidence * 100)}%，{formatReviewStatus(event.review_status)}。</p>
                     <div className="flex gap-xs">
                       <span className="flex-1 rounded bg-primary px-sm py-xs text-center text-[10px] font-bold uppercase text-on-primary">打开事件</span>
-                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{event.risk_level ?? 'normal'}</span>
+                      <span className="rounded bg-surface-container-high px-sm py-xs text-[10px] font-bold uppercase text-on-surface-variant">{formatRiskLevel(event.risk_level)}</span>
                     </div>
                   </button>
                 ))}
@@ -238,4 +238,23 @@ function initials(value: string) {
     .map((part) => part[0])
     .join('')
     .toUpperCase();
+}
+
+function formatReviewStatus(status: string) {
+  const labels: Record<string, string> = {
+    pending: '待复核',
+    validated: '已确认',
+    false_alarm: '误报',
+    assigned: '已派发',
+    accepted: '已接单',
+    completed: '已完成',
+    closed: '已关闭',
+  };
+  return labels[status] ?? status;
+}
+
+function formatRiskLevel(status?: string | null) {
+  if (status === 'high') return '高风险';
+  if (status === 'critical') return '严重';
+  return '正常';
 }

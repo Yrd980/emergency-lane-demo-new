@@ -9,10 +9,10 @@ import type { OperationsStats, OverviewStats, SystemStatus } from '../types';
 type PeriodKey = '30d' | 'qtd' | 'ytd' | 'custom';
 
 const PERIODS: Array<{ key: PeriodKey; label: string; short: string }> = [
-  { key: '30d', label: 'Last 30 Days', short: '30d' },
-  { key: 'qtd', label: 'Quarterly', short: 'QTD' },
-  { key: 'ytd', label: 'Year to Date', short: 'YTD' },
-  { key: 'custom', label: 'Custom Range', short: 'Custom' },
+  { key: '30d', label: '近 30 天', short: '30天' },
+  { key: 'qtd', label: '本季度', short: '季度' },
+  { key: 'ytd', label: '今年以来', short: '年度' },
+  { key: 'custom', label: '自定义范围', short: '自定义' },
 ];
 
 const fallbackSectors = ['默认路段', 'A-12 路段', 'B-04 路段', '7 号隧道'];
@@ -53,7 +53,7 @@ export default function Dashboard() {
     if (!operations.data || !system.data) return;
     const operationData = operations.data;
     const summary = operationData.summary;
-    const periodLabel = summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || 'Last 30 Days';
+    const periodLabel = summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || '近 30 天';
     set导出中(true);
     const report = {
       generated_at: new Date().toISOString(),
@@ -83,7 +83,7 @@ export default function Dashboard() {
   if (overview.loading || system.loading || operations.loading) {
     return (
       <>
-        <PageHeader eyebrow="OPERATIONS" title="Syncing system status" description="Loading the most critical next-step actions." />
+        <PageHeader eyebrow="运营" title="正在同步系统状态" description="正在加载最关键的下一步操作。" />
         <SkeletonGrid count={4} />
       </>
     );
@@ -93,11 +93,11 @@ export default function Dashboard() {
     return (
       <StateBlock
         tone="error"
-        title="Workbench unavailable"
-        description={overview.error || system.error || operations.error || 'Check that FastAPI backend is running.'}
+        title="工作台不可用"
+        description={overview.error || system.error || operations.error || '请检查 FastAPI 后端是否正在运行。'}
         action={
           <PrimaryButton icon="refresh" onClick={() => { void overview.refetch(); void system.refetch(); void operations.refetch(); }}>
-            Retry
+            重试
           </PrimaryButton>
         }
       />
@@ -121,16 +121,17 @@ export default function Dashboard() {
   const topHotspots = operationData.hotspots.slice(0, 5);
   const operators = operationData.operators.slice(0, 5);
   const sectors = Array.from(new Set([...operationData.hotspots.map((item) => item.roi_id), ...fallbackSectors])).filter(Boolean);
-  const periodLabel = summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || 'Last 30 Days';
+  const periodLabel = localizePeriodLabel(summary.period_label || PERIODS.find((period) => period.key === selectedPeriod)?.label || '近 30 天');
   const trendPath = buildTrendPath(operationData.trend);
   const areaPath = trendPath ? `${trendPath} L800,200 L0,200 Z` : '';
   const dayLabels = buildDayLabels(operationData.trend);
   const heatmap = buildHeatmap(operationData.trend);
-  const primaryPeak = heatmap.peakHour ? `${String(heatmap.peakHour).padStart(2, '0')}:00 - ${String(Math.min(23, heatmap.peakHour + 1)).padStart(2, '0')}:00` : 'No peak yet';
+  const primaryPeak = heatmap.peakHour ? `${String(heatmap.peakHour).padStart(2, '0')}:00 - ${String(Math.min(23, heatmap.peakHour + 1)).padStart(2, '0')}:00` : '暂无峰值';
 
   const eventFilterQuery = new URLSearchParams();
   if (selectedSector) eventFilterQuery.set('roi_id', selectedSector);
   const eventHref = `/events${eventFilterQuery.toString() ? `?${eventFilterQuery.toString()}` : ''}`;
+  const insight = localizeInsight(operationData.insight);
 
   return (
     <div className="space-y-lg">
@@ -173,11 +174,11 @@ export default function Dashboard() {
       </section>
 
       {needsSetup ? (
-        <ActionPanel tone="warning" title="暂无设备接入" description="Configure the Android app with the backend address and register a device before the system can enter long-running mode." action={<PrimaryButton href="/setup">打开配置向导</PrimaryButton>} />
+        <ActionPanel tone="warning" title="暂无设备接入" description="请先将后端地址配置到 Android 应用并注册设备，系统才能进入持续运行状态。" action={<PrimaryButton href="/setup">打开配置向导</PrimaryButton>} />
       ) : topIssue ? (
         <ActionPanel tone={topIssue.severity === 'critical' ? 'danger' : 'warning'} title={topIssue.message} description={topIssue.next_action} action={<PrimaryButton href={issueHref}>去处理</PrimaryButton>} />
       ) : (
-        <ActionPanel tone="success" title="系统已就绪" description="Devices online, backend available. Waiting for events, or review existing ones." action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
+        <ActionPanel tone="success" title="系统已就绪" description="设备在线，后端可用。可等待新事件，或继续复核已有事件。" action={<PrimaryButton href={eventHref}>查看事件</PrimaryButton>} />
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-md">
@@ -197,9 +198,9 @@ export default function Dashboard() {
         <div className="flex flex-wrap items-center gap-sm">
           {selectedPeriod === 'custom' && (
             <div className="flex flex-wrap items-center gap-xs rounded-lg border border-outline-variant/10 bg-surface-container px-xs py-xs">
-              <input aria-label="Start date" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customStart} onChange={(event) => setFilter({ start_date: event.target.value })} />
-              <span className="text-on-surface-variant">to</span>
-              <input aria-label="End date" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customEnd} onChange={(event) => setFilter({ end_date: event.target.value })} />
+              <input aria-label="开始日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customStart} onChange={(event) => setFilter({ start_date: event.target.value })} />
+              <span className="text-on-surface-variant">至</span>
+              <input aria-label="结束日期" className="w-36 rounded-md border border-outline-variant/10 bg-surface-container-low px-sm py-xs text-label-xs text-on-surface outline-none focus:border-primary" type="date" value={customEnd} onChange={(event) => setFilter({ end_date: event.target.value })} />
             </div>
           )}
           <div className="relative">
@@ -219,7 +220,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
         <MetricCard icon="warning" label="违规总数" value={summary.total_violations} badge={periodLabel} helper={`${summary.pending_review} 待复核`} onClick={() => navigate(eventHref)} />
         <MetricCard icon="schedule" tone="secondary" label="平均响应时长" value={`${summary.avg_response_minutes}m`} badge="调度" helper="路段调度平均值" onClick={() => navigate('/devices')} />
-        <MetricCard icon="task_alt" tone="tertiary" label="已确认事件" value={summary.validated} badge={`${summary.false_alarms} false`} helper="复核确认结果" onClick={() => navigate('/events?status=validated')} />
+        <MetricCard icon="task_alt" tone="tertiary" label="已确认事件" value={summary.validated} badge={`${summary.false_alarms} 误报`} helper="复核确认结果" onClick={() => navigate('/events?status=validated')} />
         <MetricCard icon="route" label="巡检任务" value={summary.assigned_tasks} badge="活跃" helper={`${summary.completed_tasks} 已完成巡检任务`} onClick={() => navigate('/devices')} />
       </div>
 
@@ -250,7 +251,7 @@ export default function Dashboard() {
                 <path d={trendPath} fill="none" stroke="#c2c1ff" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
               </svg>
             ) : (
-              <div className="flex h-full items-center justify-center rounded-lg bg-surface-container text-body-sm text-on-surface-variant">No trend data for this filter.</div>
+              <div className="flex h-full items-center justify-center rounded-lg bg-surface-container text-body-sm text-on-surface-variant">当前筛选暂无趋势数据。</div>
             )}
             <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t border-outline-variant/10 px-xs pt-sm text-label-xs font-mono-data text-on-surface-variant">
               {dayLabels.map((label) => <span key={label}>{label}</span>)}
@@ -259,8 +260,8 @@ export default function Dashboard() {
         </button>
 
         <div className="flex h-[400px] flex-col rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
-          <h2 className="mb-xs text-headline-md font-headline-md text-on-surface">Hotspot Ranking</h2>
-          <p className="mb-lg text-label-xs text-on-surface-variant">Most active violation zones</p>
+          <h2 className="mb-xs text-headline-md font-headline-md text-on-surface">高发路段排行</h2>
+          <p className="mb-lg text-label-xs text-on-surface-variant">占用事件最活跃的路段</p>
 
           <button className="relative mb-lg h-32 w-full overflow-hidden rounded-lg border border-outline-variant/10 bg-surface-container text-left" onClick={() => navigate(eventHref)} type="button">
             <div className="h-full w-full opacity-[0.14]" style={{ backgroundImage: 'linear-gradient(rgba(145,143,160,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(145,143,160,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
@@ -271,7 +272,7 @@ export default function Dashboard() {
           </button>
 
           <div className="custom-scrollbar flex-1 space-y-sm overflow-y-auto pr-xs">
-            {(topHotspots.length ? topHotspots : [{ roi_id: 'No active sectors', count: 0, pending: 0 }]).map((item, index) => (
+            {(topHotspots.length ? topHotspots : [{ roi_id: '暂无活跃路段', count: 0, pending: 0 }]).map((item, index) => (
               <button key={item.roi_id} className="flex w-full items-center justify-between rounded-lg p-xs text-left transition-colors hover:bg-surface-container" onClick={() => item.count > 0 && setFilter({ roi_id: item.roi_id })} type="button">
                 <div className="flex items-center gap-md">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-outline-variant/20 bg-surface-container-high text-label-xs font-mono-data">
@@ -279,7 +280,7 @@ export default function Dashboard() {
                   </span>
                   <div>
                     <p className="text-body-sm font-medium text-on-surface">{item.roi_id}</p>
-                    <p className="text-label-xs text-on-surface-variant">{item.pending} pending</p>
+                    <p className="text-label-xs text-on-surface-variant">{item.pending} 待复核</p>
                   </div>
                 </div>
                 <span className={`font-mono-data text-body-sm ${index === 0 ? 'text-error' : 'text-on-surface'}`}>{item.count}</span>
@@ -292,8 +293,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
         <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
           <div className="mb-lg flex items-center justify-between">
-            <h2 className="text-headline-md font-headline-md text-on-surface">Time Distribution</h2>
-            <span className="font-mono-data text-label-xs text-on-surface-variant">Rush Hour Peaks</span>
+            <h2 className="text-headline-md font-headline-md text-on-surface">时间分布</h2>
+            <span className="font-mono-data text-label-xs text-on-surface-variant">高峰时段</span>
           </div>
 
           <div className="mb-md flex flex-col gap-1">
@@ -310,20 +311,20 @@ export default function Dashboard() {
 
           <div className="mt-lg flex items-center justify-between border-t border-outline-variant/10 pt-md">
             <p className="text-body-sm text-on-surface-variant">
-              Primary peak: <span className="font-bold text-primary">{primaryPeak}</span>
+              主要峰值：<span className="font-bold text-primary">{primaryPeak}</span>
             </p>
             <div className="flex items-center gap-xs">
-              <span className="text-[10px] text-on-surface-variant">LESS</span>
+              <span className="text-[10px] text-on-surface-variant">少</span>
               <div className="flex gap-1">{[0, 1, 2, 3].map((level) => <div key={level} className={`h-3 w-3 rounded-sm ${heatClass(level)}`} />)}</div>
-              <span className="text-[10px] text-on-surface-variant">MORE</span>
+              <span className="text-[10px] text-on-surface-variant">多</span>
             </div>
           </div>
         </div>
 
         <div className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg">
-          <h2 className="mb-lg text-headline-md font-headline-md text-on-surface">Operator Performance</h2>
+          <h2 className="mb-lg text-headline-md font-headline-md text-on-surface">人员处理表现</h2>
           <div className="space-y-sm">
-            {(operators.length ? operators : [{ username: 'patrol', display_name: 'Patrol Unit', tasks: 0, completed: 0, completion_rate: 0 }]).map((operator) => (
+            {(operators.length ? operators : [{ username: 'patrol', display_name: '巡查单元', tasks: 0, completed: 0, completion_rate: 0 }]).map((operator) => (
               <button key={operator.username} className="group flex w-full items-center rounded-lg p-sm text-left transition-colors hover:bg-surface-container" onClick={() => navigate('/devices')} type="button">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-outline-variant/20 bg-surface-container-highest">
                   <span className="text-xs font-semibold text-primary">{operator.display_name.slice(0, 2).toUpperCase()}</span>
@@ -338,8 +339,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="ml-lg shrink-0 text-right">
-                  <p className="font-mono-data text-body-sm font-bold text-on-surface">{operator.tasks} Tasks</p>
-                  <p className="text-[10px] uppercase text-on-surface-variant">Done: {operator.completed}</p>
+                  <p className="font-mono-data text-body-sm font-bold text-on-surface">{operator.tasks} 个任务</p>
+                  <p className="text-[10px] uppercase text-on-surface-variant">完成：{operator.completed}</p>
                 </div>
               </button>
             ))}
@@ -352,11 +353,11 @@ export default function Dashboard() {
           <button className="flex items-start gap-sm text-left" onClick={() => selectedSector ? navigate(eventHref) : navigate('/devices')} type="button">
             <span className="material-symbols-outlined text-primary">auto_awesome</span>
             <div>
-              <h2 className="text-headline-md font-headline-md text-on-surface">{operationData.insight.title}</h2>
-              <p className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">{operationData.insight.message}</p>
+              <h2 className="text-headline-md font-headline-md text-on-surface">{insight.title}</h2>
+              <p className="mt-xs max-w-2xl text-body-sm text-on-surface-variant">{insight.message}</p>
             </div>
           </button>
-          <PrimaryButton tone="light" href={selectedSector ? eventHref : '/devices'}>{operationData.insight.action}</PrimaryButton>
+          <PrimaryButton tone="light" href={selectedSector ? eventHref : '/devices'}>{insight.action}</PrimaryButton>
         </div>
       </div>
     </div>
@@ -377,7 +378,9 @@ function MetricCard({ icon, label, value, helper, badge, tone = 'primary', onCli
   return (
     <button className="group rounded-lg border border-outline-variant/10 bg-surface-container-low p-lg text-left transition-all hover:border-primary/20 hover:bg-surface-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" onClick={onClick} type="button">
       <div className="mb-md flex items-start justify-between">
-        <span className={`material-symbols-outlined rounded-lg p-sm ${toneClass}`}>{icon}</span>
+        <span className={`material-symbols-outlined rounded-lg p-sm ${toneClass}`} aria-hidden="true" title="">
+          <span className="sr-only">{icon}</span>
+        </span>
         <span className={`max-w-32 truncate rounded-full px-sm py-xs text-label-xs font-label-xs ${toneClass}`}>{badge}</span>
       </div>
       <h3 className="mb-xs text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">{label}</h3>
@@ -414,7 +417,7 @@ function buildTrendPath(trend: OperationsStats['trend']) {
 }
 
 function buildDayLabels(trend: OperationsStats['trend']) {
-  if (trend.length === 0) return ['Start', 'No Data', 'End'];
+  if (trend.length === 0) return ['开始', '无数据', '结束'];
   if (trend.length <= 5) return trend.map((point) => point.day.slice(5));
   const indices = [0, Math.floor(trend.length * 0.25), Math.floor(trend.length * 0.5), Math.floor(trend.length * 0.75), trend.length - 1];
   return indices.map((index) => trend[index].day.slice(5));
@@ -443,4 +446,27 @@ function heatClass(level: number) {
   if (level === 2) return 'bg-primary/60';
   if (level === 1) return 'bg-primary/30';
   return 'bg-surface-container';
+}
+
+function localizeInsight(insight: OperationsStats['insight']) {
+  const hotspotMatch = insight.message.match(/^(.+) is the current top violation hotspot\.$/);
+  return {
+    title: insight.title === 'System Insights' ? '系统洞察' : insight.title,
+    message: insight.message === 'No abnormal congestion pattern yet.'
+      ? '暂未发现异常拥堵模式。'
+      : hotspotMatch
+        ? `${hotspotMatch[1]} 是当前违规高发路段。`
+        : insight.message,
+    action: insight.action === 'Optimize Patrol Dispatch' ? '优化巡查调度' : insight.action,
+  };
+}
+
+function localizePeriodLabel(label: string) {
+  const labels: Record<string, string> = {
+    'Last 30 Days': '近 30 天',
+    'Quarter to Date': '本季度',
+    'Year to Date': '今年以来',
+    'Custom Range': '自定义范围',
+  };
+  return labels[label] ?? label;
 }
