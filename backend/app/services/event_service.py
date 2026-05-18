@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 from app.database import get_db
 from app.config import settings
 
-VALID_REVIEW_STATUSES = {"pending", "validated", "false_alarm", "assigned", "accepted", "completed", "closed"}
+VALID_REVIEW_STATUSES = {"pending", "validated", "false_alarm", "closed"}
 EVIDENCE_ORDER = {"frame_before": 0, "frame_peak": 1, "frame_after": 2, "video_clip": 3}
 COMPLETE_EVIDENCE_TYPES = {"frame_before", "frame_peak", "frame_after"}
 
@@ -15,6 +15,11 @@ def _now():
 
 def _priority_case(alias: str = "e"):
     return f"CASE WHEN {alias}.review_status='pending' AND ({alias}.confidence >= 0.85 OR {alias}.duration_seconds >= 10) THEN 0 ELSE 1 END"
+
+def _review_priority(row) -> str:
+    if row["review_status"] == "pending" and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10):
+        return "high"
+    return "normal"
 
 def create_event(
     event_id: str, device_id: str, start_time: str, end_time: str,
@@ -91,8 +96,8 @@ def list_events(
             f"/evidence/{r['event_id']}/{r['thumbnail_file_path'].split('/')[-1]}"
             if r["thumbnail_file_path"] else ""
         )
-        risk_level = "high" if r["review_status"] in ("pending", "validated", "assigned", "accepted") and (r["confidence"] >= 0.85 or r["duration_seconds"] >= 10) else "normal"
-        priority_reason = "高置信度或长时间停留" if risk_level == "high" else "按时间顺序处理"
+        review_priority = _review_priority(r)
+        priority_reason = "高置信度或长时间停留" if review_priority == "high" else "按时间顺序处理"
         items.append({
             "event_id": r["event_id"],
             "device_id": r["device_id"],
@@ -102,7 +107,8 @@ def list_events(
             "confidence": r["confidence"],
             "review_status": r["review_status"],
             "thumbnail_url": thumbnail_url,
-            "risk_level": risk_level,
+            "risk_level": review_priority,
+            "review_priority": review_priority,
             "review_priority_reason": priority_reason,
         })
 
@@ -156,7 +162,7 @@ def get_event(event_id: str):
         "video_count": sum(1 for item in evidence if item["mime_type"].startswith("video/")),
         "is_complete": {"frame_before", "frame_peak", "frame_after"}.issubset(evidence_types),
     }
-    risk_level = "high" if row["review_status"] in ("pending", "validated", "assigned", "accepted") and (row["confidence"] >= 0.85 or row["duration_seconds"] >= 10) else "normal"
+    review_priority = _review_priority(row)
 
     return {
         "event_id": row["event_id"],
@@ -188,14 +194,15 @@ def get_event(event_id: str):
             }
             for history in history_rows
         ],
-        "risk_level": risk_level,
-        "review_priority_reason": "高置信度或长时间停留" if risk_level == "high" else "按时间顺序处理",
+        "risk_level": review_priority,
+        "review_priority": review_priority,
+        "review_priority_reason": "高置信度或长时间停留" if review_priority == "high" else "按时间顺序处理",
         "previous_event_id": prev_row["event_id"] if prev_row else None,
         "next_event_id": next_pending_row["event_id"] if next_pending_row else None,
     }
 
 def update_review(event_id: str, review_status: str, operator_note: str, operator_id: str = "本地复核员"):
-    if review_status not in VALID_REVIEW_STATUSES - {"assigned", "accepted", "completed"}:
+    if review_status not in VALID_REVIEW_STATUSES:
         return {"event_id": event_id, "review_status": review_status, "error": "Unsupported review status"}
     conn = get_db()
     try:

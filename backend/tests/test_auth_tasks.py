@@ -56,6 +56,11 @@ def test_dispatcher_can_list_assignable_users(client):
 
 def test_cannot_assign_to_admin_user(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_admin_assign"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/events/evt_admin_assign/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
     dispatcher = token(client, "dispatcher", "dispatch123")
 
     resp = client.post("/api/events/evt_admin_assign/assign", headers=dispatcher, json={
@@ -66,8 +71,49 @@ def test_cannot_assign_to_admin_user(client):
     assert resp.status_code == 422
 
 
-def test_dispatch_to_patrol_accept_complete(client):
+def test_cannot_dispatch_before_incident_is_validated(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_dispatch_pending"})
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    resp = client.post("/api/events/evt_dispatch_pending/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Check shoulder lane",
+    })
+
+    assert resp.status_code == 422
+    assert "validated" in resp.json()["detail"]
+
+
+def test_cannot_create_duplicate_active_response_task(client):
+    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_dispatch_once"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/events/evt_dispatch_once/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    first = client.post("/api/events/evt_dispatch_once/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Check shoulder lane",
+    })
+    second = client.post("/api/events/evt_dispatch_once/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Duplicate dispatch",
+    })
+
+    assert first.status_code == 200
+    assert second.status_code == 422
+    assert "active response task" in second.json()["detail"]
+
+
+def test_dispatch_to_patrol_accept_complete_does_not_change_review_status(client):
     client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_dispatch"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/events/evt_dispatch/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
     dispatcher = token(client, "dispatcher", "dispatch123")
     patrol = token(client, "patrol", "patrol123")
 
@@ -90,4 +136,8 @@ def test_dispatch_to_patrol_accept_complete(client):
     assert completed.json()["status"] == "completed"
 
     detail = client.get("/api/events/evt_dispatch").json()
-    assert detail["review_status"] == "completed"
+    assert detail["review_status"] == "validated"
+    assert all(
+        history["to_status"] in ("validated", "false_alarm")
+        for history in detail["review_history"]
+    )

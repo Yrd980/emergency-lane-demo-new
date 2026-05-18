@@ -12,6 +12,10 @@ def _risk_level(row):
     return "high" if row["confidence"] >= 0.85 or row["duration_seconds"] >= 10 else "normal"
 
 
+def _review_priority(row):
+    return _risk_level(row)
+
+
 def _thumbnail_url(row):
     return f"/evidence/{row['event_id']}/{row['thumbnail_file_path'].split('/')[-1]}" if row["thumbnail_file_path"] else ""
 
@@ -36,6 +40,7 @@ def _serialize(row):
         "start_time": row["start_time"],
         "device_id": row["device_id"],
         "risk_level": _risk_level(row),
+        "review_priority": _review_priority(row),
         "thumbnail_url": _thumbnail_url(row),
     }
 
@@ -85,6 +90,17 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
         event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (event_id,)).fetchone()
         if not event:
             return None
+        if event["review_status"] != "validated":
+            return {"error": "Response tasks can only be assigned after the suspected incident is validated"}
+
+        active_task = conn.execute(
+            """SELECT task_id FROM dispatch_tasks
+               WHERE event_id=? AND status IN ('assigned', 'accepted')
+               LIMIT 1""",
+            (event_id,),
+        ).fetchone()
+        if active_task:
+            return {"error": "Suspected incident already has an active response task"}
 
         assignee = None
         if assigned_to_username:
@@ -112,7 +128,6 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
                 now,
             ),
         )
-        _record_event_status(conn, event_id, event["review_status"], "assigned", note or "已派发给巡查员", assigner["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:
@@ -134,8 +149,6 @@ def accept_task(task_id: str, user: dict):
             "UPDATE dispatch_tasks SET status='accepted', accepted_at=COALESCE(accepted_at, ?) WHERE task_id=?",
             (now, task_id),
         )
-        event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (row["event_id"],)).fetchone()
-        _record_event_status(conn, row["event_id"], event["review_status"], "accepted", "巡查员已接单", user["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:
@@ -160,8 +173,6 @@ def complete_task(task_id: str, completed_note: str, user: dict):
                WHERE task_id=?""",
             (now, now, completed_note or "", task_id),
         )
-        event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (row["event_id"],)).fetchone()
-        _record_event_status(conn, row["event_id"], event["review_status"], "completed", completed_note or "巡查员已完成任务", user["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:
@@ -177,15 +188,3 @@ def get_task(task_id: str, conn=None):
     finally:
         if own_conn:
             conn.close()
-
-
-def _record_event_status(conn, event_id: str, from_status: str, to_status: str, note: str, operator_id: str, now: str):
-    conn.execute(
-        "UPDATE events SET review_status=?, operator_note=?, reviewed_at=? WHERE event_id=?",
-        (to_status, note, now, event_id),
-    )
-    conn.execute(
-        """INSERT INTO review_history (event_id, operator_id, from_status, to_status, operator_note, reviewed_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (event_id, operator_id, from_status, to_status, note, now),
-    )
