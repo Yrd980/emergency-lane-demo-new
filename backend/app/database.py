@@ -3,8 +3,11 @@ import os
 from app.config import settings
 
 EVENT_REVIEW_STATUSES = (
-    "'pending', 'validated', 'false_alarm', 'assigned', 'accepted', 'completed', 'closed'"
+    "'pending', 'validated', 'false_alarm', 'closed'"
 )
+REVIEW_OUTCOME_STATUSES = "'validated', 'false_alarm', 'closed'"
+LEGACY_TASK_REVIEW_STATUSES = ("assigned", "accepted", "completed")
+LEGACY_REVIEW_STATUSES = ("confirmed", "rejected", *LEGACY_TASK_REVIEW_STATUSES)
 
 def get_db() -> sqlite3.Connection:
     os.makedirs(os.path.dirname(settings.db_path), exist_ok=True)
@@ -76,7 +79,7 @@ def init_db():
             operator_note TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL,
             reviewed_at TEXT,
-            CHECK (review_status IN ('pending', 'validated', 'false_alarm', 'assigned', 'accepted', 'completed', 'closed'))
+            CHECK (review_status IN ('pending', 'validated', 'false_alarm', 'closed'))
         );
 
         CREATE TABLE IF NOT EXISTS evidence_files (
@@ -100,8 +103,8 @@ def init_db():
             operator_note TEXT NOT NULL DEFAULT '',
             reviewed_at TEXT NOT NULL,
             FOREIGN KEY(event_id) REFERENCES events(event_id),
-            CHECK (from_status IN ('pending', 'validated', 'false_alarm', 'assigned', 'accepted', 'completed', 'closed')),
-            CHECK (to_status IN ('validated', 'false_alarm', 'assigned', 'accepted', 'completed', 'closed'))
+            CHECK (from_status IN ('pending', 'validated', 'false_alarm', 'closed')),
+            CHECK (to_status IN ('validated', 'false_alarm', 'closed'))
         );
 
         CREATE TABLE IF NOT EXISTS dispatch_tasks (
@@ -150,9 +153,14 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_evidence_event ON evidence_files(event_id);
         CREATE INDEX IF NOT EXISTS idx_review_history_event ON review_history(event_id);
     """)
-    _migrate_events_status_check(conn)
-    _migrate_review_history_status_check(conn)
-    _migrate_dispatch_tasks_event_fk(conn)
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        _migrate_events_status_check(conn)
+        _migrate_review_history_status_check(conn)
+        _migrate_dispatch_tasks_event_fk(conn)
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
     _seed_builtin_users(conn)
     conn.commit()
     conn.close()
@@ -160,7 +168,8 @@ def init_db():
 
 def _migrate_events_status_check(conn: sqlite3.Connection):
     row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='events'").fetchone()
-    if not row or "validated" in (row["sql"] or ""):
+    sql = row["sql"] if row else ""
+    if not row or _has_canonical_review_status_check(sql):
         return
     conn.executescript(f"""
         ALTER TABLE events RENAME TO events_old;
@@ -182,14 +191,31 @@ def _migrate_events_status_check(conn: sqlite3.Connection):
             reviewed_at TEXT,
             CHECK (review_status IN ({EVENT_REVIEW_STATUSES}))
         );
-        INSERT INTO events SELECT * FROM events_old;
+        INSERT INTO events (
+            event_id, device_id, start_time, end_time, duration_seconds,
+            roi_id, track_id, vehicle_class, vehicle_box_json, confidence,
+            gps_json, review_status, operator_note, created_at, reviewed_at
+        )
+        SELECT
+            event_id, device_id, start_time, end_time, duration_seconds,
+            roi_id, track_id, vehicle_class, vehicle_box_json, confidence,
+            gps_json,
+            CASE
+                WHEN review_status = 'confirmed' THEN 'validated'
+                WHEN review_status = 'rejected' THEN 'false_alarm'
+                WHEN review_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
+                ELSE review_status
+            END,
+            operator_note, created_at, reviewed_at
+        FROM events_old;
         DROP TABLE events_old;
     """)
 
 
 def _migrate_review_history_status_check(conn: sqlite3.Connection):
     row = conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='review_history'").fetchone()
-    if not row or "validated" in (row["sql"] or ""):
+    sql = row["sql"] if row else ""
+    if not row or _has_canonical_review_status_check(sql):
         return
     conn.executescript(f"""
         ALTER TABLE review_history RENAME TO review_history_old;
@@ -203,11 +229,35 @@ def _migrate_review_history_status_check(conn: sqlite3.Connection):
             reviewed_at TEXT NOT NULL,
             FOREIGN KEY(event_id) REFERENCES events(event_id),
             CHECK (from_status IN ({EVENT_REVIEW_STATUSES})),
-            CHECK (to_status IN ('validated', 'false_alarm', 'assigned', 'accepted', 'completed', 'closed'))
+            CHECK (to_status IN ({REVIEW_OUTCOME_STATUSES}))
         );
-        INSERT INTO review_history SELECT * FROM review_history_old;
+        INSERT INTO review_history (
+            id, event_id, operator_id, from_status, to_status, operator_note, reviewed_at
+        )
+        SELECT
+            id, event_id, operator_id,
+            CASE
+                WHEN from_status = 'confirmed' THEN 'validated'
+                WHEN from_status = 'rejected' THEN 'false_alarm'
+                WHEN from_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
+                ELSE from_status
+            END,
+            CASE
+                WHEN to_status = 'confirmed' THEN 'validated'
+                WHEN to_status = 'rejected' THEN 'false_alarm'
+                WHEN to_status IN ('assigned', 'accepted', 'completed') THEN 'validated'
+                ELSE to_status
+            END,
+            operator_note, reviewed_at
+        FROM review_history_old
+        WHERE event_id IN (SELECT event_id FROM events);
         DROP TABLE review_history_old;
     """)
+
+
+def _has_canonical_review_status_check(sql: str | None) -> bool:
+    sql = sql or ""
+    return all(status not in sql for status in LEGACY_REVIEW_STATUSES)
 
 
 def _migrate_dispatch_tasks_event_fk(conn: sqlite3.Connection):

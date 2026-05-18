@@ -21,7 +21,7 @@ def create_event(body: EventCreate):
 
 @router.get("")
 def list_events(
-    status: Literal["pending", "validated", "false_alarm", "assigned", "accepted", "completed", "closed"] | None = Query(None),
+    status: Literal["pending", "validated", "false_alarm", "closed"] | None = Query(None),
     device_id: str = Query(None),
     roi_id: str = Query(None),
     start_time_from: str = Query(None),
