@@ -93,7 +93,7 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
                 (assigned_to_username,),
             ).fetchone()
             if not assignee:
-                return {"error": "Assigned patrol user not found"}
+                return {"error": "未找到指定巡查员"}
 
         task_id = f"task_{uuid.uuid4().hex[:12]}"
         now = _now()
@@ -112,7 +112,7 @@ def assign_task(event_id: str, assigned_to_username: str | None, assigned_to_dev
                 now,
             ),
         )
-        _record_event_status(conn, event_id, event["review_status"], "assigned", note or "Assigned to patrol", assigner["display_name"], now)
+        _record_event_status(conn, event_id, event["review_status"], "assigned", note or "已派发给巡查员", assigner["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:
@@ -126,16 +126,16 @@ def accept_task(task_id: str, user: dict):
         if not row:
             return None
         if row["assigned_to_user_id"] and row["assigned_to_user_id"] != user["id"] and user["role"] != "admin":
-            return {"error": "Task is assigned to another patrol user"}
+            return {"error": "任务已派发给其他巡查员"}
         if row["status"] not in ("assigned", "accepted"):
-            return {"error": "Task cannot be accepted from current status"}
+            return {"error": "当前状态无法接单"}
         now = _now()
         conn.execute(
             "UPDATE dispatch_tasks SET status='accepted', accepted_at=COALESCE(accepted_at, ?) WHERE task_id=?",
             (now, task_id),
         )
         event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (row["event_id"],)).fetchone()
-        _record_event_status(conn, row["event_id"], event["review_status"], "accepted", "Patrol accepted task", user["display_name"], now)
+        _record_event_status(conn, row["event_id"], event["review_status"], "accepted", "巡查员已接单", user["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:
@@ -149,9 +149,9 @@ def complete_task(task_id: str, completed_note: str, user: dict):
         if not row:
             return None
         if row["assigned_to_user_id"] and row["assigned_to_user_id"] != user["id"] and user["role"] != "admin":
-            return {"error": "Task is assigned to another patrol user"}
+            return {"error": "任务已派发给其他巡查员"}
         if row["status"] not in ("assigned", "accepted"):
-            return {"error": "Task cannot be completed from current status"}
+            return {"error": "当前状态无法完成任务"}
         now = _now()
         conn.execute(
             """UPDATE dispatch_tasks
@@ -161,7 +161,7 @@ def complete_task(task_id: str, completed_note: str, user: dict):
             (now, now, completed_note or "", task_id),
         )
         event = conn.execute("SELECT review_status FROM events WHERE event_id=?", (row["event_id"],)).fetchone()
-        _record_event_status(conn, row["event_id"], event["review_status"], "completed", completed_note or "Patrol completed task", user["display_name"], now)
+        _record_event_status(conn, row["event_id"], event["review_status"], "completed", completed_note or "巡查员已完成任务", user["display_name"], now)
         conn.commit()
         return get_task(task_id, conn=conn)
     finally:

@@ -248,10 +248,10 @@ def _seed_builtin_users(conn: sqlite3.Connection):
     from app.services.auth_service import hash_password, now_iso
 
     users = [
-        ("admin", "admin123", "Aegis Admin", "admin"),
-        ("reviewer", "review123", "Local Reviewer", "reviewer"),
-        ("dispatcher", "dispatch123", "Dispatch Lead", "dispatcher"),
-        ("patrol", "patrol123", "Patrol Unit", "patrol"),
+        ("admin", "admin123", "Aegis 管理员", "admin"),
+        ("reviewer", "review123", "本地审核员", "reviewer"),
+        ("dispatcher", "dispatch123", "调度负责人", "dispatcher"),
+        ("patrol", "patrol123", "巡查单元", "patrol"),
     ]
     created_at = now_iso()
     for username, password, display_name, role in users:

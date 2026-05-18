@@ -27,14 +27,14 @@ def _operation_window(period, start_date=None, end_date=None):
     elif period == "custom":
         start = _parse_date(start_date, now - timedelta(days=30))
         end = _parse_date(end_date, now)
-        return start.isoformat(), end.isoformat(), "Custom Range"
+        return start.isoformat(), end.isoformat(), "自定义范围"
     else:
         start = now - timedelta(days=30)
     return start.isoformat(), now.isoformat(), {
-        "30d": "Last 30 Days",
-        "qtd": "Quarter to Date",
-        "ytd": "Year to Date",
-    }.get(period, "Last 30 Days")
+        "30d": "近 30 天",
+        "qtd": "本季度",
+        "ytd": "今年以来",
+    }.get(period, "近 30 天")
 
 def _with_roi(sql, params, roi_id):
     if not roi_id:
@@ -210,8 +210,8 @@ def get_operations(period="30d", roi_id=None, start_date=None, end_date=None):
             for row in operator_rows
         ],
         "insight": {
-            "title": "System Insights",
-            "message": "No abnormal congestion pattern yet." if not hotspot_rows else f"{hotspot_rows[0]['roi_id']} is the current top violation hotspot.",
-            "action": "Optimize Patrol Dispatch",
+            "title": "系统洞察",
+            "message": "暂未发现异常拥堵模式。" if not hotspot_rows else f"{hotspot_rows[0]['roi_id']} 是当前违规高发路段。",
+            "action": "优化巡查调度",
         },
     }
