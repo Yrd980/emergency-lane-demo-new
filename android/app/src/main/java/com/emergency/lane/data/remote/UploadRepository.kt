@@ -30,6 +30,7 @@ class UploadRepository(private val context: Context) {
         val baseUrl = settings.baseUrl.first()
         if (baseUrl.isBlank()) return 0
         val client = HpApiClient(baseUrl)
+        val authorization = authHeader()
 
         for (suspectedIncident in suspectedIncidents) {
             try {
@@ -49,7 +50,7 @@ class UploadRepository(private val context: Context) {
                 val body = json.encodeToString(payload)
                     .toRequestBody("application/json".toMediaType())
 
-                val resp = client.api.createSuspectedIncident(body)
+                val resp = client.api.createSuspectedIncident(authorization, body)
 
                 if (resp.isSuccessful) {
                     val result = resp.body()
@@ -65,7 +66,7 @@ class UploadRepository(private val context: Context) {
                                     )
                                     val typePart = ev.evidenceType
                                         .toRequestBody("text/plain".toMediaType())
-                                    client.api.uploadEvidence(suspectedIncident.suspectedIncidentId, typePart, filePart)
+                                    client.api.uploadEvidence(authorization, suspectedIncident.suspectedIncidentId, typePart, filePart)
                                 }
                             }
                         }
@@ -102,5 +103,10 @@ class UploadRepository(private val context: Context) {
         }.getOrElse {
             VehicleBox(120f, 220f, 180f, 90f)
         }
+    }
+
+    private suspend fun authHeader(): String? {
+        val token = settings.authToken.first()
+        return token.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
     }
 }

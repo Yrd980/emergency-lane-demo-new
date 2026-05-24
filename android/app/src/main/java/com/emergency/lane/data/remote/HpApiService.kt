@@ -13,13 +13,22 @@ interface HpApiService {
     suspend fun health(): Response<HealthResponse>
 
     @POST("/api/devices/register")
-    suspend fun registerDevice(@Body req: DeviceRegisterRequest): Response<DeviceRegisterResponse>
+    suspend fun registerDevice(
+        @Header("Authorization") authorization: String? = null,
+        @Body req: DeviceRegisterRequest
+    ): Response<DeviceRegisterResponse>
 
     @POST("/api/devices/heartbeat")
-    suspend fun heartbeat(@Body req: HeartbeatRequest): Response<HeartbeatResponse>
+    suspend fun heartbeat(
+        @Header("Authorization") authorization: String? = null,
+        @Body req: HeartbeatRequest
+    ): Response<HeartbeatResponse>
 
     @POST("/api/suspected-incidents")
-    suspend fun createSuspectedIncident(@Body suspectedIncident: RequestBody): Response<SuspectedIncidentCreateResponse>
+    suspend fun createSuspectedIncident(
+        @Header("Authorization") authorization: String? = null,
+        @Body suspectedIncident: RequestBody
+    ): Response<SuspectedIncidentCreateResponse>
 
     @GET("/api/suspected-incidents")
     suspend fun getSuspectedIncidents(
@@ -50,6 +59,7 @@ interface HpApiService {
     @Multipart
     @POST("/api/suspected-incidents/{suspectedIncidentId}/evidence")
     suspend fun uploadEvidence(
+        @Header("Authorization") authorization: String? = null,
         @Path("suspectedIncidentId") suspectedIncidentId: String,
         @Part("evidence_type") evidenceType: RequestBody,
         @Part file: MultipartBody.Part

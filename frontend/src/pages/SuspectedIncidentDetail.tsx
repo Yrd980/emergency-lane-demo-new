@@ -58,6 +58,13 @@ function buildTimeline(data: SuspectedIncidentDetailType): TimelineEntry[] {
       time: formatFullDateTime(data.reviewed_at),
       tone: 'danger',
     });
+  } else if (data.review_status === 'closed') {
+    entries.push({
+      id: 'closed',
+      label: '复核已关闭',
+      time: formatFullDateTime(data.reviewed_at),
+      tone: 'muted',
+    });
   } else {
     entries.push({
       id: 'pending',
@@ -132,7 +139,12 @@ export default function SuspectedIncidentDetail() {
   const handleReview = async (status: string, note: string, operatorId?: string): Promise<boolean> => {
     const ok = await submit(status, note, operatorId);
     if (ok) {
-      showToast(status === 'validated' ? '已验证疑似事件，复核结果已保存' : '已标记为误报，复核结果已保存', 'success');
+      const messages: Record<string, string> = {
+        validated: '已验证疑似事件，复核结果已保存',
+        false_alarm: '已标记为误报，复核结果已保存',
+        closed: '已关闭疑似事件，复核结果已保存',
+      };
+      showToast(messages[status] ?? '复核结果已保存', 'success');
       refetch();
     }
     return ok;
@@ -199,7 +211,7 @@ export default function SuspectedIncidentDetail() {
       {/* ─── Action banner ─── */}
       <ActionPanel
         tone={data.review_status === 'pending' ? 'warning' : 'success'}
-        title={data.review_status === 'pending' ? '下一步：完成此疑似事件复核' : data.review_status === 'validated' ? '此疑似事件已验证' : '此疑似事件已复核'}
+        title={data.review_status === 'pending' ? '下一步：完成此疑似事件复核' : data.review_status === 'validated' ? '此疑似事件已验证' : data.review_status === 'closed' ? '此疑似事件已关闭' : '此疑似事件已复核'}
         description={
           data.review_status === 'pending'
             ? data.review_priority_reason ?? '请根据证据组作出验证或驳回。'
@@ -407,7 +419,7 @@ export default function SuspectedIncidentDetail() {
                 </div>
               </div>
               <div className="grid gap-2 p-4">
-                {canReview && (
+                {data.review_status === 'pending' && canReview && (
                   <button
                     type="button"
                     className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary-container px-4 py-3 text-body-sm font-bold text-on-primary-container transition-all hover:brightness-110 active:scale-95"
@@ -415,6 +427,16 @@ export default function SuspectedIncidentDetail() {
                   >
                     <span className="material-symbols-outlined text-base">gavel</span>
                     验证疑似事件
+                  </button>
+                )}
+                {data.review_status === 'pending' && canReview && (
+                  <button
+                    type="button"
+                    className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/20 px-4 py-2.5 text-body-sm text-on-surface-variant transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary active:opacity-80"
+                    onClick={() => void handleReview('closed', '从疑似事件详情关闭记录', user?.display_name)}
+                  >
+                    <span className="material-symbols-outlined text-base">archive</span>
+                    关闭记录
                   </button>
                 )}
                 {canDispatchResponseTask && (

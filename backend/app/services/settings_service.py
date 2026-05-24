@@ -27,6 +27,23 @@ def get_effective_online_threshold() -> int:
     return config_settings.online_threshold_seconds
 
 
+def get_device_access_mode() -> str:
+    conn = None
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT device_access_mode FROM runtime_settings WHERE id=1"
+        ).fetchone()
+        if row:
+            return row["device_access_mode"]
+    except Exception:
+        pass
+    finally:
+        if conn:
+            conn.close()
+    return DEFAULT_SETTINGS["device_access_mode"]
+
+
 def _now():
     return datetime.now(timezone(timedelta(hours=8))).isoformat()
 

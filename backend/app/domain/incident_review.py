@@ -2,7 +2,7 @@ from app.domain import evidence_set
 
 VALID_REVIEW_STATUSES = frozenset({"pending", "validated", "false_alarm", "closed"})
 REVIEW_OUTCOMES = frozenset({"validated", "false_alarm", "closed"})
-ROUTER_REVIEW_OUTCOMES = frozenset({"validated", "false_alarm"})
+ROUTER_REVIEW_OUTCOMES = REVIEW_OUTCOMES
 
 
 def normalize_operator(operator_id: str | None, default: str = "本地复核员") -> str:

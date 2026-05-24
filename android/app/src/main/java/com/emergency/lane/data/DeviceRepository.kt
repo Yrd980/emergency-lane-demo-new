@@ -43,6 +43,7 @@ class DeviceRepository(private val context: Context) {
         apiClient = HpApiClient(baseUrl)
         return try {
             val resp = apiClient!!.api.registerDevice(
+                authHeader(),
                 DeviceRegisterRequest(
                     deviceId,
                     deviceName,
@@ -67,6 +68,7 @@ class DeviceRepository(private val context: Context) {
             try {
                 val deviceId = settings.deviceId.first()
                 currentClient()?.api?.heartbeat(
+                    authHeader(),
                     HeartbeatRequest(
                         deviceId = deviceId,
                         batteryLevel = currentBatteryPercent(),
@@ -89,6 +91,7 @@ class DeviceRepository(private val context: Context) {
         if (baseUrl.isBlank()) return Result.failure(Exception("HP 地址未配置"))
         return try {
             HpApiClient(baseUrl).api.heartbeat(
+                authHeader(),
                 HeartbeatRequest(
                     deviceId = deviceId,
                     batteryLevel = currentBatteryPercent(),
@@ -111,6 +114,11 @@ class DeviceRepository(private val context: Context) {
         val baseUrl = settings.baseUrl.first()
         if (baseUrl.isBlank()) return null
         return HpApiClient(baseUrl).also { apiClient = it }
+    }
+
+    private suspend fun authHeader(): String? {
+        val token = settings.authToken.first()
+        return token.takeIf { it.isNotBlank() }?.let { "Bearer $it" }
     }
 
     private fun currentBatteryPercent(): Float {

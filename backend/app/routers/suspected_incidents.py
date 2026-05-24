@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, HTTPException
-from app.auth import require_permission
+from app.auth import require_device_access, require_permission
 from app.domain import incident_review
 from app.models.suspected_incident import AssignSuspectedIncidentRequest, BulkReviewUpdate, SuspectedIncidentCreate, ReviewUpdate
 from app.services import suspected_incident_service, task_service
@@ -9,7 +9,7 @@ from app.services import suspected_incident_service, task_service
 router = APIRouter(prefix="/api/suspected-incidents", tags=["suspected_incidents"])
 
 @router.post("")
-def create_suspected_incident(body: SuspectedIncidentCreate):
+def create_suspected_incident(body: SuspectedIncidentCreate, device_access: dict | None = Depends(require_device_access)):
     gps = body.gps_location.model_dump() if body.gps_location else None
     return suspected_incident_service.create_suspected_incident(
         suspected_incident_id=body.suspected_incident_id, device_id=body.device_id,

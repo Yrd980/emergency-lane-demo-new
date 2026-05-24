@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.auth import require_permission
+from app.auth import require_device_access, require_permission
 from app.models.device import DeviceRegister, DeviceHeartbeat
 from app.services import device_service
 
@@ -21,7 +21,7 @@ def get_device(device_id: str, user: dict = Depends(require_permission("devices:
 
 
 @router.post("/register")
-def register_device(body: DeviceRegister):
+def register_device(body: DeviceRegister, device_access: dict | None = Depends(require_device_access)):
     return device_service.register(
         device_id=body.device_id,
         device_name=body.device_name,
@@ -31,7 +31,7 @@ def register_device(body: DeviceRegister):
 
 
 @router.post("/heartbeat")
-def device_heartbeat(body: DeviceHeartbeat):
+def device_heartbeat(body: DeviceHeartbeat, device_access: dict | None = Depends(require_device_access)):
     result = device_service.heartbeat(
         device_id=body.device_id,
         battery_level=body.battery_level,

@@ -8,6 +8,8 @@ import { useSuspectedIncidents } from '../hooks/useSuspectedIncidents';
 import { usePolling } from '../hooks/usePolling';
 import type { OverviewStats } from '../types';
 
+type BulkReviewStatus = 'validated' | 'false_alarm' | 'closed';
+
 export default function ReviewQueue() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -15,7 +17,7 @@ export default function ReviewQueue() {
   const overview = usePolling<OverviewStats>(() => api.getStats(), 5000);
   const firstSuspectedIncident = data?.items[0];
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkStatus, setBulkStatus] = useState<'validated' | 'false_alarm' | null>(null);
+  const [bulkStatus, setBulkStatus] = useState<BulkReviewStatus | null>(null);
   const [submittingBulk, setSubmittingBulk] = useState(false);
   const [bulkMessage, setBulkMessage] = useState<string | null>(null);
   const pendingIds = useMemo(() => data?.items.filter((item) => item.review_status === 'pending').map((item) => item.suspected_incident_id) ?? [], [data]);
@@ -32,7 +34,7 @@ export default function ReviewQueue() {
     setSelectedIds(allSelected ? selectedIds.filter((id) => !pendingIds.includes(id)) : Array.from(new Set([...selectedIds, ...pendingIds])));
   };
 
-  const submitBulkReview = async (reviewStatus: 'validated' | 'false_alarm') => {
+  const submitBulkReview = async (reviewStatus: BulkReviewStatus) => {
     if (selectedIds.length === 0) {
       setBulkMessage('请先选择待审核疑似事件，再选择审核结果。');
       return;
@@ -42,7 +44,9 @@ export default function ReviewQueue() {
       setBulkMessage(
         reviewStatus === 'validated'
           ? `确认将 ${selectedIds.length} 条疑似事件标记为已确认。批量确认要求证据包含前段、峰值、后段。再次点击以执行。`
-          : `将 ${selectedIds.length} 条疑似事件标记为误报。再次点击以执行。`,
+          : reviewStatus === 'closed'
+            ? `将 ${selectedIds.length} 条疑似事件关闭。再次点击以执行。`
+            : `将 ${selectedIds.length} 条疑似事件标记为误报。再次点击以执行。`,
       );
       return;
     }
@@ -51,7 +55,7 @@ export default function ReviewQueue() {
       const result = await api.bulkReviewSuspectedIncidents(
         selectedIds,
         reviewStatus,
-        reviewStatus === 'validated' ? '批量确认' : '批量标记误报',
+        reviewStatus === 'validated' ? '批量确认' : reviewStatus === 'closed' ? '批量关闭' : '批量标记误报',
         user?.display_name ?? 'Aegis 审核员',
       );
       const failedCount = result.failed_suspected_incident_ids?.length ?? 0;
@@ -141,6 +145,9 @@ export default function ReviewQueue() {
                 </button>
                 <PrimaryButton tone="light" icon="check_circle" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('validated')}>
                   {bulkStatus === 'validated' ? '确认执行' : '确认所选'}
+                </PrimaryButton>
+                <PrimaryButton tone="light" icon="archive" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('closed')}>
+                  {bulkStatus === 'closed' ? '执行关闭' : '关闭所选'}
                 </PrimaryButton>
                 <PrimaryButton tone="danger" icon="cancel" disabled={submittingBulk || selectedIds.length === 0} onClick={() => submitBulkReview('false_alarm')}>
                   {bulkStatus === 'false_alarm' ? '执行误报标记' : '标记为误报'}

@@ -1,6 +1,7 @@
 from fastapi import Depends, Header, HTTPException
 
 from app.services import auth_service
+from app.services.settings_service import get_device_access_mode
 
 
 def _bearer_token(authorization: str | None) -> str | None:
@@ -29,6 +30,15 @@ def require_permission(permission: str):
             raise HTTPException(status_code=403, detail="Permission denied")
         return user
     return dependency
+
+
+def require_device_access(authorization: str | None = Header(default=None)):
+    if get_device_access_mode() == "open":
+        return None
+    user = auth_service.get_user_by_token(_bearer_token(authorization))
+    if not user:
+        raise HTTPException(status_code=401, detail="Device token required")
+    return user
 
 
 def token_from_header(authorization: str | None = Header(default=None)):

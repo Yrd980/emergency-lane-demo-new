@@ -8,7 +8,10 @@ const noteTemplates = [
   '短暂经过，未形成持续占用',
   '证据不足，无法确认',
   '相机角度异常，需要重新标定 ROI',
+  '已记录，无需继续处置',
 ];
+
+type ReviewOutcome = Exclude<IncidentReviewState, 'pending'>;
 
 export default function ReviewPanel({
   reviewStatus,
@@ -25,10 +28,10 @@ export default function ReviewPanel({
 }) {
   const [note, setNote] = useState(operatorNote);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<'validated' | 'false_alarm' | null>(null);
+  const [confirming, setConfirming] = useState<ReviewOutcome | null>(null);
   const isReviewed = reviewStatus !== 'pending';
 
-  async function handleReview(newStatus: 'validated' | 'false_alarm') {
+  async function handleReview(newStatus: ReviewOutcome) {
     if (confirming !== newStatus) {
       setConfirming(newStatus);
       return;
@@ -78,14 +81,22 @@ export default function ReviewPanel({
           <div className="rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">
             操作员：<span className="font-semibold text-on-surface">{operatorName}</span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             <PrimaryButton
               tone="dark"
               icon={confirming === 'validated' ? 'send' : 'check_circle'}
               disabled={submitting}
               onClick={() => handleReview('validated')}
             >
-              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似疑似事件'}
+              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似事件'}
+            </PrimaryButton>
+            <PrimaryButton
+              tone="light"
+              icon={confirming === 'closed' ? 'send' : 'archive'}
+              disabled={submitting}
+              onClick={() => handleReview('closed')}
+            >
+              {submitting ? '提交中...' : confirming === 'closed' ? '再次点击关闭' : '关闭记录'}
             </PrimaryButton>
             <PrimaryButton
               tone="danger"

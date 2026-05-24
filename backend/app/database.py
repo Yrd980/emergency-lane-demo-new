@@ -164,7 +164,11 @@ def _seed_builtin_users(conn: sqlite3.Connection):
     created_at = now_iso()
     for username, password, display_name, role in users:
         conn.execute(
-            """INSERT OR IGNORE INTO users (username, password_hash, display_name, role, created_at)
-               VALUES (?, ?, ?, ?, ?)""",
+            """INSERT INTO users (username, password_hash, display_name, role, created_at)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(username) DO UPDATE SET
+                   password_hash=excluded.password_hash,
+                   display_name=excluded.display_name,
+                   role=excluded.role""",
             (username, hash_password(password), display_name, role, created_at),
         )

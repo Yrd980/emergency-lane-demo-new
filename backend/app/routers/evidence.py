@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
+from app.auth import require_device_access
 from app.services import evidence_service
 
 router = APIRouter(prefix="/api/suspected-incidents", tags=["evidence"])
@@ -8,6 +9,7 @@ MAX_EVIDENCE_SIZE = 50 * 1024 * 1024  # 50 MB
 @router.post("/{suspected_incident_id}/evidence")
 def upload_evidence(
     suspected_incident_id: str,
+    device_access: dict | None = Depends(require_device_access),
     evidence_type: str = Form(...),
     file: UploadFile = File(...),
 ):
