@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# Aegis Traffic Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the Web operations console for Aegis Traffic. It supports local monitoring, suspected incident review, evidence inspection, device health, runtime settings, and response task dispatch.
 
-Currently, two official plugins are available:
+## Project Role
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Aegis Traffic is a three-surface product:
 
-## React Compiler
+- `frontend/`: Web operations console.
+- `backend/`: Local API, database, evidence storage, auth, settings, devices, suspected incidents, and response tasks.
+- `android/`: Android capture and patrol app.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The Web frontend should use the shared domain language in `../CONTEXT.md` and the product/design context in `../PRODUCT.md` and `../DESIGN.md`.
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Use Bun for JavaScript and TypeScript work.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun run build
 ```
+
+## Domain Language
+
+Prefer these UI terms:
+
+- **Suspected Incident** for road-side detections awaiting review.
+- **Incident Review** for the human decision to validate or reject a suspected incident.
+- **Evidence Set** for media used during review.
+- **Complete Evidence Set** for before, peak, and after frames.
+- **Review Priority** for queue ordering.
+- **Response Task** for field work assigned after validation.
+
+Avoid UI copy that implies legal adjudication, automatic enforcement, or confirmed violations.
+
+Incident log filters should expose only incident review states: pending, validated, false alarm, and closed. Assigned, accepted, completed, and cancelled belong to response task UI.

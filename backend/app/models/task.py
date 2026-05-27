@@ -18,7 +18,7 @@ class TaskListQuery(BaseModel):
 
 class TaskPublic(BaseModel):
     task_id: str
-    event_id: str
+    suspected_incident_id: str
     status: str
     note: str
     assigned_to_username: str | None = None
@@ -34,7 +34,7 @@ class TaskPublic(BaseModel):
     confidence: float
     start_time: str
     device_id: str
-    risk_level: str
+    review_priority: str
     thumbnail_url: str = ""
 
 

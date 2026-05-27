@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
-import type { EventListResponse } from '../types';
+import type { SuspectedIncidentListResponse } from '../types';
 
-export function useEvents(initialFilters?: Record<string, string>) {
-  const [data, setData] = useState<EventListResponse | null>(null);
+export function useSuspectedIncidents(initialFilters?: Record<string, string>) {
+  const [data, setData] = useState<SuspectedIncidentListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -12,10 +12,10 @@ export function useEvents(initialFilters?: Record<string, string>) {
     ...initialFilters,
   });
 
-  const fetchEvents = useCallback(async () => {
+  const fetchSuspectedIncidents = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await api.getEvents(filters);
+      const result = await api.getSuspectedIncidents(filters);
       setData(result);
       setError(null);
     } catch (e: unknown) {
@@ -26,8 +26,8 @@ export function useEvents(initialFilters?: Record<string, string>) {
   }, [filters]);
 
   useEffect(() => {
-    void Promise.resolve().then(fetchEvents);
-  }, [fetchEvents]);
+    void Promise.resolve().then(fetchSuspectedIncidents);
+  }, [fetchSuspectedIncidents]);
 
-  return { data, loading, error, filters, setFilters, refetch: fetchEvents };
+  return { data, loading, error, filters, setFilters, refetch: fetchSuspectedIncidents };
 }

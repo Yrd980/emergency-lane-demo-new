@@ -7,8 +7,8 @@ import { formatBytes, formatDateTime } from '../utils/format';
 export default function Health() {
   const { data, loading, error, refetch } = usePolling<SystemStatus>(() => api.getSystemStatus(), 5000);
 
-  if (loading) return <StateBlock tone="loading" title="Checking system health" description="Syncing backend, database, evidence directory, and device heartbeats." />;
-  if (error) return <StateBlock tone="error" title="Health check failed" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>Retry Check</PrimaryButton>} />;
+  if (loading) return <StateBlock tone="loading" title="正在检查系统健康" description="正在同步后端、数据库、证据目录和设备心跳。" />;
+  if (error) return <StateBlock tone="error" title="健康检查失败" description={error} action={<PrimaryButton icon="refresh" onClick={refetch}>重新检查</PrimaryButton>} />;
   if (!data) return null;
 
   const topIssue = data.issues[0];
@@ -23,36 +23,36 @@ export default function Health() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="SYSTEM HEALTH"
-        title="System Health"
-        description="Before long-running use, first confirm the system can keep running, then proceed to event review."
-        action={<PrimaryButton icon="refresh" onClick={refetch}>Refresh Now</PrimaryButton>}
+        eyebrow="系统健康"
+        title="系统健康状态"
+        description="进入持续运行前，先确认系统可稳定运行，再处理疑似事件复核。"
+        action={<PrimaryButton icon="refresh" onClick={refetch}>立即刷新</PrimaryButton>}
       />
 
       <ActionPanel
         tone={topIssue ? (topIssue.severity === 'critical' ? 'danger' : 'warning') : 'success'}
-        title={topIssue ? topIssue.message : 'No blocking issues'}
-        description={topIssue ? topIssue.next_action : 'Next: return to workbench or continue processing pending reviews.'}
-        action={<PrimaryButton href={nextStepHref}>{topIssue ? 'Handle Next Step' : 'Back to Workbench'}</PrimaryButton>}
+        title={topIssue ? topIssue.message : '暂无阻塞问题'}
+        description={topIssue ? topIssue.next_action : '下一步：返回工作台，或继续处理待复核疑似事件。'}
+        action={<PrimaryButton href={nextStepHref}>{topIssue ? '处理下一步' : '返回工作台'}</PrimaryButton>}
       />
 
       <div className="mt-lg grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricTile label="Backend" value={data.backend.status} tone="success" helper={formatDateTime(data.server_time)} />
-        <MetricTile label="Online Devices" value={`${data.devices.online}/${data.devices.total}`} tone={data.devices.online > 0 ? 'success' : 'warning'} helper="By heartbeat window" />
-        <MetricTile label="Pending Review" value={data.events.pending_review_count} tone={data.events.pending_review_count > 0 ? 'warning' : 'neutral'} helper="Review workbench queue" />
-        <MetricTile label="Evidence Usage" value={formatBytes(data.evidence.usage_bytes)} helper={`${data.evidence.file_count} files`} />
+        <MetricTile label="后端" value={data.backend.status === 'ok' ? '正常' : data.backend.status} tone="success" helper={formatDateTime(data.server_time)} />
+        <MetricTile label="在线设备" value={`${data.devices.online}/${data.devices.total}`} tone={data.devices.online > 0 ? 'success' : 'warning'} helper="按心跳窗口统计" />
+        <MetricTile label="待复核" value={data.suspected_incidents.pending_review_count} tone={data.suspected_incidents.pending_review_count > 0 ? 'warning' : 'neutral'} helper="复核工作台队列" />
+        <MetricTile label="证据占用" value={formatBytes(data.evidence.usage_bytes)} helper={`${data.evidence.file_count} 个文件`} />
       </div>
 
       <div className="mt-lg grid gap-4 lg:grid-cols-2">
-        <HealthCard icon="dns" title="FastAPI Backend" status={data.backend.status} body="Handles event ingestion, review state, and web queries." next="Check uvicorn stderr on anomaly." />
-        <HealthCard icon="database" title="SQLite Database" status={data.database.status} body={data.database.path} next="Check DB_PATH and write permissions on anomaly." />
-        <HealthCard icon="folder" title="Evidence Directory" status={data.evidence.status} body={data.evidence.dir} next="Configure cleanup policy for long-running use." />
+        <HealthCard icon="dns" title="FastAPI 后端" status={data.backend.status} body="负责疑似事件接入、复核状态和 Web 查询。" next="异常时检查 uvicorn stderr 输出。" />
+        <HealthCard icon="database" title="SQLite 数据库" status={data.database.status} body={data.database.path} next="异常时检查 DB_PATH 与写入权限。" />
+        <HealthCard icon="folder" title="证据目录" status={data.evidence.status} body={data.evidence.dir} next="持续运行前配置清理策略。" />
         <HealthCard
           icon="smartphone"
-          title="Android Devices"
+          title="Android 设备"
           status={data.devices.online > 0 && data.devices.pending_upload_count === 0 ? 'ok' : 'warning'}
-          body={`${data.devices.pending_upload_count} uploads backlogged`}
-          next={data.devices.backlog_device_id ? `Open ${data.devices.backlog_device_id} to inspect the queue.` : 'Enter device detail to diagnose on backlog.'}
+          body={`${data.devices.pending_upload_count} 条上传积压`}
+          next={data.devices.backlog_device_id ? `打开 ${data.devices.backlog_device_id} 检查队列。` : '进入设备详情排查积压。'}
           href={data.devices.backlog_device_id ? `/devices/${data.devices.backlog_device_id}` : '/devices'}
         />
       </div>
@@ -90,7 +90,7 @@ function HealthCard({ icon, title, status, body, next, href }: { icon: string; t
         </span>
       </div>
       <div className="mt-4 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">
-        <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">Next: </span>
+        <span className="text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">下一步：</span>
         {next}
       </div>
     </>

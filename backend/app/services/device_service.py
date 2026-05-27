@@ -1,6 +1,8 @@
 from datetime import datetime, timezone, timedelta
 
 from app.database import get_db
+from app.domain import suspected_incident_read_model
+from app.queries import suspected_incident_queries
 from app.services.settings_service import get_effective_online_threshold
 
 
@@ -108,12 +110,7 @@ def get_device_detail(device_id: str):
         last = datetime.fromisoformat(row["last_seen_at"])
         seconds_since_seen = int((now_dt - last).total_seconds())
         is_online = seconds_since_seen < get_effective_online_threshold()
-        recent_events = conn.execute(
-            """SELECT event_id, start_time, duration_seconds, vehicle_class, confidence, review_status
-               FROM events WHERE device_id=?
-               ORDER BY created_at DESC LIMIT 8""",
-            (device_id,),
-        ).fetchall()
+        recent_suspected_incidents = suspected_incident_queries.recent_suspected_incidents_for_device(conn, device_id)
         metric_history = conn.execute(
             """SELECT id, recorded_at, battery_level, thermal_state, fps, pending_upload_count
                FROM device_metric_history WHERE device_id=?
@@ -185,17 +182,7 @@ def get_device_detail(device_id: str):
             }
             for metric in metric_history
         ],
-        "recent_events": [
-            {
-                "event_id": event["event_id"],
-                "start_time": event["start_time"],
-                "duration_seconds": event["duration_seconds"],
-                "vehicle_class": event["vehicle_class"],
-                "confidence": event["confidence"],
-                "review_status": event["review_status"],
-            }
-            for event in recent_events
-        ],
+        "recent_suspected_incidents": [suspected_incident_read_model.device_recent_item(suspected_incident) for suspected_incident in recent_suspected_incidents],
     }
 
 

@@ -1,4 +1,6 @@
-from tests.test_events import EVENT_PAYLOAD
+import io
+
+from tests.test_suspected_incidents import EVENT_PAYLOAD
 
 
 def login(client, username, password):
@@ -16,7 +18,7 @@ def test_login_and_me(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["user"]["role"] == "admin"
-    assert "events:assign" in body["user"]["permissions"]
+    assert "suspected_incidents:assign" in body["user"]["permissions"]
 
     me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {body['token']}"})
     assert me.status_code == 200
@@ -29,9 +31,9 @@ def test_protected_settings_requires_auth(client):
 
 
 def test_reviewer_cannot_assign(client):
-    client.post("/api/events", json=EVENT_PAYLOAD)
+    client.post("/api/suspected-incidents", json=EVENT_PAYLOAD)
     headers = token(client, "reviewer", "review123")
-    resp = client.post("/api/events/evt_001/assign", headers=headers, json={
+    resp = client.post("/api/suspected-incidents/evt_001/assign", headers=headers, json={
         "assigned_to_username": "patrol",
         "note": "dispatch",
     })
@@ -55,10 +57,15 @@ def test_dispatcher_can_list_assignable_users(client):
 
 
 def test_cannot_assign_to_admin_user(client):
-    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_admin_assign"})
+    client.post("/api/suspected-incidents", json={**EVENT_PAYLOAD, "suspected_incident_id": "evt_admin_assign"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/suspected-incidents/evt_admin_assign/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
     dispatcher = token(client, "dispatcher", "dispatch123")
 
-    resp = client.post("/api/events/evt_admin_assign/assign", headers=dispatcher, json={
+    resp = client.post("/api/suspected-incidents/evt_admin_assign/assign", headers=dispatcher, json={
         "assigned_to_username": "admin",
         "note": "Should not assign to admin",
     })
@@ -66,12 +73,53 @@ def test_cannot_assign_to_admin_user(client):
     assert resp.status_code == 422
 
 
-def test_dispatch_to_patrol_accept_complete(client):
-    client.post("/api/events", json={**EVENT_PAYLOAD, "event_id": "evt_dispatch"})
+def test_cannot_dispatch_before_incident_is_validated(client):
+    client.post("/api/suspected-incidents", json={**EVENT_PAYLOAD, "suspected_incident_id": "evt_dispatch_pending"})
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    resp = client.post("/api/suspected-incidents/evt_dispatch_pending/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Check shoulder lane",
+    })
+
+    assert resp.status_code == 422
+    assert "validated" in resp.json()["detail"]
+
+
+def test_cannot_create_duplicate_active_response_task(client):
+    client.post("/api/suspected-incidents", json={**EVENT_PAYLOAD, "suspected_incident_id": "evt_dispatch_once"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/suspected-incidents/evt_dispatch_once/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    first = client.post("/api/suspected-incidents/evt_dispatch_once/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Check shoulder lane",
+    })
+    second = client.post("/api/suspected-incidents/evt_dispatch_once/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Duplicate dispatch",
+    })
+
+    assert first.status_code == 200
+    assert second.status_code == 422
+    assert "active response task" in second.json()["detail"]
+
+
+def test_dispatch_to_patrol_accept_complete_does_not_change_review_status(client):
+    client.post("/api/suspected-incidents", json={**EVENT_PAYLOAD, "suspected_incident_id": "evt_dispatch"})
+    reviewer = token(client, "reviewer", "review123")
+    client.patch("/api/suspected-incidents/evt_dispatch/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
     dispatcher = token(client, "dispatcher", "dispatch123")
     patrol = token(client, "patrol", "patrol123")
 
-    assigned = client.post("/api/events/evt_dispatch/assign", headers=dispatcher, json={
+    assigned = client.post("/api/suspected-incidents/evt_dispatch/assign", headers=dispatcher, json={
         "assigned_to_username": "patrol",
         "note": "Check shoulder lane",
     })
@@ -89,5 +137,44 @@ def test_dispatch_to_patrol_accept_complete(client):
     assert completed.status_code == 200
     assert completed.json()["status"] == "completed"
 
-    detail = client.get("/api/events/evt_dispatch").json()
-    assert detail["review_status"] == "completed"
+    detail = client.get("/api/suspected-incidents/evt_dispatch").json()
+    assert detail["review_status"] == "validated"
+    assert all(
+        history["to_status"] in ("validated", "false_alarm")
+        for history in detail["review_history"]
+    )
+
+
+def test_response_task_includes_review_priority_and_peak_thumbnail(client):
+    suspected_incident_id = "evt_dispatch_context"
+    client.post("/api/suspected-incidents", json={
+        **EVENT_PAYLOAD,
+        "suspected_incident_id": suspected_incident_id,
+        "duration_seconds": 12,
+        "confidence": 0.9,
+    })
+    client.post(
+        f"/api/suspected-incidents/{suspected_incident_id}/evidence",
+        files={"file": ("frame_peak.jpg", io.BytesIO(b"fakeimg"), "image/jpeg")},
+        data={"evidence_type": "frame_peak"},
+    )
+    reviewer = token(client, "reviewer", "review123")
+    client.patch(f"/api/suspected-incidents/{suspected_incident_id}/review", headers=reviewer, json={
+        "review_status": "validated",
+        "operator_note": "Ready for dispatch",
+    })
+    dispatcher = token(client, "dispatcher", "dispatch123")
+
+    assigned = client.post(f"/api/suspected-incidents/{suspected_incident_id}/assign", headers=dispatcher, json={
+        "assigned_to_username": "patrol",
+        "note": "Check shoulder lane",
+    })
+    listed = client.get("/api/tasks", headers=dispatcher)
+
+    assert assigned.status_code == 200
+    assert assigned.json()["review_priority"] == "high"
+    assert assigned.json()["thumbnail_url"] == f"/evidence/{suspected_incident_id}/frame_peak.jpg"
+    assert listed.status_code == 200
+    task = next(item for item in listed.json()["items"] if item["suspected_incident_id"] == suspected_incident_id)
+    assert task["review_priority"] == "high"
+    assert task["thumbnail_url"] == f"/evidence/{suspected_incident_id}/frame_peak.jpg"

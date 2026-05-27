@@ -21,7 +21,7 @@ def me(user: dict = Depends(current_user)):
 
 
 @router.get("/assignees", response_model=list[UserPublic])
-def assignees(user: dict = Depends(require_permission("events:assign"))):
+def assignees(user: dict = Depends(require_permission("suspected_incidents:assign"))):
     return auth_service.list_assignable_users()
 
 

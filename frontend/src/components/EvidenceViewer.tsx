@@ -24,8 +24,8 @@ export default function EvidenceViewer({
     return (
       <div className="rounded-lg border border-dashed border-outline-variant/40 bg-surface-container-high p-8 text-center">
         <span className="material-symbols-outlined text-2xl text-on-surface-variant mx-auto">hide_image</span>
-        <div className="mt-3 font-semibold text-on-surface">Evidence not yet uploaded</div>
-        <p className="mt-2 text-body-sm text-on-surface-variant">Next: check Android queue and device network, wait for retransmission then refresh the event.</p>
+        <div className="mt-3 font-semibold text-on-surface">证据尚未上传</div>
+        <p className="mt-2 text-body-sm text-on-surface-variant">下一步：检查 Android 队列和设备网络，等待重传后刷新疑似疑似事件。</p>
       </div>
     );
   }
@@ -43,14 +43,14 @@ export default function EvidenceViewer({
       </div>
       <div className="space-y-3">
         <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
-          <div className="text-body-sm font-semibold text-on-surface">Evidence Chain Integrity</div>
+          <div className="text-body-sm font-semibold text-on-surface">证据链完整性</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-label-xs">
             <EvidenceMark label="进入前" ok={summary?.has_before ?? false} />
             <EvidenceMark label="峰值帧" ok={summary?.has_peak ?? media.some((item) => item.evidence_type === 'frame_peak')} />
             <EvidenceMark label="离开后" ok={summary?.has_after ?? false} />
           </div>
           <p className="mt-3 text-label-xs leading-5 text-on-surface-variant">
-            Next: prioritize peak frame, then use before/after to determine if it was a brief pass-through.
+            下一步：优先查看峰值帧，再结合进入前、离开后判断是否为短暂经过。
           </p>
         </div>
         <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-2 shadow-[0_1px_0_rgba(32,32,29,0.04)]">

@@ -94,6 +94,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
             val registerResponse = try {
                 client.api.registerDevice(
+                    "Bearer ${login.token}",
                     DeviceRegisterRequest(
                         deviceId = deviceId,
                         deviceName = deviceName,

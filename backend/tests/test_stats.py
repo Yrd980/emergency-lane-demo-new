@@ -1,5 +1,5 @@
 BASE_EVENT = {
-    "event_id": "evt_s1",
+    "suspected_incident_id": "evt_s1",
     "device_id": "vivo_001",
     "start_time": "2026-05-05T10:00:00+08:00",
     "end_time": "2026-05-05T10:00:12+08:00",
@@ -16,33 +16,33 @@ def test_stats_overview_structure(client, auth_headers):
     resp = client.get("/api/stats/overview", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.json()
-    for key in ["total_events_today", "pending_review_count", "confirmed_count",
-                "rejected_count", "online_device_count", "recent_events"]:
+    for key in ["total_suspected_incidents_today", "pending_review_count", "validated_count",
+                "false_alarm_count", "online_device_count", "recent_suspected_incidents"]:
         assert key in data
-    assert isinstance(data["recent_events"], list)
+    assert isinstance(data["recent_suspected_incidents"], list)
 
 def test_stats_counts_reflect_events(client, auth_headers):
-    client.post("/api/events", json={**BASE_EVENT, "event_id": "evt_s1"})
-    client.post("/api/events", json={**BASE_EVENT, "event_id": "evt_s2", "vehicle_class": "truck"})
-    client.patch("/api/events/evt_s1/review", headers=auth_headers, json={"review_status": "validated"})
+    client.post("/api/suspected-incidents", json={**BASE_EVENT, "suspected_incident_id": "evt_s1"})
+    client.post("/api/suspected-incidents", json={**BASE_EVENT, "suspected_incident_id": "evt_s2", "vehicle_class": "truck"})
+    client.patch("/api/suspected-incidents/evt_s1/review", headers=auth_headers, json={"review_status": "validated"})
     resp = client.get("/api/stats/overview", headers=auth_headers)
     data = resp.json()
-    assert data["confirmed_count"] == 1
+    assert data["validated_count"] == 1
     assert data["pending_review_count"] == 1
 
 
 def test_stats_today_excludes_future_events(client, auth_headers):
     client.post(
-        "/api/events",
+        "/api/suspected-incidents",
         json={
             **BASE_EVENT,
-            "event_id": "evt_future",
+            "suspected_incident_id": "evt_future",
             "start_time": "2999-05-05T10:00:00+08:00",
             "end_time": "2999-05-05T10:00:12+08:00",
         },
     )
     resp = client.get("/api/stats/overview", headers=auth_headers)
-    assert resp.json()["total_events_today"] == 0
+    assert resp.json()["total_suspected_incidents_today"] == 0
 
 
 def test_online_device_count(client, auth_headers):

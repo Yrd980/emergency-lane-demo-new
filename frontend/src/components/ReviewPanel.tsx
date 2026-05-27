@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { PrimaryButton } from './ProductPrimitives';
 import { inputClassName } from './styles';
-import StatusBadge from './StatusBadge';
+import { IncidentReviewStateBadge, type IncidentReviewState } from './StatusBadge';
 
 const noteTemplates = [
-  'Evidence clear, violation confirmed',
-  'Brief pass-through, no sustained occupation',
-  'Insufficient evidence, cannot confirm',
-  'Camera angle abnormal, ROI recalibration needed',
+  '证据清晰，验证为应急车道占用',
+  '短暂经过，未形成持续占用',
+  '证据不足，无法确认',
+  '相机角度异常，需要重新标定 ROI',
+  '已记录，无需继续处置',
 ];
+
+type ReviewOutcome = Exclude<IncidentReviewState, 'pending'>;
 
 export default function ReviewPanel({
   reviewStatus,
@@ -17,7 +20,7 @@ export default function ReviewPanel({
   submitting,
   operatorName,
 }: {
-  reviewStatus: string;
+  reviewStatus: IncidentReviewState;
   operatorNote: string;
   onSubmit: (status: string, note: string, operatorId?: string) => Promise<boolean>;
   submitting: boolean;
@@ -25,35 +28,35 @@ export default function ReviewPanel({
 }) {
   const [note, setNote] = useState(operatorNote);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<'validated' | 'false_alarm' | null>(null);
+  const [confirming, setConfirming] = useState<ReviewOutcome | null>(null);
   const isReviewed = reviewStatus !== 'pending';
 
-  async function handleReview(newStatus: 'validated' | 'false_alarm') {
+  async function handleReview(newStatus: ReviewOutcome) {
     if (confirming !== newStatus) {
       setConfirming(newStatus);
       return;
     }
     setSubmitError(null);
     const ok = await onSubmit(newStatus, note, operatorName);
-    if (!ok) setSubmitError('Review submission failed, check backend and retry');
+    if (!ok) setSubmitError('复核提交失败，请检查后端后重试');
   }
 
   return (
     <div className="rounded-lg border border-outline-variant/40 bg-surface-container-high p-4 shadow-[0_1px_0_rgba(32,32,29,0.04)]">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold text-on-surface">Manual Review</h3>
-          <p className="mt-1 text-label-xs text-on-surface-variant">Next: confirm or reject, and leave a traceable note.</p>
+          <h3 className="font-semibold text-on-surface">人工复核</h3>
+          <p className="mt-1 text-label-xs text-on-surface-variant">下一步：确认或驳回，并留下可追溯备注。</p>
         </div>
         <div className="shrink-0">
-          <StatusBadge status={reviewStatus} />
+          <IncidentReviewStateBadge state={reviewStatus} />
         </div>
       </div>
 
       {isReviewed ? (
         <div className="mt-4 rounded-lg bg-surface-container-low p-4 text-body-sm text-on-surface-variant">
-          <div className="font-semibold">Review Completed</div>
-          <div className="mt-2">{operatorNote || 'No note provided'}</div>
+          <div className="font-semibold">复核已完成</div>
+          <div className="mt-2">{operatorNote || '未填写备注'}</div>
         </div>
       ) : (
         <div className="mt-4 space-y-4">
@@ -71,21 +74,29 @@ export default function ReviewPanel({
           </div>
           <textarea
             className={inputClassName('min-h-28 w-full p-3')}
-            placeholder="Fill in review notes for traceability"
+            placeholder="填写复核备注，便于后续追溯"
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
           <div className="rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">
-            Operator: <span className="font-semibold text-on-surface">{operatorName}</span>
+            操作员：<span className="font-semibold text-on-surface">{operatorName}</span>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             <PrimaryButton
               tone="dark"
               icon={confirming === 'validated' ? 'send' : 'check_circle'}
               disabled={submitting}
               onClick={() => handleReview('validated')}
             >
-              {submitting ? 'Submitting...' : confirming === 'validated' ? 'Click Again to Validate' : 'Validate Violation'}
+              {submitting ? '提交中...' : confirming === 'validated' ? '再次点击验证' : '验证疑似事件'}
+            </PrimaryButton>
+            <PrimaryButton
+              tone="light"
+              icon={confirming === 'closed' ? 'send' : 'archive'}
+              disabled={submitting}
+              onClick={() => handleReview('closed')}
+            >
+              {submitting ? '提交中...' : confirming === 'closed' ? '再次点击关闭' : '关闭记录'}
             </PrimaryButton>
             <PrimaryButton
               tone="danger"
@@ -93,7 +104,7 @@ export default function ReviewPanel({
               disabled={submitting}
               onClick={() => handleReview('false_alarm')}
             >
-              {submitting ? 'Submitting...' : confirming === 'false_alarm' ? 'Click Again to Mark False Alarm' : 'False Alarm'}
+              {submitting ? '提交中...' : confirming === 'false_alarm' ? '再次点击标记误报' : '标记误报'}
             </PrimaryButton>
           </div>
         </div>

@@ -76,7 +76,7 @@ fun PatrolDashboardScreen(
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Patrol Tasks",
+                    text = "巡查任务",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AegisOnSurface,
@@ -84,9 +84,9 @@ fun PatrolDashboardScreen(
                 )
                 Text(
                     text = if (state.username.isBlank()) {
-                        "Tasks assigned from the web console appear here after the account is connected."
+                        "账号连接后，Web 控制台派发的任务会显示在这里。"
                     } else {
-                        "Signed in as ${state.username}. Assigned tasks sync from the backend."
+                        "已登录为 ${state.username}。派发任务会从后端同步。"
                     },
                     fontSize = 12.sp,
                     color = AegisOnSurfaceVariant
@@ -101,15 +101,15 @@ fun PatrolDashboardScreen(
             ) {
                 StatusCard(
                     modifier = Modifier.weight(1f),
-                    label = "Open",
+                    label = "待处理",
                     value = state.activeTaskCount.toString(),
                     valueColor = AegisPrimary,
                     showStatusDot = state.activeTaskCount > 0
                 )
                 StatusCard(
                     modifier = Modifier.weight(1f),
-                    label = "Assigned",
-                    value = state.todayCaseCount.toString(),
+                    label = "已派发",
+                    value = state.assignedTaskCount.toString(),
                     valueColor = AegisOnSurface
                 )
             }
@@ -131,7 +131,7 @@ fun PatrolDashboardScreen(
                 ) {
                     Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Refresh", fontSize = 12.sp)
+                    Text("刷新", fontSize = 12.sp)
                 }
                 Button(
                     onClick = { navController.navigate("account") },
@@ -142,7 +142,7 @@ fun PatrolDashboardScreen(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Account", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("账号", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -161,10 +161,10 @@ fun PatrolDashboardScreen(
         } else if (state.error != null) {
             item {
                 StatePanel(
-                    title = if (state.needsConfiguration) "Account setup needed" else "Task sync failed",
-                    message = state.error ?: "Unable to load tasks.",
+                    title = if (state.needsConfiguration) "需要配置账号" else "任务同步失败",
+                    message = state.error ?: "无法加载任务。",
                     tone = "error",
-                    primaryLabel = if (state.needsConfiguration) "Open Account" else "Retry",
+                    primaryLabel = if (state.needsConfiguration) "打开账号" else "重试",
                     onPrimary = {
                         if (state.needsConfiguration) navController.navigate("account") else viewModel.refresh()
                     }
@@ -173,10 +173,10 @@ fun PatrolDashboardScreen(
         } else if (state.incidents.isEmpty()) {
             item {
                 StatePanel(
-                    title = "No assigned tasks",
-                    message = "Web dispatch has not assigned anything to this patrol account yet.",
+                    title = "暂无派发任务",
+                    message = "Web 调度尚未向当前巡查账号派发任务。",
                     tone = "idle",
-                    primaryLabel = "Check Again",
+                    primaryLabel = "再次检查",
                     onPrimary = { viewModel.refresh() }
                 )
             }
@@ -185,7 +185,7 @@ fun PatrolDashboardScreen(
         if (state.incidents.isNotEmpty()) {
             item {
                 Text(
-                    text = "Assigned Cases",
+                    text = "已派发处置任务",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = AegisOnSurface
@@ -303,9 +303,9 @@ private fun IncidentCard(
     onOpenEvidence: () -> Unit,
     onNavigate: () -> Unit
 ) {
-    val isHighRisk = incident.riskLevel == "high" || incident.riskLevel == "critical"
-    val badgeColor = if (isHighRisk) AegisSecondaryContainer else AegisSurfaceContainerHigh
-    val badgeText = if (isHighRisk) "HIGH RISK" else "NORMAL"
+    val isHighPriority = incident.reviewPriority == "high" || incident.reviewPriority == "critical"
+    val badgeColor = if (isHighPriority) AegisSecondaryContainer else AegisSurfaceContainerHigh
+    val badgeText = if (isHighPriority) "高优先级" else "普通优先级"
 
     Box(
         modifier = Modifier
@@ -334,12 +334,12 @@ private fun IncidentCard(
                             modifier = Modifier.size(30.dp)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("No image evidence", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                        Text("暂无图片证据", fontSize = 12.sp, color = AegisOnSurfaceVariant)
                     }
                 } else {
                     AsyncImage(
                         model = incident.thumbnailUrl,
-                        contentDescription = "Evidence image",
+                        contentDescription = "证据图片",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -375,13 +375,13 @@ private fun IncidentCard(
                         color = AegisOnSurface
                     )
                     Text(
-                        text = "${incident.location} · ${incident.status.uppercase()} · ${incident.detectedTime}",
+                        text = "${incident.location} · ${formatTaskStatus(incident.status)} · ${incident.detectedTime}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = AegisOnSurfaceVariant
                     )
                     Text(
-                        text = "Confidence ${"%.0f".format(incident.confidence * 100)}%",
+                        text = "置信度 ${"%.0f".format(incident.confidence * 100)}%",
                         fontSize = 12.sp,
                         color = AegisOnSurfaceVariant
                     )
@@ -409,9 +409,9 @@ private fun IncidentCard(
                     ) {
                         Text(
                             text = when (incident.status) {
-                                "accepted" -> "Complete"
-                                "completed" -> "Completed"
-                                else -> "Accept"
+                                "accepted" -> "完成"
+                                "completed" -> "已完成"
+                                else -> "接单"
                             },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
@@ -427,7 +427,7 @@ private fun IncidentCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.ImageNotSupported,
-                            contentDescription = "Open detection",
+                            contentDescription = "打开检测",
                             tint = AegisOnSurface,
                             modifier = Modifier.size(18.dp)
                         )
@@ -442,7 +442,7 @@ private fun IncidentCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Navigation,
-                            contentDescription = "Open detection",
+                            contentDescription = "打开检测",
                             tint = AegisOnSurface,
                             modifier = Modifier.size(18.dp)
                         )
@@ -450,5 +450,14 @@ private fun IncidentCard(
                 }
             }
         }
+    }
+}
+
+private fun formatTaskStatus(status: String): String {
+    return when (status) {
+        "assigned" -> "已派发"
+        "accepted" -> "已接单"
+        "completed" -> "已完成"
+        else -> status
     }
 }

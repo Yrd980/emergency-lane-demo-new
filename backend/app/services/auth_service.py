@@ -7,16 +7,18 @@ from app.database import get_db
 
 ROLE_PERMISSIONS = {
     "admin": [
-        "events:read", "events:review", "events:assign", "events:delete",
+        "suspected_incidents:read", "suspected_incidents:review", "suspected_incidents:assign", "suspected_incidents:delete",
         "tasks:read", "tasks:accept", "tasks:complete",
         "devices:read", "settings:read", "settings:write", "stats:read",
     ],
-    "reviewer": ["events:read", "events:review", "tasks:read", "devices:read", "stats:read"],
-    "dispatcher": ["events:read", "events:assign", "tasks:read", "devices:read", "stats:read"],
-    "patrol": ["events:read", "tasks:read", "tasks:accept", "tasks:complete", "devices:read"],
+    "reviewer": ["suspected_incidents:read", "suspected_incidents:review", "tasks:read", "devices:read", "stats:read"],
+    "dispatcher": ["suspected_incidents:read", "suspected_incidents:assign", "tasks:read", "devices:read", "stats:read"],
+    "patrol": ["suspected_incidents:read", "tasks:read", "tasks:accept", "tasks:complete", "devices:read"],
 }
 
 SESSION_DAYS = 7
+PASSWORD_ALGORITHM = "pbkdf2_sha256"
+PASSWORD_ITERATIONS = 260_000
 
 
 def now_iso() -> str:
@@ -24,7 +26,30 @@ def now_iso() -> str:
 
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        PASSWORD_ITERATIONS,
+    ).hex()
+    return f"{PASSWORD_ALGORITHM}${PASSWORD_ITERATIONS}${salt}${digest}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    try:
+        algorithm, iterations, salt, expected_digest = stored_hash.split("$", 3)
+        if algorithm != PASSWORD_ALGORITHM:
+            return False
+        digest = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            salt.encode("utf-8"),
+            int(iterations),
+        ).hex()
+        return hmac.compare_digest(digest, expected_digest)
+    except (ValueError, TypeError):
+        return False
 
 
 def serialize_user(row):
@@ -47,7 +72,7 @@ def login(username: str, password: str):
             "SELECT * FROM users WHERE username=?",
             ((username or "").strip(),),
         ).fetchone()
-        if not row or not hmac.compare_digest(row["password_hash"], hash_password(password or "")):
+        if not row or not verify_password(password or "", row["password_hash"]):
             return None
 
         token = secrets.token_urlsafe(32)

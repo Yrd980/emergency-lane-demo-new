@@ -5,8 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.emergency.lane.data.DeviceRepository
 import com.emergency.lane.data.local.EvidenceFileEntity
-import com.emergency.lane.data.local.EventQueueRepository
-import com.emergency.lane.data.local.LocalEventEntity
+import com.emergency.lane.data.local.SuspectedIncidentQueueRepository
+import com.emergency.lane.data.local.LocalSuspectedIncidentEntity
 import com.emergency.lane.data.remote.UploadRepository
 import com.emergency.lane.data.remote.UploadWorker
 import com.emergency.lane.domain.UploadState
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 data class QueueUiState(
-    val events: List<QueuedEventItem> = emptyList(),
+    val suspectedIncidents: List<QueuedSuspectedIncidentItem> = emptyList(),
     val stats: Map<String, Int> = emptyMap(),
     val loading: Boolean = false,
     val uploading: Boolean = false,
@@ -25,13 +25,13 @@ data class QueueUiState(
     val actionMessage: String? = null
 )
 
-data class QueuedEventItem(
-    val event: LocalEventEntity,
+data class QueuedSuspectedIncidentItem(
+    val suspectedIncident: LocalSuspectedIncidentEntity,
     val evidence: List<EvidenceFileEntity>
 )
 
 class QueueViewModel(application: Application) : AndroidViewModel(application) {
-    private val repo = EventQueueRepository(application)
+    private val repo = SuspectedIncidentQueueRepository(application)
     private val deviceRepo = DeviceRepository(application)
     private val uploadRepo = UploadRepository(application)
     private val _uiState = MutableStateFlow(QueueUiState())
@@ -45,21 +45,21 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(loading = true, error = null)
             repo.observeAll()
-                .combine(repo.observeEvidence()) { events, evidenceFiles ->
-                    val evidenceByEvent = evidenceFiles.groupBy { it.eventId }
-                    events.map { event ->
-                        QueuedEventItem(
-                            event = event,
-                            evidence = evidenceByEvent[event.eventId].orEmpty()
+                .combine(repo.observeEvidence()) { suspectedIncidents, evidenceFiles ->
+                    val evidenceBySuspectedIncident = evidenceFiles.groupBy { it.suspectedIncidentId }
+                    suspectedIncidents.map { suspectedIncident ->
+                        QueuedSuspectedIncidentItem(
+                            suspectedIncident = suspectedIncident,
+                            evidence = evidenceBySuspectedIncident[suspectedIncident.suspectedIncidentId].orEmpty()
                         )
-                    } to statsFrom(events)
+                    } to statsFrom(suspectedIncidents)
                 }
                 .catch { e ->
                     _uiState.value = _uiState.value.copy(loading = false, error = e.message)
                 }
                 .collect { (items, stats) ->
                     _uiState.value = _uiState.value.copy(
-                        events = items,
+                        suspectedIncidents = items,
                         stats = stats,
                         loading = false,
                         error = null
@@ -73,10 +73,10 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.value = _uiState.value.copy(loading = showLoading, error = null)
             try {
                 _uiState.value = QueueUiState(
-                    events = repo.getAll().map { event ->
-                        QueuedEventItem(
-                            event = event,
-                            evidence = repo.getEvidenceForEvent(event.eventId)
+                    suspectedIncidents = repo.getAll().map { suspectedIncident ->
+                        QueuedSuspectedIncidentItem(
+                            suspectedIncident = suspectedIncident,
+                            evidence = repo.getEvidenceForSuspectedIncident(suspectedIncident.suspectedIncidentId)
                         )
                     },
                     stats = repo.getStats(),
@@ -90,17 +90,17 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun retryEvent(eventId: String) {
+    fun retrySuspectedIncident(suspectedIncidentId: String) {
         viewModelScope.launch {
             if (_uiState.value.uploading) return@launch
             _uiState.value = _uiState.value.copy(
                 uploading = true,
                 error = null,
-                actionMessage = "Uploading $eventId..."
+                actionMessage = "Uploading $suspectedIncidentId..."
             )
             try {
-                repo.retryEvent(eventId)
-                val uploaded = uploadRepo.uploadPendingEvents()
+                repo.retrySuspectedIncident(suspectedIncidentId)
+                val uploaded = uploadRepo.uploadPendingSuspectedIncidents()
                 syncHeartbeat()
                 refresh()
                 val pending = repo.getPendingCount()
@@ -138,10 +138,10 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
                 actionMessage = "Uploading $pendingBefore pending item(s)..."
             )
             try {
-                repo.getPendingUploads().forEach { event ->
-                    repo.retryEvent(event.eventId)
+                repo.getPendingUploads().forEach { suspectedIncident ->
+                    repo.retrySuspectedIncident(suspectedIncident.suspectedIncidentId)
                 }
-                val uploaded = uploadRepo.uploadPendingEvents()
+                val uploaded = uploadRepo.uploadPendingSuspectedIncidents()
                 syncHeartbeat()
                 refresh()
                 val pending = repo.getPendingCount()
@@ -165,12 +165,12 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deleteEvent(eventId: String) {
+    fun deleteSuspectedIncident(suspectedIncidentId: String) {
         viewModelScope.launch {
-            repo.deleteEvent(eventId)
+            repo.deleteSuspectedIncident(suspectedIncidentId)
             syncHeartbeat()
             refresh()
-            _uiState.value = _uiState.value.copy(actionMessage = "Deleted $eventId")
+            _uiState.value = _uiState.value.copy(actionMessage = "Deleted $suspectedIncidentId")
         }
     }
 
@@ -189,13 +189,13 @@ class QueueViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun statsFrom(events: List<LocalEventEntity>): Map<String, Int> {
+    private fun statsFrom(suspectedIncidents: List<LocalSuspectedIncidentEntity>): Map<String, Int> {
         return mapOf(
-            "queued" to events.count { it.uploadState == UploadState.QUEUED.name },
-            "uploading" to events.count { it.uploadState == UploadState.UPLOADING.name },
-            "uploaded" to events.count { it.uploadState == UploadState.UPLOADED.name },
-            "failed" to events.count { it.uploadState == UploadState.FAILED.name },
-            "local_created" to events.count { it.uploadState == UploadState.LOCAL_CREATED.name }
+            "queued" to suspectedIncidents.count { it.uploadState == UploadState.QUEUED.name },
+            "uploading" to suspectedIncidents.count { it.uploadState == UploadState.UPLOADING.name },
+            "uploaded" to suspectedIncidents.count { it.uploadState == UploadState.UPLOADED.name },
+            "failed" to suspectedIncidents.count { it.uploadState == UploadState.FAILED.name },
+            "local_created" to suspectedIncidents.count { it.uploadState == UploadState.LOCAL_CREATED.name }
         )
     }
 }

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { EventDetail } from '../types';
+import type { SuspectedIncidentDetail } from '../types';
 
-export function useEventDetail(id: string) {
-  const [data, setData] = useState<EventDetail | null>(null);
+export function useSuspectedIncidentDetail(id: string) {
+  const [data, setData] = useState<SuspectedIncidentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetch = useCallback(() => {
     setLoading(true);
-    api.getEvent(id)
+    api.getSuspectedIncident(id)
       .then((d) => { setData(d); setError(null); })
       .catch((e: unknown) => setError((e as Error).message))
       .finally(() => setLoading(false));

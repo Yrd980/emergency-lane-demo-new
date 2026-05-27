@@ -10,7 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.emergency.lane.data.DeviceRepository
-import com.emergency.lane.data.local.EventQueueRepository
+import com.emergency.lane.data.local.SuspectedIncidentQueueRepository
 import java.util.concurrent.TimeUnit
 
 class UploadWorker(
@@ -20,8 +20,8 @@ class UploadWorker(
 
     override suspend fun doWork(): Result {
         val repo = UploadRepository(applicationContext)
-        val uploaded = repo.uploadPendingEvents()
-        val queue = EventQueueRepository(applicationContext)
+        val uploaded = repo.uploadPendingSuspectedIncidents()
+        val queue = SuspectedIncidentQueueRepository(applicationContext)
         DeviceRepository(applicationContext).sendHeartbeatOnce(
             pendingProvider = { queue.getPendingCount() }
         )

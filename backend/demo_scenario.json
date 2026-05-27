@@ -2,7 +2,7 @@
   "event_count": 30,
   "days": 30,
   "task_count": 6,
-  "vehicle_classes": ["car", "truck", "van", "bus", "maintenance"],
+  "vehicle_classes": ["小客车", "货车", "面包车", "客车", "养护车辆"],
   "review_status_mix": {
     "pending": 2,
     "validated": 7,
@@ -24,7 +24,7 @@
   "rois": [
     {
       "roi_id": "A12_NB_shoulder",
-      "label": "Sector A-12 Northbound",
+      "label": "A-12 路段北向",
       "base_daily_events": 3,
       "spike_days_ago": [2, 9, 16],
       "spike_extra": 5,
@@ -34,7 +34,7 @@
     },
     {
       "roi_id": "B04_SB_merge",
-      "label": "Sector B-04 Southbound",
+      "label": "B-04 路段南向",
       "base_daily_events": 2,
       "spike_days_ago": [5, 13, 21],
       "spike_extra": 4,
@@ -44,7 +44,7 @@
     },
     {
       "roi_id": "Tunnel_07_entry",
-      "label": "Tunnel Corridor 7 Entry",
+      "label": "7 号隧道入口",
       "base_daily_events": 1,
       "spike_days_ago": [1, 10, 24],
       "spike_extra": 3,
@@ -54,7 +54,7 @@
     },
     {
       "roi_id": "Depot_ramp_west",
-      "label": "Depot Ramp West",
+      "label": "西侧匝道入口",
       "base_daily_events": 1,
       "spike_days_ago": [7, 18],
       "spike_extra": 2,

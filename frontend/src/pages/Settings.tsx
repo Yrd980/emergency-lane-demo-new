@@ -60,24 +60,24 @@ export default function Settings() {
       setSettings(toEditableSettings(saved));
       setUpdatedAt(saved.updated_at);
       setError(null);
-      showToast('Settings saved to local backend, persisted across page reloads.', 'success');
+      showToast('设置已保存到本地后端，刷新页面后仍会保留。', 'success');
     } catch (e: unknown) {
       const message = (e as Error).message;
       setError(message);
-      showToast(`Settings save failed: ${message}`, 'error');
+      showToast(`设置保存失败：${message}`, 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <StateBlock tone="loading" title="Loading runtime settings" description="Syncing review, online detection, and evidence retention policies." />;
+  if (loading) return <StateBlock tone="loading" title="正在加载运行设置" description="正在同步复核、在线判定和证据留存策略。" />;
   if (error && !settings) {
     return (
       <StateBlock
         tone="error"
-        title="Settings load failed"
+        title="设置加载失败"
         description={error}
-        action={<PrimaryButton icon="refresh" onClick={load}>Retry Load</PrimaryButton>}
+        action={<PrimaryButton icon="refresh" onClick={load}>重新加载</PrimaryButton>}
       />
     );
   }
@@ -87,16 +87,16 @@ export default function Settings() {
   return (
     <div className="space-y-lg">
       <PageHeader
-        eyebrow="SETTINGS"
-        title="Runtime Settings"
-        description="Surface the configs that most affect trust during long-running use: review mode, online window, evidence retention, and device access."
+        eyebrow="设置"
+        title="运行设置"
+        description="集中管理持续运行中最影响可信度的配置：复核模式、在线窗口、证据留存和设备接入。"
         action={
           editable ? (
             <PrimaryButton icon="save" onClick={save} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Settings'}
+              {saving ? '保存中...' : '保存设置'}
             </PrimaryButton>
           ) : (
-            <PrimaryButton href="/health">View System Health</PrimaryButton>
+            <PrimaryButton href="/health">查看系统健康</PrimaryButton>
           )
         }
       />
@@ -104,29 +104,29 @@ export default function Settings() {
       {!editable && (
         <ActionPanel
           tone="warning"
-          title="Current role can only view settings"
-          description="Only accounts with settings:write can modify runtime parameters. Current account is limited to operational viewing."
-          action={<PrimaryButton href="/health">Go to System Health</PrimaryButton>}
+          title="当前角色只能查看设置"
+          description="只有具备 settings:write 权限的账号可以修改运行参数。当前账号仅限运维查看。"
+          action={<PrimaryButton href="/health">前往系统健康</PrimaryButton>}
         />
       )}
 
       <ActionPanel
         tone={error ? 'danger' : 'success'}
-        title={error ? 'Last save failed' : 'Settings backed by backend persistence'}
-        description={error ? `${error}. Confirm local backend is available and retry.` : `Last saved: ${updatedAt ? formatDateTime(updatedAt) : 'Awaiting first save'}. Next: check system health to confirm runtime state.`}
-        action={error ? <PrimaryButton icon="refresh" onClick={save}>Re-save</PrimaryButton> : <PrimaryButton href="/health">View System Health</PrimaryButton>}
+        title={error ? '上次保存失败' : '设置由后端持久化'}
+        description={error ? `${error}。请确认本地后端可用后重试。` : `最近保存：${updatedAt ? formatDateTime(updatedAt) : '等待首次保存'}。下一步：检查系统健康以确认运行状态。`}
+        action={error ? <PrimaryButton icon="refresh" onClick={save}>重新保存</PrimaryButton> : <PrimaryButton href="/health">查看系统健康</PrimaryButton>}
       />
 
       <div className="mt-lg grid gap-4 lg:grid-cols-2">
-        <SettingCard icon="shield" title="Review Policy" description="All suspected events must be manually reviewed before confirmation.">
+        <SettingCard icon="shield" title="复核策略" description="所有疑似疑似事件必须经过人工复核后才能确认。">
           <select
             className={selectClassName('mt-3 w-full')}
             value={settings.review_mode}
             onChange={(e) => editable && update('review_mode', e.target.value as RuntimeSettingsUpdate['review_mode'])}
             disabled={!editable}
           >
-            <option value="manual">Manual Review Priority</option>
-            <option value="strict">Complete Evidence Required</option>
+            <option value="manual">人工复核优先</option>
+            <option value="strict">要求完整证据链</option>
           </select>
           <label className="mt-3 flex items-start gap-3 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant transition-all hover:border-primary/20">
             <input
@@ -136,10 +136,10 @@ export default function Settings() {
               disabled={!editable}
               className="mt-0.5 h-4 w-4 rounded border-outline-variant bg-background text-primary focus:ring-primary focus:ring-offset-0"
             />
-            <span>Require before / peak / after evidence completeness before confirming</span>
+            <span>确认前要求具备进入前、峰值、离开后三段证据</span>
           </label>
         </SettingCard>
-        <SettingCard icon="wifi" title="Online Detection Window" description="Devices are shown as offline after exceeding this number of seconds without a heartbeat.">
+        <SettingCard icon="wifi" title="在线判定窗口" description="设备超过该秒数未上报心跳后，将显示为离线。">
           <NumberInput
             value={settings.online_window_seconds}
             min={10}
@@ -148,7 +148,7 @@ export default function Settings() {
             disabled={!editable}
           />
         </SettingCard>
-        <SettingCard icon="delete" title="Evidence Retention" description="Control evidence directory growth during long-running use.">
+        <SettingCard icon="delete" title="证据留存" description="控制持续运行期间证据目录的增长。">
           <NumberInput
             value={settings.evidence_retention_days}
             min={1}
@@ -157,17 +157,17 @@ export default function Settings() {
             disabled={!editable}
           />
         </SettingCard>
-        <SettingCard icon="shield" title="Device Access" description="Current LAN demo defaults to open; production should integrate device tokens.">
+        <SettingCard icon="shield" title="设备接入" description="当前局域网演示默认开放；生产环境应接入设备令牌。">
           <select
             className={selectClassName('mt-3 w-full')}
             value={settings.device_access_mode}
             onChange={(e) => editable && update('device_access_mode', e.target.value as RuntimeSettingsUpdate['device_access_mode'])}
             disabled={!editable}
           >
-            <option value="open">LAN Open Access</option>
-            <option value="token">Require Device Token (future Android integration)</option>
+            <option value="open">局域网开放接入</option>
+            <option value="token">要求设备令牌（后续 Android 集成）</option>
           </select>
-          <div className="mt-3 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">Next: enforce token check after Android upload carries tokens.</div>
+          <div className="mt-3 rounded-lg border border-outline-variant/10 bg-surface-container p-3 text-body-sm text-on-surface-variant">下一步：Android 上传携带令牌后启用令牌校验。</div>
         </SettingCard>
       </div>
     </div>

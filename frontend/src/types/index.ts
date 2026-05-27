@@ -1,10 +1,11 @@
-export type ReviewStatus = 'pending' | 'validated' | 'false_alarm' | 'assigned' | 'accepted' | 'completed' | 'closed';
+export type ReviewStatus = 'pending' | 'validated' | 'false_alarm' | 'closed';
+export type ReviewPriority = 'normal' | 'high';
 export type Role = 'admin' | 'reviewer' | 'dispatcher' | 'patrol';
 export type Permission =
-  | 'events:read'
-  | 'events:review'
-  | 'events:assign'
-  | 'events:delete'
+  | 'suspected_incidents:read'
+  | 'suspected_incidents:review'
+  | 'suspected_incidents:assign'
+  | 'suspected_incidents:delete'
   | 'tasks:read'
   | 'tasks:accept'
   | 'tasks:complete'
@@ -36,7 +37,7 @@ export interface GpsLocation {
 
 export interface EvidenceFile {
   id: number;
-  event_id: string;
+  suspected_incident_id: string;
   evidence_type: string;
   mime_type: string;
   url: string;
@@ -52,8 +53,8 @@ export interface EvidenceSummary {
   is_complete: boolean;
 }
 
-export interface EventDetail {
-  event_id: string;
+export interface SuspectedIncidentDetail {
+  suspected_incident_id: string;
   device_id: string;
   start_time: string;
   end_time: string;
@@ -71,15 +72,15 @@ export interface EventDetail {
   evidence_files: EvidenceFile[];
   review_history: ReviewHistoryItem[];
   evidence_summary?: EvidenceSummary;
-  risk_level?: 'normal' | 'high';
+  review_priority?: ReviewPriority;
   review_priority_reason?: string;
-  previous_event_id?: string | null;
-  next_event_id?: string | null;
+  previous_suspected_incident_id?: string | null;
+  next_suspected_incident_id?: string | null;
 }
 
 export interface ReviewHistoryItem {
   id: number;
-  event_id: string;
+  suspected_incident_id: string;
   operator_id: string;
   from_status: ReviewStatus;
   to_status: Exclude<ReviewStatus, 'pending'>;
@@ -87,8 +88,8 @@ export interface ReviewHistoryItem {
   reviewed_at: string;
 }
 
-export interface EventListItem {
-  event_id: string;
+export interface SuspectedIncidentListItem {
+  suspected_incident_id: string;
   device_id: string;
   start_time: string;
   duration_seconds: number;
@@ -96,25 +97,25 @@ export interface EventListItem {
   confidence: number;
   review_status: ReviewStatus;
   thumbnail_url: string;
-  risk_level?: 'normal' | 'high';
+  review_priority?: ReviewPriority;
   review_priority_reason?: string;
 }
 
-export interface EventListResponse {
-  items: EventListItem[];
+export interface SuspectedIncidentListResponse {
+  items: SuspectedIncidentListItem[];
   total: number;
 }
 
 export interface BulkReviewResponse {
   requested_count: number;
   updated_count: number;
-  missing_event_ids: string[];
-  failed_event_ids?: string[];
+  missing_suspected_incident_ids: string[];
+  failed_suspected_incident_ids?: string[];
 }
 
 export interface TaskItem {
   task_id: string;
-  event_id: string;
+  suspected_incident_id: string;
   status: 'assigned' | 'accepted' | 'completed' | 'cancelled';
   note: string;
   assigned_to_username: string | null;
@@ -130,7 +131,7 @@ export interface TaskItem {
   confidence: number;
   start_time: string;
   device_id: string;
-  risk_level: 'normal' | 'high';
+  review_priority: ReviewPriority;
   thumbnail_url: string;
 }
 
@@ -140,25 +141,25 @@ export interface TaskListResponse {
 }
 
 export interface OverviewStats {
-  total_events_today: number;
+  total_suspected_incidents_today: number;
   pending_review_count: number;
-  confirmed_count: number;
-  rejected_count: number;
+  validated_count: number;
+  false_alarm_count: number;
   online_device_count: number;
-  recent_events: EventListItem[];
+  recent_suspected_incidents: SuspectedIncidentListItem[];
 }
 
 export interface OperationsStats {
   summary: {
-    total_violations: number;
+    total_suspected_incidents: number;
     pending_review: number;
     validated: number;
     false_alarms: number;
     assigned_tasks: number;
     completed_tasks: number;
     avg_response_minutes: number;
-    today_events: number;
-    latest_event_at: string | null;
+    today_suspected_incidents: number;
+    latest_suspected_incident_at: string | null;
     period_label?: string;
     roi_id?: string | null;
   };
@@ -193,7 +194,7 @@ export interface DeviceDetail extends DeviceInfo {
   seconds_since_seen: number;
   issues: DeviceIssue[];
   metric_history: DeviceMetricSnapshot[];
-  recent_events: EventListItem[];
+  recent_suspected_incidents: SuspectedIncidentListItem[];
 }
 
 export interface DeviceMetricSnapshot {
@@ -230,9 +231,9 @@ export interface SystemStatus {
     pending_upload_count: number;
     backlog_device_id?: string | null;
   };
-  events: {
+  suspected_incidents: {
     pending_review_count: number;
-    latest_event_at: string | null;
+    latest_suspected_incident_at: string | null;
   };
   issues: SystemIssue[];
 }

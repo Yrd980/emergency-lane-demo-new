@@ -85,16 +85,16 @@ fun SettingsScreen(
     }
 
     fun validateUrl(url: String): String? {
-        if (url.isBlank()) return "Enter HP backend address"
+        if (url.isBlank()) return "请输入 HP 后端地址"
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            return "Address must start with http:// or https://"
+            return "地址必须以 http:// 或 https:// 开头"
         }
         return null
     }
 
     fun validateCredentials(): String? {
-        if (username.isBlank()) return "Enter HP username"
-        if (password.isBlank() && uiState.username.isBlank()) return "Enter HP password"
+        if (username.isBlank()) return "请输入 HP 账号"
+        if (password.isBlank() && uiState.username.isBlank()) return "请输入 HP 密码"
         return null
     }
 
@@ -110,14 +110,14 @@ fun SettingsScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Device",
+                text = "设备",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AegisOnSurface,
                 letterSpacing = 0.sp
             )
             Text(
-                text = "This phone is connected for patrol tasks and camera capture.",
+                text = "本机用于接收巡查任务与相机采集。",
                 fontSize = 12.sp,
                 color = AegisOnSurfaceVariant
             )
@@ -126,21 +126,21 @@ fun SettingsScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MiniInfoCard(
                 icon = Icons.Default.Cloud,
-                title = "Backend",
+                title = "后端",
                 value = when {
-                    baseUrl.isBlank() -> "Not set"
+                    baseUrl.isBlank() -> "未设置"
                     developerMode -> baseUrl
-                    else -> "Connected"
+                    else -> "已连接"
                 },
                 modifier = Modifier.weight(1f)
             )
             MiniInfoCard(
                 icon = Icons.Default.People,
-                title = "Account",
+                title = "账号",
                 value = when {
-                    username.isBlank() -> "Not set"
+                    username.isBlank() -> "未设置"
                     developerMode -> username
-                    else -> "Patrol"
+                    else -> "巡查"
                 },
                 modifier = Modifier.weight(1f)
             )
@@ -148,8 +148,8 @@ fun SettingsScreen(
 
         MiniInfoCard(
             icon = Icons.Default.PhoneAndroid,
-            title = "This phone",
-            value = "${deviceName.ifBlank { "Android device" }} · ${deviceId.ifBlank { "unknown id" }}",
+            title = "本机",
+            value = "${deviceName.ifBlank { "Android 设备" }} · ${deviceId.ifBlank { "未知 ID" }}",
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -158,7 +158,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = baseUrl,
                 onValueChange = { baseUrl = it; urlError = null },
-                label = { Text("Backend URL", color = AegisOnSurfaceVariant) },
+                label = { Text("后端地址", color = AegisOnSurfaceVariant) },
                 placeholder = { Text("http://192.168.2.103:8000") },
                 isError = urlError != null,
                 supportingText = urlError?.let { { Text(it, color = AegisError) } },
@@ -183,7 +183,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = deviceId,
                 onValueChange = { deviceId = it },
-                label = { Text("Device ID", color = AegisOnSurfaceVariant) },
+                label = { Text("设备 ID", color = AegisOnSurfaceVariant) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -202,7 +202,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = deviceName,
                 onValueChange = { deviceName = it },
-                label = { Text("Device Name", color = AegisOnSurfaceVariant) },
+                label = { Text("设备名称", color = AegisOnSurfaceVariant) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -221,8 +221,8 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Backend account", color = AegisOnSurfaceVariant) },
-                placeholder = { Text("operator account") },
+                label = { Text("后端账号", color = AegisOnSurfaceVariant) },
+                placeholder = { Text("操作员账号") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -241,9 +241,9 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password", color = AegisOnSurfaceVariant) },
+                label = { Text("密码", color = AegisOnSurfaceVariant) },
                 placeholder = {
-                    if (uiState.username.isNotBlank()) Text("Leave blank to keep saved password")
+                    if (uiState.username.isNotBlank()) Text("留空则保留已保存密码")
                 },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
@@ -280,7 +280,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Check server", fontSize = 12.sp)
+                    Text("检查服务", fontSize = 12.sp)
                 }
                 Button(
                     onClick = {
@@ -297,13 +297,13 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Save and connect", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("保存并连接", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             when (val status = uiState.connectionStatus) {
                 is SettingsUiState.ConnectionStatus.Testing ->
-                    Text("Checking backend...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
+                    Text("正在检查后端...", color = AegisOnSurfaceVariant, fontSize = 14.sp)
                 is SettingsUiState.ConnectionStatus.Success ->
                     Text(status.msg, color = AegisPrimary, fontSize = 14.sp)
                 is SettingsUiState.ConnectionStatus.Error ->
@@ -338,9 +338,9 @@ fun SettingsScreen(
                     .padding(16.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("Developer mode", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("开发者模式", color = AegisOnSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Advanced device setup is visible. Use ROI editing only when installing or realigning the camera.",
+                        "高级设备设置已显示。仅在安装或重新对齐相机时编辑 ROI。",
                         color = AegisOnSurfaceVariant,
                         fontSize = 12.sp
                     )
@@ -353,7 +353,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Edit ROI", fontSize = 12.sp)
+                        Text("编辑 ROI", fontSize = 12.sp)
                     }
                 }
             }
@@ -372,11 +372,11 @@ fun SettingsScreen(
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Default.Password, contentDescription = null, tint = AegisOnSurfaceVariant)
-                    Text("Local account is for the backend, not the phone.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                    Text("本地账号用于后端认证，不是手机系统账号。", fontSize = 12.sp, color = AegisOnSurfaceVariant)
                 }
-                Text("Use the account assigned for this device. Role permissions are handled by the backend.", fontSize = 12.sp, color = AegisOnSurfaceVariant)
+                Text("请使用分配给本设备的账号。角色权限由后端处理。", fontSize = 12.sp, color = AegisOnSurfaceVariant)
                 Text(
-                    "App Version: ${BuildConfig.VERSION_NAME}",
+                    "应用版本：${BuildConfig.VERSION_NAME}",
                     fontSize = 14.sp,
                     color = if (developerMode) AegisPrimary else AegisOnSurfaceVariant,
                     modifier = Modifier.clickable {
@@ -389,9 +389,9 @@ fun SettingsScreen(
                     }
                 )
                 if (developerMode) {
-                    Text("Developer mode enabled", fontSize = 12.sp, color = AegisPrimary)
+                    Text("开发者模式已启用", fontSize = 12.sp, color = AegisPrimary)
                 }
-                Text("Model: ${SettingsStore.MODEL_VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
+                Text("模型：${SettingsStore.MODEL_VERSION_NAME}", fontSize = 14.sp, color = AegisOnSurfaceVariant)
             }
         }
 

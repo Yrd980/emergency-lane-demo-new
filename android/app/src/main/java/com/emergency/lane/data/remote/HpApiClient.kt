@@ -80,13 +80,13 @@ class HpApiClient(baseUrl: String) {
         }
     }
 
-    suspend fun getEvents(status: String? = null, limit: Int = 20): Result<EventListResponse> {
+    suspend fun getSuspectedIncidents(status: String? = null, limit: Int = 20): Result<SuspectedIncidentListResponse> {
         return try {
-            val response = api.getEvents(status, limit)
+            val response = api.getSuspectedIncidents(status, limit)
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to fetch events")))
+                Result.failure(Exception(friendlyHttpMessage(response.code(), "Failed to fetch suspectedIncidents")))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -98,7 +98,7 @@ class HpApiClient(baseUrl: String) {
             401 -> "Login expired or password is wrong. Save the account again."
             403 -> "This account does not have permission for that action."
             404 -> "The requested item no longer exists."
-            422 -> "The server rejected this action for the current status."
+            422 -> "The server cannot apply this action for the current status."
             in 500..599 -> "Backend error $code. Check the server log and retry."
             else -> "$fallback: $code"
         }

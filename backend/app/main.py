@@ -13,11 +13,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    from app.routers import auth, health, devices, events, evidence, stats, system, settings as settings_router, tasks
+    from app.routers import auth, health, devices, suspected_incidents, evidence, stats, system, settings as settings_router, tasks
     app.include_router(auth.router)
     app.include_router(health.router)
     app.include_router(devices.router)
-    app.include_router(events.router)
+    app.include_router(suspected_incidents.router)
     app.include_router(evidence.router)
     app.include_router(stats.router)
     app.include_router(system.router)

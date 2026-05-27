@@ -14,7 +14,7 @@ export default function Login() {
     setSubmitting(true);
     setError(null);
     const ok = await login(username, password);
-    if (!ok) setError('Login failed. Check username and password.');
+    if (!ok) setError('登录失败，请检查用户名和密码。');
     setSubmitting(false);
   };
 
@@ -27,14 +27,14 @@ export default function Login() {
             <span className="text-[24px] font-semibold leading-tight">Aegis Traffic</span>
           </div>
           <h1 className="mt-xl max-w-xl text-[32px] font-semibold leading-tight text-on-surface">
-            Local emergency-lane operations console.
+            本地应急车道运维控制台。
           </h1>
           <p className="mt-md max-w-lg text-[15px] leading-6 text-on-surface-variant">
-            Sign in to review evidence, check device health, and route validated incidents to the next action.
+            登录后可审核证据、检查设备健康状态，并将已确认疑似事件流转到下一环节。
           </p>
         </div>
         <div className="grid grid-cols-3 gap-sm text-label-xs text-on-surface-variant">
-          {['Evidence', 'Review', 'Dispatch'].map((item) => (
+          {['证据', '审核', '派发'].map((item) => (
             <div key={item} className="rounded-lg border border-outline-variant/10 bg-surface-container-low p-3">
               <span className="font-semibold text-primary">{item}</span>
             </div>
@@ -52,11 +52,11 @@ export default function Login() {
             <span className="material-symbols-outlined">shield</span>
             <h1 className="text-headline-md font-headline-md">Aegis Traffic</h1>
           </div>
-          <p className="mt-sm text-body-sm text-on-surface-variant">Sign in with a local operations account.</p>
+          <p className="mt-sm text-body-sm text-on-surface-variant">请使用本地运维账号登录。</p>
         </div>
         {error && <div className="mb-md rounded-lg border border-error/30 bg-error-container/10 p-3 text-body-sm text-error">{error}</div>}
         <label className="block text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">
-          Username
+          用户名
           <input
             className={inputClassName('mt-sm w-full')}
             value={username}
@@ -64,7 +64,7 @@ export default function Login() {
           />
         </label>
         <label className="mt-md block text-label-xs font-label-xs uppercase tracking-wider text-on-surface-variant">
-          Password
+          密码
           <input
             className={inputClassName('mt-sm w-full')}
             type="password"
@@ -76,10 +76,10 @@ export default function Login() {
           className="mt-lg flex min-h-11 w-full items-center justify-center rounded-lg bg-primary-container px-md py-sm text-body-sm font-semibold text-on-primary-container transition-all hover:brightness-110 disabled:opacity-60"
           disabled={submitting}
         >
-          {submitting ? 'Signing in...' : 'Sign In'}
+          {submitting ? '正在登录...' : '登录'}
         </button>
         <div className="mt-md rounded-lg bg-surface-container p-3 text-label-xs leading-5 text-on-surface-variant">
-          Built-in accounts: admin/admin123, reviewer/review123, dispatcher/dispatch123, patrol/patrol123.
+          内置账号：admin/admin123，reviewer/review123，dispatcher/dispatch123，patrol/patrol123。
         </div>
       </form>
       </div>

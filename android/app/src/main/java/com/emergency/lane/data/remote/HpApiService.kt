@@ -13,19 +13,28 @@ interface HpApiService {
     suspend fun health(): Response<HealthResponse>
 
     @POST("/api/devices/register")
-    suspend fun registerDevice(@Body req: DeviceRegisterRequest): Response<DeviceRegisterResponse>
+    suspend fun registerDevice(
+        @Header("Authorization") authorization: String? = null,
+        @Body req: DeviceRegisterRequest
+    ): Response<DeviceRegisterResponse>
 
     @POST("/api/devices/heartbeat")
-    suspend fun heartbeat(@Body req: HeartbeatRequest): Response<HeartbeatResponse>
+    suspend fun heartbeat(
+        @Header("Authorization") authorization: String? = null,
+        @Body req: HeartbeatRequest
+    ): Response<HeartbeatResponse>
 
-    @POST("/api/events")
-    suspend fun createEvent(@Body event: RequestBody): Response<EventCreateResponse>
+    @POST("/api/suspected-incidents")
+    suspend fun createSuspectedIncident(
+        @Header("Authorization") authorization: String? = null,
+        @Body suspectedIncident: RequestBody
+    ): Response<SuspectedIncidentCreateResponse>
 
-    @GET("/api/events")
-    suspend fun getEvents(
+    @GET("/api/suspected-incidents")
+    suspend fun getSuspectedIncidents(
         @Query("status") status: String? = null,
         @Query("limit") limit: Int = 20
-    ): Response<EventListResponse>
+    ): Response<SuspectedIncidentListResponse>
 
     @GET("/api/tasks")
     suspend fun getTasks(
@@ -48,9 +57,10 @@ interface HpApiService {
     ): Response<TaskItem>
 
     @Multipart
-    @POST("/api/events/{eventId}/evidence")
+    @POST("/api/suspected-incidents/{suspectedIncidentId}/evidence")
     suspend fun uploadEvidence(
-        @Path("eventId") eventId: String,
+        @Header("Authorization") authorization: String? = null,
+        @Path("suspectedIncidentId") suspectedIncidentId: String,
         @Part("evidence_type") evidenceType: RequestBody,
         @Part file: MultipartBody.Part
     ): Response<Unit>
